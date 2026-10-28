@@ -125,6 +125,36 @@
     });
     window.addEventListener('pagehide', function () { comp.componentWillUnmount && comp.componentWillUnmount(); });
     ridisegna();
+    /* finestra staccata (altro monitor): una barra in alto col nome di quello che si vede e il tasto per chiuderla.
+       Chiudendola, la casella torna al suo posto nella pagina da cui è partita. */
+    var h0 = (location.hash || '').slice(1);
+    if (h0 === 'finestra' || h0.indexOf('solo-') === 0) {
+      var st = document.createElement('style');
+      st.textContent = 'html.con-barra body{padding-top:46px!important}' +
+        '#dc-barra{position:fixed;top:0;left:0;right:0;height:46px;z-index:9999;display:flex;align-items:center;gap:10px;padding:0 10px 0 16px;box-sizing:border-box;background:var(--sf2);border-bottom:1px solid var(--ln);color:var(--ink);font:700 13px Manrope,"IBM Plex Sans",Arial,sans-serif}' +
+        '#dc-barra .pt{width:8px;height:8px;border-radius:50%;background:#0891B2;flex:0 0 auto}' +
+        '#dc-barra .tt{flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+        '#dc-barra button{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px 0 9px;border-radius:8px;border:1px solid var(--ln);background:var(--sf);color:var(--ink);font:700 12.5px Manrope,Arial,sans-serif;cursor:pointer}' +
+        '#dc-barra button:hover{border-color:#DC2626;color:#B91C1C}';
+      document.head.appendChild(st);
+      var barra = document.createElement('div'); barra.id = 'dc-barra'; barra.setAttribute('role', 'banner');
+      barra.innerHTML = '<span class="pt"></span><span class="tt"></span>' +
+        '<button type="button" title="Chiudi questa finestra: torna al suo posto nel portale"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Chiudi</button>';
+      barra.querySelector('button').addEventListener('click', function () { try { window.close(); } catch (e) {} });
+      document.body.insertBefore(barra, document.body.firstChild);
+      document.documentElement.classList.add('con-barra');
+      var base = document.title.replace(/^Next\s*·\s*/i, '').replace(/\s*—.*$/, '') || 'Next';
+      base = base.charAt(0).toUpperCase() + base.slice(1);
+      var allinea = function () {
+        var t = radice.querySelector('[data-tema]'); if (t) barra.setAttribute('data-tema', t.getAttribute('data-tema') || '');
+        var h = radice.querySelector('.solo-tieni h2, .solo-tieni h3');
+        var nome = h && h.textContent.trim() ? base + ' · ' + h.textContent.trim() : base;
+        var tt = barra.querySelector('.tt'); if (tt.textContent !== nome) tt.textContent = nome;
+        if (document.title !== 'Next · ' + nome) document.title = 'Next · ' + nome;
+      };
+      allinea();
+      new MutationObserver(allinea).observe(radice, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-tema'] });
+    }
     /* dentro il portale: il tema segue quello del portale (regia_tema: chiaro / scuro) */
     if (document.documentElement.classList.contains('incorniciata')) {
       var segui = function () {
@@ -216,14 +246,14 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 
 <header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px;">
 <div style="display: flex; flex-direction: column; gap: 4px;">
-<span style="font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3);">Tutte le caselle di Next · dati di esempio</span>
+<span style="font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3);">Tutte le caselle di Next · {{pvTesta.sotto}}</span>
 <h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.01em;">Posta</h1>
 </div>
 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
 <div style="display: flex; align-items: center; gap: 10px; background: var(--sf); border: 1px solid var(--ln); border-radius: 12px; padding: 8px 14px;">
-<span style="width: 9px; height: 9px; border-radius: 50%; background: #16A34A;"></span>
-<span style="font-size: 12.5px; font-weight: 700;">Postino in ascolto continuo</span>
-<span style="font-size: 12px; color: var(--ink3);">ultima mail 11:14 · smistata 11:14</span>
+<span style="width: 9px; height: 9px; border-radius: 50%; background: {{pvTesta.col}};"></span>
+<span style="font-size: 12.5px; font-weight: 700;">{{pvTesta.titolo}}</span>
+<span style="font-size: 12px; color: var(--ink3);">{{pvTesta.nota}}</span>
 </div>
 <button onClick="{{ripristina}}" style="font: 700 13.5px Manrope, sans-serif; border: 1px solid var(--ln); border-radius: 10px; height: 40px; padding: 0 12px; background: var(--sf); color: var(--ink); cursor: pointer;">Disposizione iniziale</button>
 </div>
@@ -296,10 +326,10 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 <div style="padding: 12px 14px; overflow-y: auto; display: {{c.prev}}; flex-direction: column; gap: 8px; min-width: 0;">
 <span style="font-size: 13px; font-weight: 700; line-height: 1.35;">{{c.sel.oggetto}}</span>
 <span style="font-size: 10.5px; color: var(--ink3);">{{c.sel.verso}} {{c.sel.chi}} · {{c.sel.ora}}</span>
-<p style="margin: 0; font-size: 12px; line-height: 1.55;">{{c.sel.testo}}</p>
-<div style="background: var(--acw); border: 1px solid var(--acw); border-radius: 10px; padding: 8px 10px; font-size: 11.5px; line-height: 1.45; color: #0891B2;"><b>Il sistema:</b> {{c.sel.sistema}}</div>
-<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: auto;">
-<button style="font: 700 13.5px Manrope, sans-serif; border: 1px solid #0891B2; border-radius: 10px; height: 40px; background: #0891B2; color: #FFFFFF; cursor: pointer;">{{c.sel.az}}</button>
+<p style="margin: 0; font-size: 12px; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere;">{{c.sel.testo}}</p><sc-if value="{{c.sel.haDocs}}"><div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{c.sel.docs}}" as="d"><a href="{{d.url}}" target="_blank" rel="noopener" title="Apri {{d.nome}}" style="display: flex; align-items: center; gap: 10px; border: 1px solid var(--ln); border-radius: 10px; padding: 6px 12px 6px 8px; text-decoration: none; color: var(--ink); background: var(--sf);"><svg aria-hidden="true" width="26" height="31" viewBox="0 0 30 36" style="flex: 0 0 auto;"><path d="M3 1h16l8 8v24a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z" fill="#fff" stroke="#D5DBE3"></path><path d="M19 1v8h8" fill="#E5E7EB"></path><rect x="1" y="20" width="22" height="10" rx="1.5" fill="{{d.fascia}}"></rect><text x="12" y="27.8" font-family="Arial,sans-serif" font-size="{{d.fs}}" font-weight="700" fill="#fff" text-anchor="middle">{{d.est}}</text></svg><span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;">{{d.nome}}</span><span style="font-size: 11px; color: var(--ink3);">{{d.est}}</span></span></a></sc-for></div></sc-if>
+<sc-if value="{{c.sel.haSistema}}"><div style="background: var(--acw); border: 1px solid var(--acw); border-radius: 10px; padding: 8px 10px; font-size: 11.5px; line-height: 1.45; color: #0891B2;"><b>Il sistema:</b> {{c.sel.sistema}}</div></sc-if>
+<div style="display: grid; grid-template-columns: {{c.sel.colBott}}; gap: 6px; margin-top: auto;">
+<sc-if value="{{c.sel.haAz}}"><button style="font: 700 13.5px Manrope, sans-serif; border: 1px solid #0891B2; border-radius: 10px; height: 40px; background: #0891B2; color: #FFFFFF; cursor: pointer;">{{c.sel.az}}</button></sc-if>
 <button onClick="{{c.apriIntera}}" style="font: 700 13.5px Manrope, sans-serif; border: 1px solid var(--ln); border-radius: 10px; height: 40px; background: var(--sf); color: var(--ink); cursor: pointer;">Apri intera</button>
 </div>
 </div>
@@ -318,7 +348,7 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 <button onClick="{{chiudiIntera}}" aria-label="Chiudi" title="Chiudi" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--ln); background: var(--sf); color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
 </div>
 
-<div role="toolbar" aria-label="Azioni sulla mail" style="display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 6px 12px; border-bottom: 1px solid var(--ln);">
+<sc-if value="{{intera.finta}}"><div role="toolbar" aria-label="Azioni sulla mail" style="display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 6px 12px; border-bottom: 1px solid var(--ln);">
 <button onClick="{{rispondi}}" style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 6 6v4"></path></svg>Rispondi</button>
 <button onClick="{{rispondiTutti}}" style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14L2 9l5-5"></path><path d="M12 14L7 9l5-5"></path><path d="M7 9h8a6 6 0 0 1 6 6v4"></path></svg>Rispondi a tutti</button>
 <button onClick="{{inoltra}}" style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"></path><path d="M20 9H10a6 6 0 0 0-6 6v4"></path></svg>Inoltra</button>
@@ -329,7 +359,7 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 <button style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink2); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4h11l-1.5 4L16 12H5"></path></svg>Contrassegna</button>
 <button style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink2); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg>Segna come non letta</button>
 <button style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink2); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px; margin-left: auto;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7h-2"></path><rect x="6" y="14" width="12" height="7"></rect></svg>Stampa</button>
-</div>
+</div></sc-if>
 
 <div style="padding: 18px 26px 6px; display: flex; flex-direction: column; gap: 14px;">
 <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;"><h2 style="margin: 0; font-size: 19px; font-weight: 700; line-height: 1.3;">{{intera.oggetto}}</h2><span style="font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 2px 8px; color: {{intera.tc}}; background: {{intera.tb}};">{{intera.tag}}</span></div>
@@ -346,12 +376,12 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 <sc-if value="{{intera.haAllegati}}" hint-placeholder-val="{{true}}">
 <div style="display: flex; flex-wrap: wrap; gap: 8px;">
 <sc-for list="{{intera.allegati}}" as="f" hint-placeholder-count="1">
-<a href="#" style="display: flex; align-items: center; gap: 10px; border: 1px solid var(--ln); border-radius: 10px; padding: 7px 12px 7px 9px; text-decoration: none; color: var(--ink);"><span style="width: 30px; height: 34px; border-radius: 5px; background: var(--rdw); color: #B91C1C; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800;">{{f.tipo}}</span><span style="display: flex; flex-direction: column;"><span style="font-size: 12.5px; font-weight: 600;">{{f.nome}}</span><span style="font-size: 11px; color: var(--ink3);">{{f.peso}}</span></span><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg></a>
+<a href="{{f.url}}" target="_blank" rel="noopener" title="Apri {{f.nome}}" style="display: flex; align-items: center; gap: 10px; border: 1px solid var(--ln); border-radius: 10px; padding: 6px 12px 6px 8px; text-decoration: none; color: var(--ink); background: var(--sf);"><svg aria-hidden="true" width="26" height="31" viewBox="0 0 30 36" style="flex: 0 0 auto;"><path d="M3 1h16l8 8v24a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z" fill="#fff" stroke="#D5DBE3"></path><path d="M19 1v8h8" fill="#E5E7EB"></path><rect x="1" y="20" width="22" height="10" rx="1.5" fill="{{f.fascia}}"></rect><text x="12" y="27.8" font-family="Arial,sans-serif" font-size="{{f.fs}}" font-weight="700" fill="#fff" text-anchor="middle">{{f.est}}</text></svg><span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;">{{f.nome}}</span><span style="font-size: 11px; color: var(--ink3);">{{f.est}}</span></span></a>
 </sc-for>
 </div>
 </sc-if>
 
-<div style="font-size: 14px; line-height: 1.65; color: var(--ink); display: flex; flex-direction: column; gap: 10px; padding: 8px 0 4px; border-top: 1px solid var(--ln);"><span style="padding-top: 8px;">Buongiorno,</span><span>{{intera.testo}}</span><span>Cordiali saluti</span><span style="font-size: 12.5px; color: var(--ink2); white-space: pre-line;">{{intera.firma}}</span></div>
+<div style="font-size: 14px; line-height: 1.65; color: var(--ink); display: flex; flex-direction: column; gap: 10px; padding: 8px 0 4px; border-top: 1px solid var(--ln);"><sc-if value="{{intera.finta}}"><span style="padding-top: 8px;">Buongiorno,</span><span>{{intera.testo}}</span><span>Cordiali saluti</span><span style="font-size: 12.5px; color: var(--ink2); white-space: pre-line;">{{intera.firma}}</span></sc-if><sc-if value="{{intera.vera}}"><span style="padding-top: 8px; white-space: pre-line; overflow-wrap: anywhere;">{{intera.testo}}</span></sc-if></div>
 </div>
 
 <sc-if value="{{inRisposta}}" hint-placeholder-val="{{false}}">
@@ -362,7 +392,7 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 </div>
 </sc-if>
 
-<div style="margin: 14px 26px 22px; background: var(--acw); border: 1px solid var(--acw); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.5; color: #0891B2; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;"><span style="flex: 1 1 300px;"><b>Il sistema:</b> {{intera.sistema}}</span><button style="font: 700 13.5px Manrope, sans-serif; border: 1px solid #0891B2; border-radius: 10px; height: 40px; padding: 0 14px; background: #0891B2; color: #FFFFFF; cursor: pointer;">{{intera.az}}</button></div>
+<sc-if value="{{intera.finta}}"><div style="margin: 14px 26px 22px; background: var(--acw); border: 1px solid var(--acw); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.5; color: #0891B2; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;"><span style="flex: 1 1 300px;"><b>Il sistema:</b> {{intera.sistema}}</span><button style="font: 700 13.5px Manrope, sans-serif; border: 1px solid #0891B2; border-radius: 10px; height: 40px; padding: 0 14px; background: #0891B2; color: #FFFFFF; cursor: pointer;">{{intera.az}}</button></div></sc-if>
 
 </div>
 </div>
@@ -513,12 +543,13 @@ const WA = [
     { da: 'next', ora: 'lun', testo: 'Buongiorno, ci servono le foto dell’impianto di [CLIENTE].' } ] }
 ];
 class Component extends DCLogic {
-  componentWillUnmount() { clearInterval(this.giroWa); clearTimeout(this.viaToast); clearInterval(this.giroVero); }
+  componentWillUnmount() { clearInterval(this.giroPosta); clearInterval(this.giroWa); clearTimeout(this.viaToast); clearInterval(this.giroVero); }
   componentDidMount() {
+    if (this.postaVeraAvvia) this.postaVeraAvvia();
     if (this.waVeroAvvia) this.waVeroAvvia();
     try { const h0 = (window.location.hash || '').slice(1);
       if (h0 === 'finestra') document.documentElement.classList.add('finestra');
-      if (h0.indexOf('solo-') === 0) { this.solo = h0.slice(5); document.documentElement.classList.add('solo'); this.setState({ solo: this.solo }); document.title = 'Next · posta'; }
+      if (h0.indexOf('solo-') === 0) { this.solo = h0.slice(5); document.documentElement.classList.add('solo'); this.setState({ solo: this.solo }); document.title = 'Next · Posta'; }
     } catch (e) {}
     let lay = null;
     try { const t = window.localStorage.getItem(CHIAVE); if (t) lay = JSON.parse(t); } catch (e) {}
@@ -599,21 +630,22 @@ class Component extends DCLogic {
       const elenco = v === 'in' ? c.in : c.out;
       const k = sel[id + v] || 0;
       const lista = elenco.map((x, i) => ({ ...x, tc: TAG[x.tag].c, tb: TAG[x.tag].b, tag: TAG[x.tag].t, peso: x.nuova ? '800' : '600',
-        bordo: i === k ? c.col : 'transparent', bg: i === k ? 'var(--sf2)' : 'var(--sf)', pick: () => { this.setState({ sel: { ...sel, [id + v]: i } }); if (t === 2) this.salva({ ...lay, taglie: { ...lay.taglie, [id]: 3 } }); } }));
+        bordo: i === k ? c.col : 'transparent', bg: i === k ? 'var(--sf2)' : 'var(--sf)', pick: () => { if (x.vera && this.postaVeraApri) this.postaVeraApri(x); this.setState({ sel: { ...sel, [id + v]: i } }); if (t === 2) this.salva({ ...lay, taglie: { ...lay.taglie, [id]: 3 } }); } }));
       const x = elenco[k] || elenco[0] || { chi: '—', ora: '', oggetto: 'Nessuna mail', testo: '', sistema: 'niente da fare.', az: 'Aggiorna' };
       const apriIntera = () => {
+        if (x.vera) { const mk = () => pvScheda(x, c.indirizzo, c.nome, c.col); this.setState({ risp: null, intera: mk() }); pvLeggiMail(x).then(() => { if (this.state && this.state.intera && this.state.intera.chiave === x.chiave) this.setState({ intera: mk() }); }); return; }
         const inArr = v === 'in';
         const daNome = inArr ? x.chi : 'Next S.r.l.';
         const daMail = inArr ? mailDi(x.chi) : c.indirizzo;
-        const allegati = /preventivo|fattura|ddt|ordine|rapporto|procedura|offerta/i.test(x.oggetto) ? [{ tipo: 'PDF', nome: x.oggetto.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '') + '.pdf', peso: '184 KB' }] : [];
+        const allegati = /preventivo|fattura|ddt|ordine|rapporto|procedura|offerta/i.test(x.oggetto) ? [{ est: 'PDF', fascia: '#E5322D', fs: '7.5', url: '#', nome: x.oggetto }] : [];
         this.setState({ risp: null, intera: { ...x, casella: c.nome, cartella: inArr ? 'Posta in arrivo' : 'Posta inviata', col: c.col,
           tc: TAG[x.tag].c, tb: TAG[x.tag].b, tag: TAG[x.tag].t, daNome, daMail, iniziali: iniziali(daNome),
           a: inArr ? 'Next S.r.l. <' + c.indirizzo + '>' : x.chi + ' <' + mailDi(x.chi) + '>',
           haCc: inArr && id !== 'sante', cc: 'Sante Bortoletto <sante@next-srl.eu>',
-          data: /\d/.test(x.ora) ? 'mer 28/10/2026 ' + x.ora : x.ora, allegati, haAllegati: allegati.length > 0,
+          data: /\d/.test(x.ora) ? 'mer 28/10/2026 ' + x.ora : x.ora, allegati, haAllegati: allegati.length > 0, finta: true, vera: false,
           firma: inArr ? '' : 'Next S.r.l.\nnext-srl.eu' } });
       };
-      return { ...c, lista, apriIntera, span: String(t), colonne: t === 2 ? '40px minmax(0, 1fr)' : '40px minmax(0, 0.95fr) minmax(0, 1.25fr)', prev: t === 2 ? 'none' : 'flex', daLeggere: t === 2 ? '' : ' da leggere', taglia: NOME_TAGLIA[t], w0: '#0891B2', w1: t > 2 ? '#0891B2' : 'var(--ln)', w2: t > 3 ? '#0891B2' : 'var(--ln)', h0: '#0891B2', h1: hi > 0 ? '#0891B2' : 'var(--ln)', h2: hi > 1 ? '#0891B2' : 'var(--ln)', h: String(this.solo ? Math.max(420, (window.innerHeight || 800) - 24) : ALTEZZE[hi]), altezza: NOME_ALTEZZA[hi], altezzaBreve: BREVE_ALTEZZA[hi], sel: { ...x, verso: v === 'in' ? 'Da' : 'A' },
+      return { ...c, lista, apriIntera, span: String(t), colonne: t === 2 ? '40px minmax(0, 1fr)' : '40px minmax(0, 0.95fr) minmax(0, 1.25fr)', prev: t === 2 ? 'none' : 'flex', daLeggere: t === 2 ? '' : ' da leggere', taglia: NOME_TAGLIA[t], w0: '#0891B2', w1: t > 2 ? '#0891B2' : 'var(--ln)', w2: t > 3 ? '#0891B2' : 'var(--ln)', h0: '#0891B2', h1: hi > 0 ? '#0891B2' : 'var(--ln)', h2: hi > 1 ? '#0891B2' : 'var(--ln)', h: String(this.solo ? Math.max(420, (window.innerHeight || 800) - 70) : ALTEZZE[hi]), altezza: NOME_ALTEZZA[hi], altezzaBreve: BREVE_ALTEZZA[hi], sel: { ...x, verso: v === 'in' ? 'Da' : 'A', ...this.selVera(x) },
         nIn: String(c.in.length), nOut: String(c.out.length),
         inSel: v === 'in' ? 'true' : 'false', outSel: v === 'out' ? 'true' : 'false',
         inBg: v === 'in' ? 'var(--acw)' : 'transparent', inFg: v === 'in' ? '#0891B2' : 'var(--ink2)',
@@ -657,7 +689,11 @@ class Component extends DCLogic {
     { const v = this.waVeroVista ? this.waVeroVista(s, waS) : null; if (v) { Object.assign(wa, v.wa); Object.assign(waIn, v.waIn); if (v.wa.c) wa.c = v.wa.c; } }
     const inFinestra = () => { try { window.open('https://nextsrl-sim.github.io/area-posta/?v=' + Date.now() + '#finestra', 'next-scheda-posta', 'popup,width=1320,height=900'); } catch (e) {} };
     const clsC = this.solo ? 'solo-tieni' : '';
-    return { inFinestra, clsC, waIn, wa, ...temaX, apriFuoriArea, apriFuoriPosta, fuoriVista, haFuori: fuoriVista.length > 0, mini, chiuse, aperte, haIntera: !!s.intera, intera: s.intera || {}, chiudiIntera: () => this.setState({ intera: null, risp: null }),
+    const pvTesta = !window.WA_SOLO_VERO ? { sotto: 'dati di esempio', col: '#16A34A', titolo: 'Postino in ascolto continuo', nota: 'ultima mail 11:14 · smistata 11:14' }
+      : s.pvStato === 'ok' ? { sotto: 'posta vera, ultimi 7 giorni', col: '#16A34A', titolo: 'Caselle lette', nota: 'alle ' + new Date(s.pvAlle).toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' }) + ' · si rileggono ogni 3 minuti' }
+      : s.pvStato === 'no' ? { sotto: 'posta vera', col: '#B91C1C', titolo: 'Caselle non collegate', nota: 'entra dal portale per vederle' }
+      : { sotto: 'posta vera', col: '#D97706', titolo: 'Sto leggendo le caselle…', nota: 'ci vuole qualche secondo' };
+    return { pvTesta, inFinestra, clsC, waIn, wa, ...temaX, apriFuoriArea, apriFuoriPosta, fuoriVista, haFuori: fuoriVista.length > 0, mini, chiuse, aperte, haIntera: !!s.intera, intera: s.intera || {}, chiudiIntera: () => this.setState({ intera: null, risp: null }),
       inRisposta: !!(s.intera && s.risp), risposta: risposta(s.intera, s.risp),
       rispondi: () => this.setState({ risp: 'r' }), rispondiTutti: () => this.setState({ risp: 't' }), inoltra: () => this.setState({ risp: 'i' }), annullaRisposta: () => this.setState({ risp: null }), sopra: (e) => { if (e && e.preventDefault) e.preventDefault(); }, ripristina: () => this.salva(INIZIALE) };
   }
@@ -750,6 +786,133 @@ Component.prototype.waVeroVista = function (s, waS) {
     waIn: tw && tw.vero ? { ultimo: { nome: tw.nome, ruolo: tw.ruolo, testo: tw.testo, voce: '', haVoce: false },
       rispondi: () => { const c = el.find((x) => x.tel === tw.tel); this.setState({ waToast: null, wa: { ...waS, aperto: true } }); if (c) this.waVeroScegli(c); } } : {}
   };
+};
+/* PORTALE NEXT-102 — la posta vera nell'Area di lavoro.
+   Le caselle si leggono da area-lavoro-dati (?posta=1), che passa da posta-leggi in sola lettura:
+   nessuna mail risulta letta perché la si guarda da qui. Una mail per intero: ?leggi=1. L'allegato: ?file=1.
+   I documenti si mostrano col simbolo del portale: PDF in rosso, gli altri in blu con l'estensione. */
+const PV_API = 'https://pnxhthrheqeucoisifjw.supabase.co/functions/v1/area-lavoro-dati';
+const PV_ID = { sante: 'sante', info: 'info', pec: 'pec', amministrazione: 'amm', acquisti: 'acq', commerciale: 'com', assistenza: 'ass' };
+const PV_CASELLA = { sante: 'sante', info: 'info', pec: 'pec', amm: 'amministrazione', acq: 'acquisti', com: 'commerciale', ass: 'assistenza' };
+const PV_GG = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab'];
+const pvPass = () => { try { return window.sessionStorage.getItem('regia_pass'); } catch (e) { return null; } };
+const pvOra = (iso) => {
+  if (!iso) return '';
+  const d = new Date(iso), ora = d.toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' });
+  const g = (x) => x.toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' });
+  const oggi = new Date(), ieri = new Date(Date.now() - 864e5);
+  if (g(d) === g(oggi)) return ora;
+  if (g(d) === g(ieri)) return 'ieri';
+  if (Date.now() - d.getTime() < 6 * 864e5) return PV_GG[new Date(d.toLocaleString('en-US', { timeZone: 'Europe/Rome' })).getDay()];
+  return d.toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit' });
+};
+const pvData = (iso) => iso ? new Date(iso).toLocaleString('it-IT', { timeZone: 'Europe/Rome', weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(',', '') : '';
+const pvNome = (m) => (m.nome || (m.da || '').split('@')[0] || 'mittente').replace(/^"|"$/g, '');
+const pvPulisci = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+/* il documento: estensione, colore della fascia, nome leggibile, indirizzo per aprirlo */
+const pvDoc = (nome, casella, cartella, uid) => {
+  const est = ((String(nome).match(/\.([a-z0-9]{2,4})$/i) || [])[1] || 'file').toUpperCase();
+  const vis = String(nome).replace(/\.[a-z0-9]{2,4}$/i, '').replace(/_/g, ' ');
+  const pass = pvPass();
+  return { nome: vis.charAt(0).toUpperCase() + vis.slice(1), est, fascia: est === 'PDF' ? '#E5322D' : '#2F6FD6', fs: est.length > 3 ? '6' : '7.5',
+    url: pass ? PV_API + '?file=1&t=' + encodeURIComponent(pass) + '&casella=' + encodeURIComponent(casella) + '&cartella=' + encodeURIComponent(cartella) + '&uid=' + uid + '&nome=' + encodeURIComponent(nome) : '#' };
+};
+/* una mail com'è nelle liste della pagina */
+const pvVoce = (m, casella, verso) => {
+  const tag = verso === 'out' ? 'inviata' : (m.non_letta ? 'nuova' : (m.cliente ? 'cliente' : 'letta'));
+  const chi = verso === 'out' ? pvPulisci((m.a || '').replace(/<[^>]*>/g, '').replace(/"/g, '')) || 'destinatario' : pvNome(m);
+  return { vera: true, chiave: casella + ':' + m.cartella + ':' + m.uid, casella, cartella: m.cartella, uid: m.uid, iso: m.data,
+    chi, ora: pvOra(m.data), oggetto: pvPulisci(m.oggetto) || '(senza oggetto)', tag, nuova: !!m.non_letta, da: m.da || '', a: m.a || '',
+    cliente: m.cliente || '', haClip: !!m.allegati,
+    testo: '', sistema: m.cliente ? 'mittente riconosciuto: cliente ' + m.cliente + '.' : '', az: '' };
+};
+/* legge tutte le caselle; risponde con { per: { idPagina: { in, out, errore } }, alle } oppure null */
+async function pvLeggiTutto() {
+  const pass = pvPass();
+  if (!pass) return null;
+  const r = await fetch(PV_API + '?posta=1&t=' + encodeURIComponent(pass));
+  const j = await r.json();
+  if (!j || !j.ok) return null;
+  const per = {};
+  for (const c of Object.keys(j.caselle || {})) {
+    const id = PV_ID[c]; if (!id) continue;
+    const x = j.caselle[c];
+    per[id] = { in: (x.in || []).map((m) => pvVoce(m, c, 'in')), out: (x.out || []).map((m) => pvVoce(m, c, 'out')), errore: x.errore || null };
+  }
+  return { per, alle: j.letto_alle };
+}
+/* una mail per intero, con i documenti */
+const PV_TESTI = {};
+async function pvLeggiMail(v) {
+  if (PV_TESTI[v.chiave]) return PV_TESTI[v.chiave];
+  const pass = pvPass();
+  if (!pass) return null;
+  PV_TESTI[v.chiave] = { carica: true };
+  try {
+    const j = await (await fetch(PV_API + '?leggi=1&t=' + encodeURIComponent(pass) + '&casella=' + encodeURIComponent(v.casella) + '&cartella=' + encodeURIComponent(v.cartella) + '&uid=' + v.uid)).json();
+    if (!j || !j.ok) { PV_TESTI[v.chiave] = { errore: (j && j.errore) || 'non leggibile' }; return PV_TESTI[v.chiave]; }
+    const testo = String(j.testo || '').replace(/\n{3,}/g, '\n\n').trim();
+    PV_TESTI[v.chiave] = { testo: testo + (j.tagliato ? '\n\n[…il resto della mail è più lungo: aprila nella casella]' : ''), a: j.a || '', da: j.da || v.da, nome: j.nome || '', data: j.data,
+      docs: (j.allegati || []).filter((n) => !/^(smime\.p7s|daticert\.xml|postacert\.eml)$/i.test(n)).map((n) => pvDoc(n, v.casella, v.cartella, v.uid)) };
+  } catch (e) { PV_TESTI[v.chiave] = { errore: 'non leggibile adesso' }; }
+  return PV_TESTI[v.chiave];
+}
+/* la scheda per la finestra "mail intera" */
+const pvScheda = (v, indirizzoCasella, nomeCasella, col) => {
+  const t = PV_TESTI[v.chiave] || {};
+  const inArr = v.cartella === 'INBOX';
+  const daNome = inArr ? (t.nome || v.chi) : 'Next S.r.l.';
+  const docs = t.docs || [];
+  return { ...v, vera: true, finta: false, casella: nomeCasella, cartella: inArr ? 'Posta in arrivo' : 'Posta inviata', col,
+    daNome, daMail: inArr ? (t.da || v.da) : indirizzoCasella, iniziali: (daNome.replace(/[^A-Za-z ]/g, ' ').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?'),
+    a: pvPulisci(t.a || v.a) || indirizzoCasella, haCc: false, cc: '', data: pvData(t.data || v.iso),
+    allegati: docs, haAllegati: docs.length > 0,
+    testo: t.carica ? 'Sto aprendo la mail…' : (t.errore ? 'Non riesco ad aprirla: ' + t.errore + '.' : (t.testo || '(mail senza testo)')),
+    firma: '', tc: '#0891B2', tb: 'var(--acw)', tag: inArr ? 'Posta in arrivo' : 'Posta inviata' };
+};
+/* — pagina Posta: le caselle con le mail vere — */
+Object.assign(TAG, {
+  nuova: { t: 'Da leggere', c: '#0891B2', b: 'var(--acw)' },
+  cliente: { t: 'Cliente', c: '#15803D', b: 'var(--grw)' },
+  letta: { t: 'Letta', c: 'var(--ink3)', b: 'var(--ln)' },
+  inviata: { t: 'Inviata', c: 'var(--ink2)', b: 'var(--ln)' }
+});
+Component.prototype.selVera = function (x) {
+  if (!x || !x.vera) return { docs: [], haDocs: false, haSistema: !!x.sistema, haAz: !!x.az, colBott: x.az ? 'repeat(2, minmax(0, 1fr))' : 'minmax(0, 1fr)' };
+  const t = PV_TESTI[x.chiave];
+  if (!t) setTimeout(() => this.postaVeraApri(x), 0);
+  const docs = (t && t.docs) || [];
+  return { testo: !t || t.carica ? 'Sto aprendo la mail…' : (t.errore ? 'Non riesco ad aprirla: ' + t.errore + '.' : (t.testo || '(mail senza testo)')),
+    docs, haDocs: docs.length > 0, haSistema: !!x.sistema, haAz: false, colBott: 'minmax(0, 1fr)' };
+};
+Component.prototype.postaVeraApri = function (x) {
+  const t = PV_TESTI[x.chiave];
+  if (t && !t.errore) return;
+  if (t && t.errore) delete PV_TESTI[x.chiave];
+  pvLeggiMail(x).then(() => this.setState({ pvT: Date.now() }));
+  this.setState({ pvT: Date.now() });
+};
+Component.prototype.postaVeraAvvia = function () {
+  if (!window.WA_SOLO_VERO) return;          /* nel mock-up restano gli esempi */
+  const vuote = () => { for (const id of Object.keys(CASELLE)) { CASELLE[id].in = []; CASELLE[id].out = []; } };
+  if (!pvPass()) { vuote(); this.setState({ pvStato: 'no' }); return; }
+  vuote();
+  CASELLE.sante.in = [{ chi: 'un momento', ora: '', oggetto: 'Sto leggendo le caselle…', tag: 'letta', nuova: false, testo: '', sistema: '', az: '' }];
+  let corre = false;
+  const giro = async () => {
+    if (corre) return; corre = true;
+    try {
+      const r = await pvLeggiTutto();
+      if (r) {
+        for (const id of Object.keys(CASELLE)) { const x = r.per[id]; CASELLE[id].in = x ? x.in : []; CASELLE[id].out = x ? x.out : []; }
+        this.setState({ pvStato: 'ok', pvAlle: r.alle });
+      }
+    } catch (e) {} finally { corre = false; }
+  };
+  giro();
+  this.giroPosta = setInterval(giro, 180000);
+  let ultima = Date.now();
+  window.addEventListener('focus', () => { if (Date.now() - ultima > 60000) { ultima = Date.now(); giro(); } });
 };
 </script>
 </body>
