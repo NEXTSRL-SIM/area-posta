@@ -171,6 +171,7 @@ nav[aria-label="Menu Next"] .mn-riga:hover .mn-fuori,nav[aria-label="Menu Next"]
 nav[aria-label="Menu Next"] .mn-fuori:hover{color:#22D3EE;background:rgba(34,211,238,.12)}
 @keyframes entra{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
 @keyframes pulsa{0%,100%{opacity:1}50%{opacity:.35}}
+*{scrollbar-width:none}*::-webkit-scrollbar{display:none}
 html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 </style>
 </helmet>
@@ -203,6 +204,12 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 </nav>
 
 <main style="flex: 999 1 560px; min-width: 0; padding: 24px 30px 44px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; zoom: 0.88;">
+
+<div role="tablist" aria-label="Schede dell'area di lavoro" style="display: flex; gap: 4px; border-bottom: 1px solid var(--ln);">
+<a href="https://nextsrl-sim.github.io/area-lavoro/" role="tab" aria-selected="false" style="font-size: 13.5px; font-weight: 700; color: var(--ink2); text-decoration: none; padding: 10px 14px; border-bottom: 2px solid transparent;">Area di lavoro</a>
+<a href="#" role="tab" aria-selected="true" style="font-size: 13.5px; font-weight: 700; color: #0891B2; text-decoration: none; padding: 10px 14px; border-bottom: 2px solid #0891B2;">Posta</a>
+<a href="https://nextsrl-sim.github.io/area-automatismi/" role="tab" aria-selected="false" style="font-size: 13.5px; font-weight: 700; color: var(--ink2); text-decoration: none; padding: 10px 14px; border-bottom: 2px solid transparent;">Automatismi</a>
+</div>
 
 <header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px;">
 <div style="display: flex; flex-direction: column; gap: 4px;">
@@ -511,7 +518,8 @@ class Component extends DCLogic {
     try { h = (window.location.hash || '').slice(1); } catch (e) {}
     if (h && CASELLE[h]) lay = { ...(lay || INIZIALE), aperta: h, mini: ((lay || INIZIALE).mini || []).filter((y) => y !== h) };
     if (lay) this.setState({ lay });
-    this.giroWa = setInterval(() => {
+    /* in produzione i WhatsApp d'esempio non arrivano: si vedranno solo quelli veri */
+    this.giroWa = false && setInterval(() => {
       this.setState((st) => {
         const k = ((st && st.waK) || 0) % WA_IN.length;
         const chi = WA_IN[k][0]; const testo = WA_IN[k][1]; const voce = WA_IN[k][2] || '';
