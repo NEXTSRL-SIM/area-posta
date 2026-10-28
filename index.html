@@ -545,7 +545,7 @@ class Component extends DCLogic {
   }
   portaFuori(id) {
     let w = null;
-    try { w = window.open('https://nextsrl-sim.github.io/area-posta/#solo-' + id, 'next-casella-' + id, 'popup,width=900,height=760'); } catch (e) {}
+    try { w = window.open('https://nextsrl-sim.github.io/area-posta/?v=' + Date.now() + '#solo-' + id, 'next-casella-' + id, 'popup,width=900,height=760'); } catch (e) {}
     this.finestre = this.finestre || {};
     this.finestre[id] = w;
     this.setState((st) => ({ fuori: [...((st && st.fuori) || []).filter((x) => x !== id), id] }));
@@ -657,7 +657,7 @@ class Component extends DCLogic {
         fc: wc.aperta ? '#15803D' : '#B45309', tasto: wc.aperta ? 'Invia' : 'Invia modello', nota: wc.aperta ? '' : 'WhatsApp non permette testo libero dopo 24 ore',
         segnaposto: wc.aperta ? 'Scrivi a ' + wc.nome + '…' : 'Testo da mettere nel modello di ricontatto…' },
       storia: [...wc.storia, ...extra].map((h) => ({ ...h, lato: h.da === 'next' ? 'flex-end' : 'flex-start', bg: h.da === 'next' ? 'var(--grw)' : 'var(--sf)' })) };
-    const inFinestra = () => { try { window.open('https://nextsrl-sim.github.io/area-posta/#finestra', 'next-scheda-posta', 'popup,width=1320,height=900'); } catch (e) {} };
+    const inFinestra = () => { try { window.open('https://nextsrl-sim.github.io/area-posta/?v=' + Date.now() + '#finestra', 'next-scheda-posta', 'popup,width=1320,height=900'); } catch (e) {} };
     const clsC = this.solo ? 'solo-tieni' : '';
     return { inFinestra, clsC, waIn, wa, ...temaX, apriFuoriArea, apriFuoriPosta, fuoriVista, haFuori: fuoriVista.length > 0, mini, chiuse, aperte, haIntera: !!s.intera, intera: s.intera || {}, chiudiIntera: () => this.setState({ intera: null, risp: null }),
       inRisposta: !!(s.intera && s.risp), risposta: risposta(s.intera, s.risp),
