@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Caselle di posta</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script>(function(global,factory){typeof exports==="object"&&typeof module!=="undefined"?module.exports=factory():typeof define==="function"&&define.amd?define(factory):(global=global||self,global.morphdom=factory())})(this,function(){"use strict";var DOCUMENT_FRAGMENT_NODE=11;function morphAttrs(fromNode,toNode){var toNodeAttrs=toNode.attributes;var attr;var attrName;var attrNamespaceURI;var attrValue;var fromValue;if(toNode.nodeType===DOCUMENT_FRAGMENT_NODE||fromNode.nodeType===DOCUMENT_FRAGMENT_NODE){return}for(var i=toNodeAttrs.length-1;i>=0;i--){attr=toNodeAttrs[i];attrName=attr.name;attrNamespaceURI=attr.namespaceURI;attrValue=attr.value;if(attrNamespaceURI){attrName=attr.localName||attrName;fromValue=fromNode.getAttributeNS(attrNamespaceURI,attrName);if(fromValue!==attrValue){if(attr.prefix==="xmlns"){attrName=attr.name}fromNode.setAttributeNS(attrNamespaceURI,attrName,attrValue)}}else{fromValue=fromNode.getAttribute(attrName);if(fromValue!==attrValue){fromNode.setAttribute(attrName,attrValue)}}}var fromNodeAttrs=fromNode.attributes;for(var d=fromNodeAttrs.length-1;d>=0;d--){attr=fromNodeAttrs[d];attrName=attr.name;attrNamespaceURI=attr.namespaceURI;if(attrNamespaceURI){attrName=attr.localName||attrName;if(!toNode.hasAttributeNS(attrNamespaceURI,attrName)){fromNode.removeAttributeNS(attrNamespaceURI,attrName)}}else{if(!toNode.hasAttribute(attrName)){fromNode.removeAttribute(attrName)}}}}var range;var NS_XHTML="http://www.w3.org/1999/xhtml";var doc=typeof document==="undefined"?undefined:document;var HAS_TEMPLATE_SUPPORT=!!doc&&"content"in doc.createElement("template");var HAS_RANGE_SUPPORT=!!doc&&doc.createRange&&"createContextualFragment"in doc.createRange();function createFragmentFromTemplate(str){var template=doc.createElement("template");template.innerHTML=str;return template.content.childNodes[0]}function createFragmentFromRange(str){if(!range){range=doc.createRange();range.selectNode(doc.body)}var fragment=range.createContextualFragment(str);return fragment.childNodes[0]}function createFragmentFromWrap(str){var fragment=doc.createElement("body");fragment.innerHTML=str;return fragment.childNodes[0]}function toElement(str){str=str.trim();if(HAS_TEMPLATE_SUPPORT){return createFragmentFromTemplate(str)}else if(HAS_RANGE_SUPPORT){return createFragmentFromRange(str)}return createFragmentFromWrap(str)}function compareNodeNames(fromEl,toEl){var fromNodeName=fromEl.nodeName;var toNodeName=toEl.nodeName;var fromCodeStart,toCodeStart;if(fromNodeName===toNodeName){return true}fromCodeStart=fromNodeName.charCodeAt(0);toCodeStart=toNodeName.charCodeAt(0);if(fromCodeStart<=90&&toCodeStart>=97){return fromNodeName===toNodeName.toUpperCase()}else if(toCodeStart<=90&&fromCodeStart>=97){return toNodeName===fromNodeName.toUpperCase()}else{return false}}function createElementNS(name,namespaceURI){return!namespaceURI||namespaceURI===NS_XHTML?doc.createElement(name):doc.createElementNS(namespaceURI,name)}function moveChildren(fromEl,toEl){var curChild=fromEl.firstChild;while(curChild){var nextChild=curChild.nextSibling;toEl.appendChild(curChild);curChild=nextChild}return toEl}function syncBooleanAttrProp(fromEl,toEl,name){if(fromEl[name]!==toEl[name]){fromEl[name]=toEl[name];if(fromEl[name]){fromEl.setAttribute(name,"")}else{fromEl.removeAttribute(name)}}}var specialElHandlers={OPTION:function(fromEl,toEl){var parentNode=fromEl.parentNode;if(parentNode){var parentName=parentNode.nodeName.toUpperCase();if(parentName==="OPTGROUP"){parentNode=parentNode.parentNode;parentName=parentNode&&parentNode.nodeName.toUpperCase()}if(parentName==="SELECT"&&!parentNode.hasAttribute("multiple")){if(fromEl.hasAttribute("selected")&&!toEl.selected){fromEl.setAttribute("selected","selected");fromEl.removeAttribute("selected")}parentNode.selectedIndex=-1}}syncBooleanAttrProp(fromEl,toEl,"selected")},INPUT:function(fromEl,toEl){syncBooleanAttrProp(fromEl,toEl,"checked");syncBooleanAttrProp(fromEl,toEl,"disabled");if(fromEl.value!==toEl.value){fromEl.value=toEl.value}if(!toEl.hasAttribute("value")){fromEl.removeAttribute("value")}},TEXTAREA:function(fromEl,toEl){var newValue=toEl.value;if(fromEl.value!==newValue){fromEl.value=newValue}var firstChild=fromEl.firstChild;if(firstChild){var oldValue=firstChild.nodeValue;if(oldValue==newValue||!newValue&&oldValue==fromEl.placeholder){return}firstChild.nodeValue=newValue}},SELECT:function(fromEl,toEl){if(!toEl.hasAttribute("multiple")){var selectedIndex=-1;var i=0;var curChild=fromEl.firstChild;var optgroup;var nodeName;while(curChild){nodeName=curChild.nodeName&&curChild.nodeName.toUpperCase();if(nodeName==="OPTGROUP"){optgroup=curChild;curChild=optgroup.firstChild}else{if(nodeName==="OPTION"){if(curChild.hasAttribute("selected")){selectedIndex=i;break}i++}curChild=curChild.nextSibling;if(!curChild&&optgroup){curChild=optgroup.nextSibling;optgroup=null}}}fromEl.selectedIndex=selectedIndex}}};var ELEMENT_NODE=1;var DOCUMENT_FRAGMENT_NODE$1=11;var TEXT_NODE=3;var COMMENT_NODE=8;function noop(){}function defaultGetNodeKey(node){if(node){return node.getAttribute&&node.getAttribute("id")||node.id}}function morphdomFactory(morphAttrs){return function morphdom(fromNode,toNode,options){if(!options){options={}}if(typeof toNode==="string"){if(fromNode.nodeName==="#document"||fromNode.nodeName==="HTML"||fromNode.nodeName==="BODY"){var toNodeHtml=toNode;toNode=doc.createElement("html");toNode.innerHTML=toNodeHtml}else{toNode=toElement(toNode)}}else if(toNode.nodeType===DOCUMENT_FRAGMENT_NODE$1){toNode=toNode.firstElementChild}var getNodeKey=options.getNodeKey||defaultGetNodeKey;var onBeforeNodeAdded=options.onBeforeNodeAdded||noop;var onNodeAdded=options.onNodeAdded||noop;var onBeforeElUpdated=options.onBeforeElUpdated||noop;var onElUpdated=options.onElUpdated||noop;var onBeforeNodeDiscarded=options.onBeforeNodeDiscarded||noop;var onNodeDiscarded=options.onNodeDiscarded||noop;var onBeforeElChildrenUpdated=options.onBeforeElChildrenUpdated||noop;var skipFromChildren=options.skipFromChildren||noop;var addChild=options.addChild||function(parent,child){return parent.appendChild(child)};var childrenOnly=options.childrenOnly===true;var fromNodesLookup=Object.create(null);var keyedRemovalList=[];function addKeyedRemoval(key){keyedRemovalList.push(key)}function walkDiscardedChildNodes(node,skipKeyedNodes){if(node.nodeType===ELEMENT_NODE){var curChild=node.firstChild;while(curChild){var key=undefined;if(skipKeyedNodes&&(key=getNodeKey(curChild))){addKeyedRemoval(key)}else{onNodeDiscarded(curChild);if(curChild.firstChild){walkDiscardedChildNodes(curChild,skipKeyedNodes)}}curChild=curChild.nextSibling}}}function removeNode(node,parentNode,skipKeyedNodes){if(onBeforeNodeDiscarded(node)===false){return}if(parentNode){parentNode.removeChild(node)}onNodeDiscarded(node);walkDiscardedChildNodes(node,skipKeyedNodes)}function indexTree(node){if(node.nodeType===ELEMENT_NODE||node.nodeType===DOCUMENT_FRAGMENT_NODE$1){var curChild=node.firstChild;while(curChild){var key=getNodeKey(curChild);if(key){fromNodesLookup[key]=curChild}indexTree(curChild);curChild=curChild.nextSibling}}}indexTree(fromNode);function handleNodeAdded(el){onNodeAdded(el);var curChild=el.firstChild;while(curChild){var nextSibling=curChild.nextSibling;var key=getNodeKey(curChild);if(key){var unmatchedFromEl=fromNodesLookup[key];if(unmatchedFromEl&&compareNodeNames(curChild,unmatchedFromEl)){curChild.parentNode.replaceChild(unmatchedFromEl,curChild);morphEl(unmatchedFromEl,curChild)}else{handleNodeAdded(curChild)}}else{handleNodeAdded(curChild)}curChild=nextSibling}}function cleanupFromEl(fromEl,curFromNodeChild,curFromNodeKey){while(curFromNodeChild){var fromNextSibling=curFromNodeChild.nextSibling;if(curFromNodeKey=getNodeKey(curFromNodeChild)){addKeyedRemoval(curFromNodeKey)}else{removeNode(curFromNodeChild,fromEl,true)}curFromNodeChild=fromNextSibling}}function morphEl(fromEl,toEl,childrenOnly){var toElKey=getNodeKey(toEl);if(toElKey){delete fromNodesLookup[toElKey]}if(!childrenOnly){var beforeUpdateResult=onBeforeElUpdated(fromEl,toEl);if(beforeUpdateResult===false){return}else if(beforeUpdateResult instanceof HTMLElement){fromEl=beforeUpdateResult;indexTree(fromEl)}morphAttrs(fromEl,toEl);onElUpdated(fromEl);if(onBeforeElChildrenUpdated(fromEl,toEl)===false){return}}if(fromEl.nodeName!=="TEXTAREA"){morphChildren(fromEl,toEl)}else{specialElHandlers.TEXTAREA(fromEl,toEl)}}function morphChildren(fromEl,toEl){var skipFrom=skipFromChildren(fromEl,toEl);var curToNodeChild=toEl.firstChild;var curFromNodeChild=fromEl.firstChild;var curToNodeKey;var curFromNodeKey;var fromNextSibling;var toNextSibling;var matchingFromEl;outer:while(curToNodeChild){toNextSibling=curToNodeChild.nextSibling;curToNodeKey=getNodeKey(curToNodeChild);while(!skipFrom&&curFromNodeChild){fromNextSibling=curFromNodeChild.nextSibling;if(curToNodeChild.isSameNode&&curToNodeChild.isSameNode(curFromNodeChild)){curToNodeChild=toNextSibling;curFromNodeChild=fromNextSibling;continue outer}curFromNodeKey=getNodeKey(curFromNodeChild);var curFromNodeType=curFromNodeChild.nodeType;var isCompatible=undefined;if(curFromNodeType===curToNodeChild.nodeType){if(curFromNodeType===ELEMENT_NODE){if(curToNodeKey){if(curToNodeKey!==curFromNodeKey){if(matchingFromEl=fromNodesLookup[curToNodeKey]){if(fromNextSibling===matchingFromEl){isCompatible=false}else{fromEl.insertBefore(matchingFromEl,curFromNodeChild);if(curFromNodeKey){addKeyedRemoval(curFromNodeKey)}else{removeNode(curFromNodeChild,fromEl,true)}curFromNodeChild=matchingFromEl;curFromNodeKey=getNodeKey(curFromNodeChild)}}else{isCompatible=false}}}else if(curFromNodeKey){isCompatible=false}isCompatible=isCompatible!==false&&compareNodeNames(curFromNodeChild,curToNodeChild);if(isCompatible){morphEl(curFromNodeChild,curToNodeChild)}}else if(curFromNodeType===TEXT_NODE||curFromNodeType==COMMENT_NODE){isCompatible=true;if(curFromNodeChild.nodeValue!==curToNodeChild.nodeValue){curFromNodeChild.nodeValue=curToNodeChild.nodeValue}}}if(isCompatible){curToNodeChild=toNextSibling;curFromNodeChild=fromNextSibling;continue outer}if(curFromNodeKey){addKeyedRemoval(curFromNodeKey)}else{removeNode(curFromNodeChild,fromEl,true)}curFromNodeChild=fromNextSibling}if(curToNodeKey&&(matchingFromEl=fromNodesLookup[curToNodeKey])&&compareNodeNames(matchingFromEl,curToNodeChild)){if(!skipFrom){addChild(fromEl,matchingFromEl)}morphEl(matchingFromEl,curToNodeChild)}else{var onBeforeNodeAddedResult=onBeforeNodeAdded(curToNodeChild);if(onBeforeNodeAddedResult!==false){if(onBeforeNodeAddedResult){curToNodeChild=onBeforeNodeAddedResult}if(curToNodeChild.actualize){curToNodeChild=curToNodeChild.actualize(fromEl.ownerDocument||doc)}addChild(fromEl,curToNodeChild);handleNodeAdded(curToNodeChild)}}curToNodeChild=toNextSibling;curFromNodeChild=fromNextSibling}cleanupFromEl(fromEl,curFromNodeChild,curFromNodeKey);var specialElHandler=specialElHandlers[fromEl.nodeName];if(specialElHandler){specialElHandler(fromEl,toEl)}}var morphedNode=fromNode;var morphedNodeType=morphedNode.nodeType;var toNodeType=toNode.nodeType;if(!childrenOnly){if(morphedNodeType===ELEMENT_NODE){if(toNodeType===ELEMENT_NODE){if(!compareNodeNames(fromNode,toNode)){onNodeDiscarded(fromNode);morphedNode=moveChildren(fromNode,createElementNS(toNode.nodeName,toNode.namespaceURI))}}else{morphedNode=toNode}}else if(morphedNodeType===TEXT_NODE||morphedNodeType===COMMENT_NODE){if(toNodeType===morphedNodeType){if(morphedNode.nodeValue!==toNode.nodeValue){morphedNode.nodeValue=toNode.nodeValue}return morphedNode}else{morphedNode=toNode}}}if(morphedNode===toNode){onNodeDiscarded(fromNode)}else{if(toNode.isSameNode&&toNode.isSameNode(morphedNode)){return}morphEl(morphedNode,toNode,childrenOnly);if(keyedRemovalList){for(var i=0,len=keyedRemovalList.length;i<len;i++){var elToRemove=fromNodesLookup[keyedRemovalList[i]];if(elToRemove){removeNode(elToRemove,elToRemove.parentNode,false)}}}}if(!childrenOnly&&morphedNode!==fromNode&&fromNode.parentNode){if(morphedNode.actualize){morphedNode=morphedNode.actualize(fromNode.ownerDocument||doc)}fromNode.parentNode.replaceChild(morphedNode,fromNode)}return morphedNode}}var morphdom=morphdomFactory(morphAttrs);return morphdom});</script>
+<script>/* dc-lite: motore minimo per le pagine dell'Area di lavoro del portale Next.
+   Legge il modello dentro <x-dc> (con {{...}}, <sc-for>, <sc-if>, onClick=...)
+   e lo ridisegna a ogni cambio di stato, toccando solo ciò che cambia (morphdom).
+   PORTALE NEXT-102. */
+(function () {
+  'use strict';
+  var EVENTI = ['click', 'input', 'change', 'keydown', 'dragstart', 'dragover', 'drop'];
+
+  function DCLogic() { this.state = null; }
+  DCLogic.prototype.setState = function (p) {
+    var prima = this.state || {};
+    var nuovo = typeof p === 'function' ? p(prima) : p;
+    if (!nuovo) return;
+    this.state = Object.assign({}, prima, nuovo);
+    this._pianifica && this._pianifica();
+  };
+  window.DCLogic = DCLogic;
+
+  function valore(expr, scope) {
+    expr = expr.trim();
+    if (expr === 'true') return true;
+    if (expr === 'false') return false;
+    if (/^-?\d+(\.\d+)?$/.test(expr)) return Number(expr);
+    var parti = expr.split('.');
+    var v = scope[parti[0]];
+    for (var i = 1; i < parti.length; i++) { if (v == null) return undefined; v = v[parti[i]]; }
+    return v;
+  }
+  var RE = /\{\{([^}]+)\}\}/g;
+  function interpola(str, scope) {
+    return str.replace(RE, function (_, e) { var v = valore(e, scope); return v == null ? '' : String(v); });
+  }
+  function soloEspressione(str) { var m = /^\s*\{\{([^}]+)\}\}\s*$/.exec(str); return m ? m[1] : null; }
+
+  function disegna(nodo, scope, out, gestori) {
+    if (nodo.nodeType === 3) { out.appendChild(document.createTextNode(interpola(nodo.nodeValue, scope))); return; }
+    if (nodo.nodeType !== 1) return;
+    var tag = nodo.tagName.toLowerCase();
+    if (tag === 'sc-for') {
+      var lista = valore(soloEspressione(nodo.getAttribute('list')) || '', scope) || [];
+      var come = nodo.getAttribute('as') || 'item';
+      for (var i = 0; i < lista.length; i++) {
+        var s2 = Object.create(scope); s2[come] = lista[i];
+        figli(nodo, s2, out, gestori);
+      }
+      return;
+    }
+    if (tag === 'sc-if') {
+      if (valore(soloEspressione(nodo.getAttribute('value')) || '', scope)) figli(nodo, scope, out, gestori);
+      return;
+    }
+    var el = document.createElement(tag === 'textarea' || tag === 'svg' ? tag : tag);
+    if (nodo.namespaceURI && nodo.namespaceURI !== 'http://www.w3.org/1999/xhtml') el = document.createElementNS(nodo.namespaceURI, nodo.tagName);
+    for (var a = 0; a < nodo.attributes.length; a++) {
+      var at = nodo.attributes[a], nome = at.name, val = at.value;
+      if (nome.indexOf('hint-') === 0) continue;
+      if (/^on[a-z]+$/i.test(nome)) {
+        var e = soloEspressione(val); if (!e) continue;
+        var f = valore(e, scope); if (typeof f !== 'function') continue;
+        gestori.push(f);
+        el.setAttribute('data-dc-on-' + nome.slice(2).toLowerCase(), String(gestori.length - 1));
+        continue;
+      }
+      el.setAttribute(nome, interpola(val, scope));
+    }
+    figli(nodo, scope, el, gestori);
+    if (tag === 'textarea') el.value = el.textContent;
+    out.appendChild(el);
+  }
+  function figli(nodo, scope, out, gestori) {
+    var c = nodo.content ? nodo.content.childNodes : nodo.childNodes;
+    for (var i = 0; i < c.length; i++) disegna(c[i], scope, out, gestori);
+  }
+
+  function avvia() {
+    var xdc = document.querySelector('x-dc');
+    var codice = document.querySelector('script[type="text/x-dc"]');
+    if (!xdc || !codice) return;
+    try { if (window.self !== window.top) document.documentElement.classList.add('incorniciata'); } catch (e) { document.documentElement.classList.add('incorniciata'); }
+    var helmet = xdc.querySelector('helmet');
+    if (helmet) { while (helmet.firstChild) document.head.appendChild(helmet.firstChild); helmet.remove(); }
+    var modello = document.createElement('template');
+    modello.innerHTML = xdc.innerHTML;
+    xdc.remove();
+    var radice = document.createElement('div'); radice.id = 'dc-radice';
+    document.body.insertBefore(radice, codice);
+    var Classe = new Function('DCLogic', codice.textContent + '\nreturn Component;')(DCLogic);
+    var comp = new Classe();
+    if (comp.state === undefined) comp.state = null;
+    var gestori = [], inAttesa = false, montato = false;
+    function ridisegna() {
+      inAttesa = false;
+      var nuovi = [];
+      var vals = comp.renderVals ? comp.renderVals() : {};
+      var tmp = document.createElement('div'); tmp.id = 'dc-radice';
+      figli(modello, vals, tmp, nuovi);
+      gestori = nuovi;
+      window.morphdom(radice, tmp, {
+        onBeforeElUpdated: function (da, a) {
+          if (da === document.activeElement && (da.tagName === 'TEXTAREA' || da.tagName === 'INPUT') && da.value === a.value) {
+            for (var i = 0; i < a.attributes.length; i++) if (a.attributes[i].name !== 'value') da.setAttribute(a.attributes[i].name, a.attributes[i].value);
+            return false;
+          }
+          return true;
+        }
+      });
+      if (!montato) { montato = true; comp.componentDidMount && comp.componentDidMount(); }
+    }
+    comp._pianifica = function () { if (!inAttesa) { inAttesa = true; Promise.resolve().then(ridisegna); } };
+    EVENTI.forEach(function (tipo) {
+      radice.addEventListener(tipo, function (ev) {
+        var el = ev.target && ev.target.closest ? ev.target.closest('[data-dc-on-' + tipo + ']') : null;
+        if (!el || !radice.contains(el)) return;
+        var f = gestori[Number(el.getAttribute('data-dc-on-' + tipo))];
+        if (f) f(ev);
+      });
+    });
+    window.addEventListener('pagehide', function () { comp.componentWillUnmount && comp.componentWillUnmount(); });
+    ridisegna();
+    /* dentro il portale: il tema segue quello del portale (regia_tema: chiaro / scuro) */
+    if (document.documentElement.classList.contains('incorniciata')) {
+      var segui = function () {
+        try {
+          var t = localStorage.getItem('regia_tema');
+          try { var pt = window.parent.document.documentElement.getAttribute('data-tema'); if (pt) t = pt; } catch (e) {}
+          localStorage.setItem('next-tema', t === 'chiaro' ? 'giorno' : 'notte');
+          if (comp.state && comp.state.tema) comp.state.tema = null;
+          comp._pianifica();
+        } catch (e) {}
+      };
+      segui();
+      window.addEventListener('storage', function (e) { if (e.key === 'regia_tema') segui(); });
+      try { new MutationObserver(segui).observe(window.parent.document.documentElement, { attributes: true, attributeFilter: ['data-tema'] }); } catch (e) {}
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avvia); else avvia();
+})();
+</script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0B1119}
+a{color:#0891B2}a:hover{color:#0891B2}
+@keyframes scorri{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion: reduce){.nastro{animation:none!important}}
+#menuNextCss{}
+nav[aria-label="Menu Next"] .mn-v{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;color:#9AA8B9;font:600 12.5px 'IBM Plex Sans',Arial,sans-serif;cursor:pointer;list-style:none;white-space:nowrap}
+nav[aria-label="Menu Next"] .mn-v::-webkit-details-marker{display:none}
+nav[aria-label="Menu Next"] .mn-v:hover,nav[aria-label="Menu Next"] .mn-st:hover{background:#151E2A;color:#E6EDF5}
+nav[aria-label="Menu Next"] .mn-chev{margin-left:auto;transition:transform .15s}
+nav[aria-label="Menu Next"] .mn-grp[open] .mn-chev{transform:rotate(180deg)}
+nav[aria-label="Menu Next"] .mn-sub{display:flex;flex-direction:column;gap:1px;margin:1px 0 4px 17px;padding-left:8px;border-left:1px solid #1E2836}
+nav[aria-label="Menu Next"] .mn-st{display:flex;align-items:center;gap:10px;padding:5px 10px;border-radius:8px;color:#9AA8B9;text-decoration:none;font:600 12px 'IBM Plex Sans',Arial,sans-serif;white-space:nowrap}
+nav[aria-label="Menu Next"] .mn-ext{margin-left:auto;color:#7A889A}
+[data-tema]{--sf:#FFFFFF;--sf2:#F6F8FA;--ink:#0F172A;--ink2:#334155;--ink3:#64748B;--ln:#E3E7EC;--acw:#E0F4F9;--rdw:#FEE2E2;--grw:#DCFCE7;--amw:#FEF3C7;--viw:#F0ECFE}
+[data-tema="notte"]{--sf:#162032;--sf2:#0F1623;--ink:#E8EEF5;--ink2:#A3B3C6;--ink3:#8494AB;--ln:#24324A;--acw:#0B2C3A;--rdw:#3B1618;--grw:#0F2E1C;--amw:#33270F;--viw:#2A2147;color-scheme:dark}
+[data-tema="notte"] textarea,[data-tema="notte"] input{color:var(--ink)}
+nav[aria-label="Menu Next"] .mn-riga{position:relative}
+nav[aria-label="Menu Next"] .mn-fuori{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:6px;border:0;background:#151E2A;color:#9AA8B9;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .12s}
+nav[aria-label="Menu Next"] .mn-riga:hover .mn-fuori,nav[aria-label="Menu Next"] .mn-fuori:focus{opacity:1}
+nav[aria-label="Menu Next"] .mn-fuori:hover{color:#22D3EE;background:rgba(34,211,238,.12)}
+@keyframes entra{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+@keyframes pulsa{0%,100%{opacity:1}50%{opacity:.35}}
+html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
+</style>
+</helmet>
+<div data-tema="{{tema}}" style="display: flex; flex-wrap: wrap; min-height: 1300px; background: var(--sf2); font-family: Manrope, Arial, sans-serif; color: var(--ink);">
+
+<nav aria-label="Menu Next" style="flex: 0 0 224px; box-sizing: border-box; background: #0B1119; padding: 14px 10px; display: flex; flex-direction: column; gap: 1px; font-family: 'IBM Plex Sans', Arial, sans-serif;">
+<div style="display: flex; align-items: center; gap: 9px; padding: 2px 6px 14px;"><span style="width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #22D3EE, #0891B2); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; color: #0E141D;">N</span><span style="display: flex; flex-direction: column; color: #E6EDF5;"><b style="font-size: 13.5px;">Next S.r.l.</b><small style="font-size: 10.5px; color: #8D9BAD;">portale gestione</small></span></div>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; color: #9AA8B9; text-decoration: none; font-size: 12.5px; font-weight: 600;"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path></svg>Panoramica</a>
+<details class="mn-grp"><summary class="mn-v"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg><span>Regia</span><sc-if value="{{waIn.ha}}" hint-placeholder-val="{{true}}"><span class="pulsa" style="margin-left: auto; margin-right: 2px; min-width: 18px; height: 18px; border-radius: 999px; background: #22C55E; color: #0B1119; font-size: 10.5px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; animation: pulsa 1.4s ease-in-out infinite;">{{waIn.n}}</span></sc-if><svg aria-hidden="true" class="mn-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 0;"><path d="M6 9l6 6 6-6"></path></svg></summary>
+<div class="mn-sub">
+<a class="mn-st" href="#"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"></path></svg><span>Chiamate</span></a>
+<a class="mn-st" href="#"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5z"></path></svg><span>Chat</span><sc-if value="{{waIn.ha}}" hint-placeholder-val="{{true}}"><span class="pulsa" style="margin-left: auto; min-width: 18px; height: 18px; border-radius: 999px; background: #22C55E; color: #0B1119; font-size: 10.5px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; animation: pulsa 1.4s ease-in-out infinite;">{{waIn.n}}</span></sc-if></a>
+<a class="mn-st" href="#"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg><span>Liste</span></a>
+</div></details>
+<div style="font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: #5F6E81; font-weight: 800; padding: 12px 10px 4px;">Lavoro</div>
+<div class="mn-riga"><a href="https://nextsrl-sim.github.io/area-lavoro/" style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; color: #9AA8B9; text-decoration: none; font-size: 12.5px; font-weight: 600;"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="8" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect><rect x="13" y="13" width="8" height="8" rx="1.5"></rect></svg>Area di lavoro</a><button class="mn-fuori" onClick="{{apriFuoriArea}}" aria-label="Tira fuori Area di lavoro in una finestra" title="Tira fuori la pagina in una finestra (per un altro monitor)"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="14" height="14" rx="2"></rect><path d="M11 3h10v10M21 3l-9 9"></path></svg></button></div>
+<div class="mn-riga"><a href="#" aria-current="page" style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; color: #22D3EE; background: rgba(34,211,238,.12); text-decoration: none; font-size: 12.5px; font-weight: 600;"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg>Caselle di posta</a><button class="mn-fuori" onClick="{{apriFuoriPosta}}" aria-label="Tira fuori Caselle di posta in una finestra" title="Tira fuori la pagina in una finestra (per un altro monitor)"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="14" height="14" rx="2"></rect><path d="M11 3h10v10M21 3l-9 9"></path></svg></button></div>
+<div style="font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: #5F6E81; font-weight: 800; padding: 12px 10px 4px;">Preventivi e clienti</div>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; color: #9AA8B9; text-decoration: none; font-size: 12.5px; font-weight: 600;"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><path d="M14 3v6h6M12 12v6M9 15h6"></path></svg>Nuovo preventivo</a>
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; color: #9AA8B9; text-decoration: none; font-size: 12.5px; font-weight: 600;"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="4"></circle><path d="M3 21a7 7 0 0 1 14 0M19 8v6M16 11h6"></path></svg>Nuovo cliente</a>
+<details class="mn-grp" open><summary class="mn-v"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"></path></svg><span>Strumenti</span><svg aria-hidden="true" class="mn-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></summary>
+<div class="mn-sub">
+<a class="mn-st" href="https://next-srl.odoo.com/odoo" target="_blank" rel="noopener"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><circle cx="17.5" cy="17.5" r="3.5"></circle></svg><span>Odoo</span><svg aria-hidden="true" class="mn-ext" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg></a>
+<a class="mn-st" href="https://n8n.srv1030489.hstgr.cloud" target="_blank" rel="noopener"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="2.5"></circle><circle cx="19" cy="6" r="2.5"></circle><circle cx="19" cy="18" r="2.5"></circle><path d="M7.5 12h4l5-5M11.5 12l5 5"></path></svg><span>n8n</span><svg aria-hidden="true" class="mn-ext" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg></a>
+<a class="mn-st" href="https://supabase.com/dashboard/project/pnxhthrheqeucoisifjw" target="_blank" rel="noopener"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5.5" rx="7.5" ry="2.8"></ellipse><path d="M4.5 5.5v13c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8v-13M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8"></path></svg><span>Supabase</span><svg aria-hidden="true" class="mn-ext" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg></a>
+<a class="mn-st" href="https://online.unicreditcorporate.it/nb/it/uniweb.html" target="_blank" rel="noopener"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"></path></svg><span>UniCredit</span><svg aria-hidden="true" class="mn-ext" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg></a>
+<a class="mn-st" href="https://claude.ai" target="_blank" rel="noopener"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9l-4.7 1.8L12 15.5l-1.8-4.7L5.5 9l4.7-1.3z"></path><path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"></path></svg><span>Claude</span><svg aria-hidden="true" class="mn-ext" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg></a>
+</div></details>
+<div style="margin-top: auto; display: flex; align-items: center; gap: 9px; padding: 12px 6px 0; border-top: 1px solid #1A2330; color: #E6EDF5; font-size: 12px;"><span style="width: 28px; height: 28px; border-radius: 50%; background: #1F2B3A; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #A3B1C2;">SB</span><b>Sante</b><button onClick="{{cambiaTema}}" aria-label="{{temaLabel}}" title="{{temaLabel}}" style="margin-left: auto; width: 28px; height: 28px; border-radius: 7px; border: 1px solid #1F2B3A; background: transparent; color: #A3B1C2; cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{temaIcona}}"></path></svg></button></div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 24px 30px 44px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; zoom: 0.88;">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px;">
+<div style="display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3);">Tutte le caselle di Next · dati di esempio</span>
+<h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.01em;">Caselle di posta</h1>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+<div style="display: flex; align-items: center; gap: 10px; background: var(--sf); border: 1px solid var(--ln); border-radius: 12px; padding: 8px 14px;">
+<span style="width: 9px; height: 9px; border-radius: 50%; background: #16A34A;"></span>
+<span style="font-size: 12.5px; font-weight: 700;">Postino in ascolto continuo</span>
+<span style="font-size: 12px; color: var(--ink3);">ultima mail 11:14 · smistata 11:14</span>
+</div>
+<button onClick="{{ripristina}}" style="font: 700 13.5px Manrope, sans-serif; border: 1px solid var(--ln); border-radius: 10px; height: 40px; padding: 0 12px; background: var(--sf); color: var(--ink); cursor: pointer;">Disposizione iniziale</button>
+</div>
+</header>
+
+<section aria-label="Caselle minori" style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px;">
+<span style="font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); margin-right: 4px;">Minori</span>
+<sc-for list="{{mini}}" as="c" hint-placeholder-count="4">
+<div draggable="true" onDragStart="{{c.drag}}" onDragOver="{{sopra}}" onDrop="{{c.drop}}" style="display: flex; align-items: center; gap: 2px; background: var(--sf); border: 1px solid var(--ln); border-radius: 999px; height: 32px; padding: 0 4px 0 6px; cursor: grab;">
+<button onClick="{{c.apri}}" title="Apri" style="font: 700 12px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink); cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 0 4px; height: 28px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{c.col}};"></span>{{c.nome}}<span style="font-size: 11px; font-weight: 800; border-radius: 999px; padding: 0 7px; color: {{c.nc}}; background: {{c.nb}};">{{c.nArrivate}}</span></button>
+<button onClick="{{c.aFascetta}}" aria-label="Mostra come fascetta" title="Mostra come fascetta" style="width: 24px; height: 24px; border-radius: 999px; border: 0; background: transparent; color: var(--ink3); cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h16M4 15h16"></path></svg></button>
+</div>
+</sc-for>
+</section>
+
+<section aria-label="Caselle chiuse" style="display: flex; flex-direction: column; gap: 6px;">
+<sc-for list="{{chiuse}}" as="c" hint-placeholder-count="6">
+<div draggable="true" onDragStart="{{c.drag}}" onDragOver="{{sopra}}" onDrop="{{c.drop}}" style="display: grid; grid-template-columns: 14px 190px minmax(0, 300px) minmax(0, 1fr) 30px 30px; gap: 12px; align-items: center; background: var(--sf); border: 1px solid var(--ln); border-radius: 12px; height: 42px; padding: 0 6px 0 10px; cursor: grab;">
+<svg aria-hidden="true" width="12" height="16" viewBox="0 0 12 16" fill="#94A3B8"><circle cx="3" cy="3" r="1.4"></circle><circle cx="9" cy="3" r="1.4"></circle><circle cx="3" cy="8" r="1.4"></circle><circle cx="9" cy="8" r="1.4"></circle><circle cx="3" cy="13" r="1.4"></circle><circle cx="9" cy="13" r="1.4"></circle></svg>
+<button onClick="{{c.apri}}" style="font: 700 13px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink); cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 0; text-align: left;"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{c.col}};"></span>{{c.nome}}<span style="font-size: 11px; font-weight: 800; border-radius: 999px; padding: 1px 7px; color: {{c.nc}}; background: {{c.nb}};">{{c.nonLette}}</span></button>
+<span style="font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><b style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; color: var(--ink3);">{{c.ultima.ora}}</b> <b>{{c.ultima.chi}}</b> — {{c.ultima.oggetto}}</span>
+<div style="overflow: hidden; white-space: nowrap; mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);">
+<div class="nastro" style="display: inline-flex; gap: 28px; animation: scorri {{c.durata}}s linear infinite; font-size: 12px; color: var(--ink2);">
+<sc-for list="{{c.nastro}}" as="m" hint-placeholder-count="4"><span><b style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; color: var(--ink3);">{{m.ora}}</b> {{m.chi}} — {{m.oggetto}}</span></sc-for>
+</div>
+</div>
+<button onClick="{{c.aMini}}" aria-label="Riduci a etichetta" title="Riduci a etichetta" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--ln); background: var(--sf); color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 12h10"></path></svg></button>
+<button onClick="{{c.apri}}" aria-label="Apri" title="Apri" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--ln); background: var(--sf); color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+</sc-for>
+</section>
+
+<sc-if value="{{haFuori}}" hint-placeholder-val="{{true}}">
+<section aria-label="Caselle aperte in altre finestre" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+<span style="font-size: 10.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3);">Fuori, su un altro monitor</span>
+<sc-for list="{{fuoriVista}}" as="c" hint-placeholder-count="1">
+<span style="display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 4px 0 10px; border: 1px dashed var(--ln); border-radius: 8px; background: var(--sf); font-size: 12px; color: var(--ink2);"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{c.col}};"></span>{{c.nome}}<button onClick="{{c.dentro}}" title="Chiude la finestra esterna e la riporta qui" style="font: 700 11.5px Manrope, sans-serif; height: 24px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--ln); background: var(--acw); color: #0891B2; cursor: pointer;">Riporta dentro</button></span>
+</sc-for>
+</section>
+</sc-if>
+
+<section aria-label="Caselle aperte" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px;">
+<sc-for list="{{aperte}}" as="c" hint-placeholder-count="4">
+<article draggable="true" onDragStart="{{c.drag}}" onDragOver="{{sopra}}" onDrop="{{c.drop}}" style="grid-column: span {{c.span}}; background: var(--sf); border: 1px solid var(--ln); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; height: {{c.h}}px; min-width: 0;">
+<div style="display: flex; align-items: center; gap: 8px; padding: 9px 10px 9px 12px; border-bottom: 1px solid var(--ln);">
+<span style="cursor: grab; display: flex; padding: 2px;"><svg aria-hidden="true" width="12" height="16" viewBox="0 0 12 16" fill="#94A3B8"><circle cx="3" cy="3" r="1.4"></circle><circle cx="9" cy="3" r="1.4"></circle><circle cx="3" cy="8" r="1.4"></circle><circle cx="9" cy="8" r="1.4"></circle><circle cx="3" cy="13" r="1.4"></circle><circle cx="9" cy="13" r="1.4"></circle></svg></span>
+<span style="width: 8px; height: 8px; border-radius: 50%; background: {{c.col}};"></span>
+<div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0;"><h2 style="margin: 0; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.nome}}</h2><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.indirizzo}}</span></div>
+<span title="{{c.nonLette}} da leggere" style="font-size: 11px; font-weight: 800; border-radius: 999px; padding: 1px 7px; white-space: nowrap; color: {{c.nc}}; background: {{c.nb}};">{{c.nonLette}}{{c.daLeggere}}</span>
+<button onClick="{{c.stacca}}" aria-label="Apri in una finestra separata" title="Apri in una finestra separata (per un altro monitor)" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--ln); background: var(--sf); color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="14" height="14" rx="2"></rect><path d="M11 3h10v10M21 3l-9 9"></path></svg></button>
+<button onClick="{{c.allarga}}" aria-label="Larghezza: {{c.taglia}}" title="Larghezza: {{c.taglia}} — clic per cambiare" style="width: 30px; height: 30px; padding: 0; border-radius: 8px; border: 1px solid var(--ln); background: var(--sf); cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 18 18"><rect x="1.5" y="1.5" width="3" height="15" rx="1.2" fill="{{c.w0}}"></rect><rect x="7.5" y="1.5" width="3" height="15" rx="1.2" fill="{{c.w1}}"></rect><rect x="13.5" y="1.5" width="3" height="15" rx="1.2" fill="{{c.w2}}"></rect></svg></button>
+<button onClick="{{c.alza}}" aria-label="Altezza: {{c.altezza}}" title="Altezza: {{c.altezza}} — clic per cambiare" style="width: 30px; height: 30px; padding: 0; border-radius: 8px; border: 1px solid var(--ln); background: var(--sf); cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 18 18"><rect x="1.5" y="1.5" width="15" height="3" rx="1.2" fill="{{c.h2}}"></rect><rect x="1.5" y="7.5" width="15" height="3" rx="1.2" fill="{{c.h1}}"></rect><rect x="1.5" y="13.5" width="15" height="3" rx="1.2" fill="{{c.h0}}"></rect></svg></button>
+<button onClick="{{c.punta}}" aria-label="{{c.puntaLabel}}" title="{{c.puntaLabel}}" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid {{c.pBd}}; background: {{c.pBg}}; color: {{c.pFg}}; cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6l-1 6 3 3H7l3-3zM12 13v8"></path></svg></button>
+<button onClick="{{c.chiudi}}" aria-label="Riduci a fascetta" title="Riduci a fascetta" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--ln); background: var(--sf); color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+</div>
+<div style="display: grid; grid-template-columns: {{c.colonne}}; flex-grow: 1; min-height: 0;">
+<div role="tablist" aria-label="Cartella" style="display: flex; flex-direction: column; gap: 4px; padding: 6px 4px; background: var(--sf2); border-right: 1px solid var(--ln);">
+<button role="tab" aria-selected="{{c.inSel}}" aria-label="Entrata, {{c.nIn}}" title="Entrata" onClick="{{c.vaiIn}}" style="font: 700 10px Manrope, sans-serif; border: 0; border-radius: 8px; padding: 6px 0; cursor: pointer; background: {{c.inBg}}; color: {{c.inFg}}; display: flex; flex-direction: column; align-items: center; gap: 2px;"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"></path><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>{{c.nIn}}</button>
+<button role="tab" aria-selected="{{c.outSel}}" aria-label="Inviata, {{c.nOut}}" title="Inviata" onClick="{{c.vaiOut}}" style="font: 700 10px Manrope, sans-serif; border: 0; border-radius: 8px; padding: 6px 0; cursor: pointer; background: {{c.outBg}}; color: {{c.outFg}}; display: flex; flex-direction: column; align-items: center; gap: 2px;"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4z"></path></svg>{{c.nOut}}</button>
+</div>
+<div style="overflow-y: auto; border-right: 1px solid var(--ln); min-width: 0;">
+<sc-for list="{{c.lista}}" as="m" hint-placeholder-count="4">
+<button onClick="{{m.pick}}" style="font: inherit; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--ln); border-left: 3px solid {{m.bordo}}; background: {{m.bg}}; padding: 6px 9px; cursor: pointer; display: flex; flex-direction: column; gap: 1px; color: var(--ink);">
+<span style="display: flex; gap: 6px; align-items: baseline;"><span style="font-size: 10.5px; font-weight: {{m.peso}}; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{m.chi}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; color: var(--ink3);">{{m.ora}}</span></span>
+<span style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{m.oggetto}}</span>
+<span><span style="font-size: 9px; font-weight: 700; border-radius: 999px; padding: 1px 6px; color: {{m.tc}}; background: {{m.tb}};">{{m.tag}}</span></span>
+</button>
+</sc-for>
+</div>
+<div style="padding: 12px 14px; overflow-y: auto; display: {{c.prev}}; flex-direction: column; gap: 8px; min-width: 0;">
+<span style="font-size: 13px; font-weight: 700; line-height: 1.35;">{{c.sel.oggetto}}</span>
+<span style="font-size: 10.5px; color: var(--ink3);">{{c.sel.verso}} {{c.sel.chi}} · {{c.sel.ora}}</span>
+<p style="margin: 0; font-size: 12px; line-height: 1.55;">{{c.sel.testo}}</p>
+<div style="background: var(--acw); border: 1px solid var(--acw); border-radius: 10px; padding: 8px 10px; font-size: 11.5px; line-height: 1.45; color: #0891B2;"><b>Il sistema:</b> {{c.sel.sistema}}</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: auto;">
+<button style="font: 700 13.5px Manrope, sans-serif; border: 1px solid #0891B2; border-radius: 10px; height: 40px; background: #0891B2; color: #FFFFFF; cursor: pointer;">{{c.sel.az}}</button>
+<button onClick="{{c.apriIntera}}" style="font: 700 13.5px Manrope, sans-serif; border: 1px solid var(--ln); border-radius: 10px; height: 40px; background: var(--sf); color: var(--ink); cursor: pointer;">Apri intera</button>
+</div>
+</div>
+</div>
+</article>
+</sc-for>
+</section>
+
+<sc-if value="{{haIntera}}" hint-placeholder-val="{{false}}">
+<div role="dialog" aria-modal="true" aria-label="Mail intera" style="position: fixed; inset: 0; z-index: 50; background: rgba(15, 23, 42, .42); display: flex; align-items: flex-start; justify-content: center; padding: 32px 24px; box-sizing: border-box;">
+<div style="background: var(--sf); border-radius: 14px; width: min(1000px, 100%); max-height: 100%; overflow-y: auto; box-shadow: 0 24px 60px rgba(15, 23, 42, .25); display: flex; flex-direction: column;">
+
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px 10px 18px; border-bottom: 1px solid var(--ln); background: var(--sf2);">
+<span style="width: 8px; height: 8px; border-radius: 50%; background: {{intera.col}};"></span>
+<span style="font-size: 12px; font-weight: 700; color: var(--ink2); flex-grow: 1;">{{intera.casella}} · {{intera.cartella}}</span>
+<button onClick="{{chiudiIntera}}" aria-label="Chiudi" title="Chiudi" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--ln); background: var(--sf); color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+
+<div role="toolbar" aria-label="Azioni sulla mail" style="display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 6px 12px; border-bottom: 1px solid var(--ln);">
+<button onClick="{{rispondi}}" style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 6 6v4"></path></svg>Rispondi</button>
+<button onClick="{{rispondiTutti}}" style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14L2 9l5-5"></path><path d="M12 14L7 9l5-5"></path><path d="M7 9h8a6 6 0 0 1 6 6v4"></path></svg>Rispondi a tutti</button>
+<button onClick="{{inoltra}}" style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"></path><path d="M20 9H10a6 6 0 0 0-6 6v4"></path></svg>Inoltra</button>
+<span style="width: 1px; height: 20px; background: var(--ln); margin: 0 6px;"></span>
+<button style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink2); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1"></rect><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"></path></svg>Archivia</button>
+<button style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink2); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>Elimina</button>
+<button style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink2); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M10 13h6M13 10l3 3-3 3"></path></svg>Sposta</button>
+<button style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink2); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4h11l-1.5 4L16 12H5"></path></svg>Contrassegna</button>
+<button style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink2); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg>Segna come non letta</button>
+<button style="font: 600 12.5px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink2); cursor: pointer; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 7px; margin-left: auto;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7h-2"></path><rect x="6" y="14" width="12" height="7"></rect></svg>Stampa</button>
+</div>
+
+<div style="padding: 18px 26px 6px; display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;"><h2 style="margin: 0; font-size: 19px; font-weight: 700; line-height: 1.3;">{{intera.oggetto}}</h2><span style="font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 2px 8px; color: {{intera.tc}}; background: {{intera.tb}};">{{intera.tag}}</span></div>
+<div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: start;">
+<span style="width: 40px; height: 40px; border-radius: 50%; background: var(--acw); color: #0891B2; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800;">{{intera.iniziali}}</span>
+<div style="display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 12.5px; color: var(--ink2);">
+<span><b style="color: var(--ink); font-size: 14px;">{{intera.daNome}}</b> <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px;">&lt;{{intera.daMail}}&gt;</span></span>
+<span><span style="color: var(--ink3); display: inline-block; min-width: 28px;">A:</span> {{intera.a}}</span>
+<sc-if value="{{intera.haCc}}" hint-placeholder-val="{{true}}"><span><span style="color: var(--ink3); display: inline-block; min-width: 28px;">Cc:</span> {{intera.cc}}</span></sc-if>
+</div>
+<span style="font-size: 12px; color: var(--ink3); white-space: nowrap;">{{intera.data}}</span>
+</div>
+
+<sc-if value="{{intera.haAllegati}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<sc-for list="{{intera.allegati}}" as="f" hint-placeholder-count="1">
+<a href="#" style="display: flex; align-items: center; gap: 10px; border: 1px solid var(--ln); border-radius: 10px; padding: 7px 12px 7px 9px; text-decoration: none; color: var(--ink);"><span style="width: 30px; height: 34px; border-radius: 5px; background: var(--rdw); color: #B91C1C; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800;">{{f.tipo}}</span><span style="display: flex; flex-direction: column;"><span style="font-size: 12.5px; font-weight: 600;">{{f.nome}}</span><span style="font-size: 11px; color: var(--ink3);">{{f.peso}}</span></span><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg></a>
+</sc-for>
+</div>
+</sc-if>
+
+<div style="font-size: 14px; line-height: 1.65; color: var(--ink); display: flex; flex-direction: column; gap: 10px; padding: 8px 0 4px; border-top: 1px solid var(--ln);"><span style="padding-top: 8px;">Buongiorno,</span><span>{{intera.testo}}</span><span>Cordiali saluti</span><span style="font-size: 12.5px; color: var(--ink2); white-space: pre-line;">{{intera.firma}}</span></div>
+</div>
+
+<sc-if value="{{inRisposta}}" hint-placeholder-val="{{false}}">
+<div style="margin: 6px 26px 0; border: 1px solid var(--acw); border-radius: 12px; overflow: hidden;">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 8px 12px; background: var(--acw); font-size: 12px; color: #0891B2;"><b>{{risposta.titolo}}</b><span>A: {{risposta.a}}</span><span>Oggetto: {{risposta.oggetto}}</span></div>
+<textarea aria-label="Testo della risposta" style="display: block; width: 100%; box-sizing: border-box; border: 0; padding: 12px; min-height: 130px; font: 400 13.5px/1.6 Manrope, sans-serif; color: var(--ink); resize: vertical;">{{risposta.testo}}</textarea>
+<div style="display: flex; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--ln);"><button style="font: 700 13.5px Manrope, sans-serif; border: 1px solid #0891B2; border-radius: 10px; height: 40px; padding: 0 16px; background: #0891B2; color: #FFFFFF; cursor: pointer;">Invia</button><button style="font: 700 13.5px Manrope, sans-serif; border: 1px solid var(--ln); border-radius: 10px; height: 40px; padding: 0 14px; background: var(--sf); color: var(--ink); cursor: pointer;">Allega</button><button onClick="{{annullaRisposta}}" style="font: 700 13.5px Manrope, sans-serif; border: 1px solid var(--ln); border-radius: 10px; height: 40px; padding: 0 14px; background: var(--sf); color: var(--ink2); cursor: pointer;">Annulla</button></div>
+</div>
+</sc-if>
+
+<div style="margin: 14px 26px 22px; background: var(--acw); border: 1px solid var(--acw); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.5; color: #0891B2; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;"><span style="flex: 1 1 300px;"><b>Il sistema:</b> {{intera.sistema}}</span><button style="font: 700 13.5px Manrope, sans-serif; border: 1px solid #0891B2; border-radius: 10px; height: 40px; padding: 0 14px; background: #0891B2; color: #FFFFFF; cursor: pointer;">{{intera.az}}</button></div>
+
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{waIn.toast}}" hint-placeholder-val="{{true}}">
+<div role="status" aria-live="polite" style="position: fixed; bottom: 88px; right: 28px; z-index: 60; width: 320px; background: var(--sf); border: 1px solid var(--ln); border-left: 4px solid #16A34A; border-radius: 12px; box-shadow: 0 10px 26px rgba(15, 23, 42, .14); padding: 9px 9px 9px 11px; display: flex; flex-direction: column; gap: 6px; animation: entra .25s ease-out 1;">
+<div style="display: flex; align-items: center; gap: 8px;">
+<span style="width: 26px; height: 26px; border-radius: 50%; background: #16A34A; color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex: none;"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5z"></path></svg></span>
+<span style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0; line-height: 1.25;"><b style="font-size: 13px; color: var(--ink);">{{waIn.ultimo.nome}}</b><span style="font-size: 11px; color: var(--ink3);">WhatsApp · {{waIn.ultimo.ruolo}} · adesso</span></span>
+<button onClick="{{waIn.chiudiToast}}" aria-label="Chiudi l'avviso" title="Chiudi" style="width: 26px; height: 26px; border-radius: 7px; border: 0; background: transparent; color: var(--ink3); cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<sc-if value="{{waIn.ultimo.haVoce}}" hint-placeholder-val="{{true}}"><span style="display: flex; align-items: center; gap: 8px; margin-left: 34px; height: 30px; padding: 0 10px 0 4px; border-radius: 999px; background: var(--grw); color: #15803D; font-size: 11.5px; font-weight: 700; align-self: flex-start;"><button aria-label="Ascolta il vocale" title="Ascolta" style="width: 24px; height: 24px; border-radius: 50%; border: 0; background: #16A34A; color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;"><svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"></path></svg></button><svg aria-hidden="true" width="60" height="14" viewBox="0 0 60 14" fill="#16A34A"><rect x="0" y="5" width="2" height="4" rx="1"></rect><rect x="5" y="3" width="2" height="8" rx="1"></rect><rect x="10" y="1" width="2" height="12" rx="1"></rect><rect x="15" y="4" width="2" height="6" rx="1"></rect><rect x="20" y="2" width="2" height="10" rx="1"></rect><rect x="25" y="5" width="2" height="4" rx="1"></rect><rect x="30" y="3" width="2" height="8" rx="1"></rect><rect x="35" y="0" width="2" height="14" rx="1"></rect><rect x="40" y="4" width="2" height="6" rx="1"></rect><rect x="45" y="2" width="2" height="10" rx="1"></rect><rect x="50" y="5" width="2" height="4" rx="1"></rect><rect x="55" y="4" width="2" height="6" rx="1"></rect></svg>{{waIn.ultimo.voce}}</span><span style="font-size: 10.5px; font-weight: 700; color: var(--ink3); padding-left: 34px; text-transform: uppercase; letter-spacing: .06em;">Trascrizione</span></sc-if>
+<span style="font-size: 12.5px; line-height: 1.45; color: var(--ink); padding-left: 34px;">{{waIn.ultimo.testo}}</span>
+<div style="display: flex; gap: 6px; padding-left: 34px;">
+<button onClick="{{waIn.rispondi}}" style="font: 700 12px Manrope, sans-serif; height: 30px; padding: 0 12px; border-radius: 8px; border: 1px solid #16A34A; background: #16A34A; color: #FFFFFF; cursor: pointer;">Rispondi qui</button>
+<a href="#" style="font: 700 12px Manrope, sans-serif; height: 30px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--ln); background: var(--sf); color: var(--ink2); text-decoration: none; display: inline-flex; align-items: center;">Apri in Chat Next</a>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{wa.chiuso}}" hint-placeholder-val="{{true}}">
+<button onClick="{{wa.apri}}" aria-label="Messaggio veloce WhatsApp" title="Messaggio veloce dal numero Next" style="position: fixed; right: 28px; bottom: 28px; z-index: 40; height: 48px; padding: 0 18px 0 14px; border-radius: 999px; border: 0; background: #16A34A; color: #FFFFFF; font: 700 13.5px Manrope, sans-serif; display: flex; align-items: center; gap: 9px; cursor: pointer; box-shadow: 0 10px 28px rgba(15, 23, 42, .22);"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5z"></path><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .8a3.5 3.5 0 0 1-1.8-1.8l.8-1-1-2z"></path></svg>Messaggio veloce<sc-if value="{{waIn.ha}}" hint-placeholder-val="{{false}}"><span style="min-width: 20px; height: 20px; border-radius: 999px; background: #FFFFFF; color: #15803D; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px;">{{waIn.n}}</span></sc-if></button>
+</sc-if>
+<sc-if value="{{wa.aperto}}" hint-placeholder-val="{{false}}">
+<section aria-label="Messaggio veloce WhatsApp" style="position: fixed; right: 28px; bottom: 28px; z-index: 45; width: 380px; max-height: calc(100% - 56px); background: var(--sf); border: 1px solid var(--ln); border-radius: 16px; box-shadow: 0 24px 60px rgba(15, 23, 42, .25); display: flex; flex-direction: column; overflow: hidden;">
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 14px; background: #16A34A; color: #FFFFFF;">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5z"></path></svg>
+<span style="display: flex; flex-direction: column; flex-grow: 1; line-height: 1.2;"><b style="font-size: 13.5px;">Messaggio veloce</b><span style="font-size: 11px; opacity: .85;">parte dal numero WhatsApp di Next · resta nel chatter Odoo</span></span>
+<button onClick="{{wa.chiudi}}" aria-label="Chiudi" title="Chiudi" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid rgba(255,255,255,.35); background: transparent; color: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<div style="padding: 10px 12px 0;"><label style="display: flex; align-items: center; gap: 8px; height: 40px; border: 1px solid var(--ln); border-radius: 10px; padding: 0 10px; background: var(--sf);"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg><span style="font-size: 12px; font-weight: 700; color: var(--ink2);">A:</span><input aria-label="Cerca il destinatario" onInput="{{wa.cerca}}" placeholder="nome, azienda o telefono…" style="flex-grow: 1; min-width: 0; border: 0; outline: none; font: 400 13.5px Manrope, sans-serif; color: var(--ink); background: transparent;"></label><span style="display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); padding: 8px 2px 0;">{{wa.titoloLista}}</span></div>
+<div role="radiogroup" aria-label="A chi" style="display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 12px 10px; border-bottom: 1px solid var(--ln);">
+<sc-for list="{{wa.contatti}}" as="k" hint-placeholder-count="4">
+<button role="radio" aria-checked="{{k.sel}}" onClick="{{k.scegli}}" style="font: 700 12px Manrope, sans-serif; height: 30px; padding: 0 10px; border-radius: 999px; cursor: pointer; border: 1px solid {{k.bd}}; background: {{k.bg}}; color: {{k.fg}}; display: flex; align-items: center; gap: 6px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{k.pall}};"></span>{{k.nome}}</button>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 14px; background: var(--sf2); border-bottom: 1px solid var(--ln); font-size: 12px;">
+<span><b>{{wa.c.nome}}</b> <span style="color: var(--ink3);">· {{wa.c.ruolo}} · {{wa.c.tel}}</span></span>
+<span style="color: {{wa.c.fc}}; font-weight: 700;">{{wa.c.finestra}}</span>
+</div>
+<div style="flex: 1 1 auto; min-height: 120px; max-height: 240px; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; background: var(--sf2);">
+<sc-for list="{{wa.storia}}" as="h" hint-placeholder-count="3">
+<div style="align-self: {{h.lato}}; max-width: 82%; background: {{h.bg}}; border: 1px solid var(--ln); border-radius: 12px; padding: 7px 10px; font-size: 13px; line-height: 1.45; color: var(--ink);">{{h.testo}}<span style="display: block; text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink3); margin-top: 2px;">{{h.ora}}</span></div>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 12px; border-top: 1px solid var(--ln);">
+<textarea aria-label="Testo del messaggio" onInput="{{wa.scrivi}}" placeholder="{{wa.c.segnaposto}}" style="box-sizing: border-box; width: 100%; min-height: 64px; border: 1px solid var(--ln); border-radius: 10px; padding: 9px 10px; font: 400 13.5px/1.5 Manrope, sans-serif; color: var(--ink); resize: vertical;">{{wa.testo}}</textarea>
+<div style="display: flex; gap: 8px; align-items: center;">
+<button style="font: 700 13.5px Manrope, sans-serif; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--ln); background: var(--sf); color: var(--ink2); cursor: pointer;">Allega</button>
+<span style="flex-grow: 1; font-size: 11px; color: var(--ink3);">{{wa.c.nota}}</span>
+<button onClick="{{wa.invia}}" style="font: 700 13.5px Manrope, sans-serif; height: 40px; padding: 0 18px; border-radius: 10px; border: 1px solid #16A34A; background: #16A34A; color: #FFFFFF; cursor: pointer;">{{wa.c.tasto}}</button>
+</div>
+</div>
+</section>
+</sc-if>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1300}}'>
+const TAG = {
+  bozza: { t: 'Bozza pronta', c: '#0891B2', b: 'var(--acw)' },
+  fatto: { t: 'Gestita da sola', c: '#15803D', b: 'var(--grw)' },
+  compito: { t: 'Compito creato', c: '#6D4AE0', b: 'var(--viw)' },
+  urgente: { t: 'Urgente', c: '#B91C1C', b: 'var(--rdw)' },
+  info: { t: 'Informativa', c: 'var(--ink2)', b: 'var(--ln)' },
+  auto: { t: 'Inviata dal sistema', c: 'var(--ink2)', b: 'var(--ln)' },
+  te: { t: 'Inviata da te', c: '#0891B2', b: 'var(--acw)' }
+};
+const m = (chi, ora, oggetto, tag, nuova, testo, sistema, az) => ({ chi, ora, oggetto, tag, nuova, testo, sistema, az });
+const CASELLE = {
+  sante: { nome: 'Sante Bortoletto', indirizzo: 'sante.bortoletto@next-srl.eu', col: '#0891B2',
+    in: [ m('Roberto Polotto', '11:02', 'Cliente [CLIENTE] chiede uno sconto', 'compito', true, 'Il cliente chiede il 7% sul saldo: come mi regolo?', 'sopra il 5% decidi tu: compito creato con la richiesta e lo storico del cliente.', 'Decidi'),
+          m('WeCo Service', '09:20', 'Aggiornamento firmware ESY', 'info', false, 'Nuovo firmware disponibile per gli inverter ESY.', 'girata a Riccardo per l’assistenza.', 'Vedi'),
+          m('Banca', '08:05', 'Estratto conto di ottobre', 'fatto', false, 'Disponibile l’estratto conto.', 'scaricato e preparato per il commercialista.', 'Vedi') ],
+    out: [ m('avv. [NOME]', 'ieri', 'Posizione Next', 'te', false, 'Facciamo seguito alla Vostra.', 'nel fascicolo del caso.', 'Apri il fascicolo') ] },
+  info: { nome: 'Info', indirizzo: 'info@next-srl.eu', col: '#D97706',
+    in: [ m('[CLIENTE]', '17:40', 'Quando venite a installare?', 'bozza', true, 'Volevo sapere quando potete venire a installare.', 'merce in magazzino, installatore propone il 05/11: risposta pronta.', 'Invia la risposta'),
+          m('Paola · Solaris', '15:12', 'Foto mancanti su 2 cantieri', 'compito', false, 'Ci servono le foto di fine lavori di Olivier e di [CLIENTE].', 'foto di Olivier mandate col link; per l’altro sollecitato l’installatore.', 'Vedi il compito'),
+          m('contatto dal sito', '13:05', 'Preventivo 6 kW con batteria', 'fatto', false, 'Vorrei un preventivo.', 'contatto creato e messo nella lista di Valentino.', 'Vedi il contatto') ],
+    out: [ m('Paola · Solaris', '10:12', 'Foto cantiere Olivier', 'te', false, 'Ecco il link alle foto.', 'approvata da te.', 'Apri il link') ] },
+  pec: { nome: 'PEC', indirizzo: '[INDIRIZZO PEC]', col: '#DC2626',
+    in: [ m('avv. [NOME]', '18:02', 'Riscontro alla Vostra del 13/10', 'urgente', true, 'La mia assistita ribadisce quanto già comunicato e attende riscontro entro 7 giorni.', 'nel fascicolo, termine registrato al 04/11, bozza pronta.', 'Leggi la bozza'),
+          m('Agenzia delle Entrate', 'lun', 'Comunicazione', 'compito', false, 'Comunicazione sulla posizione fiscale.', 'inoltrata al commercialista, compito a Sante.', 'Vedi il compito') ],
+    out: [ m('avv. [NOME]', '13/10', 'Nostra posizione', 'te', false, 'Ribadiamo la nostra posizione.', 'nel fascicolo del caso.', 'Apri il fascicolo') ] },
+  amm: { nome: 'Amministrazione', indirizzo: 'amministrazione@next-srl.eu', col: '#7C3AED',
+    in: [ m('Studio [COMMERCIALISTA]', '11:30', 'Scadenze di novembre', 'compito', true, 'Le scadenze del mese con gli importi.', 'messe in calendario, un compito per ciascuna.', 'Vedi le scadenze'),
+          m('GHIOTTO IMPIANTI', '09:48', 'Fattura cantiere [CLIENTE]', 'fatto', false, 'In allegato la fattura.', 'importo come da accordo: accettata, bonifico in fila.', 'Vedi il bonifico'),
+          m('[CLIENTE]', 'ieri', 'Copia della fattura', 'bozza', true, 'Potete rimandarmi la fattura del saldo?', 'fattura trovata, risposta pronta col PDF.', 'Invia la risposta') ],
+    out: [ m('[CLIENTE]', '16:40', 'Fattura n. [N.]', 'auto', false, 'In allegato la fattura.', 'inviata appena confermata.', 'Vedi la fattura') ] },
+  acq: { nome: 'Acquisti', indirizzo: 'acquisti@next-srl.eu', col: '#0891B2',
+    in: [ m('ITALSOL SRL', '11:14', 'Conferma d’ordine CO [N.]', 'fatto', true, 'In allegato la conferma d’ordine.', 'confrontata con l’ordine: torna. Ordine confermato, bonifico in fila.', 'Vedi l’ordine'),
+          m('ITALSOL SRL', '10:40', 'DDT [N.] del 28/10', 'fatto', false, 'Documento di trasporto.', 'allegato alla ricezione del cantiere.', 'Vedi la ricezione'),
+          m('META 51 SRL', '09:30', 'Offerta batterie aggiuntive', 'compito', true, 'L’offerta per le batterie.', 'prezzi come listino: decidi tu se accettarla.', 'Accetta'),
+          m('newsletter fornitore', '08:15', 'Nuovo listino inverter', 'info', false, 'Listino dal 1° novembre.', 'archiviata, PDF salvato.', 'Apri') ],
+    out: [ m('ITALSOL SRL', '09:02', 'Richiesta di preventivo', 'auto', false, 'Vi chiediamo la migliore offerta.', 'partita dal tasto dell’ordine.', 'Vedi l’ordine') ] },
+  com: { nome: 'Commerciale', indirizzo: 'commerciale@next-srl.eu', col: '#16A34A',
+    in: [ m('[CLIENTE]', '10:55', 'Preventivo ricevuto, alcune domande', 'bozza', true, 'Ho ricevuto il preventivo, la batteria è compresa?', 'risposta pronta con il dettaglio della batteria; avvisato Roberto.', 'Invia la risposta'),
+          m('[AZIENDA]', '09:40', 'Richiesta impianto aziendale', 'compito', true, 'Vorremmo valutare un impianto per il capannone.', 'azienda creata, compito a Roberto per il sopralluogo.', 'Vedi il compito') ],
+    out: [ m('[CLIENTE]', '08:30', 'Il suo preventivo', 'auto', false, 'In allegato il preventivo.', 'partito dal portale preventivi.', 'Vedi il preventivo') ] },
+  ass: { nome: 'Assistenza', indirizzo: 'assistenza@next-srl.eu', col: '#0891B2',
+    in: [ m('[CLIENTE]', '08:50', 'L’app non mostra la produzione', 'fatto', false, 'Da ieri l’app non mostra niente.', 'Riccardo ha mandato la procedura per il WiFi.', 'Vedi la chat') ],
+    out: [ m('[CLIENTE]', '08:52', 'Procedura WiFi', 'auto', false, 'Ecco come ricollegare l’inverter.', 'mandata da Riccardo.', 'Vedi') ] },
+  exp: { nome: 'Export', indirizzo: 'export@next-srl.eu', col: 'var(--ink3)', in: [ m('[CONTATTO]', 'ven', 'Richiesta informazioni', 'info', false, 'Informazioni sui prodotti.', 'nessuna azione richiesta.', 'Apri') ], out: [] },
+  pri: { nome: 'Privacy', indirizzo: 'privacy@next-srl.eu', col: 'var(--ink3)', in: [ m('[CLIENTE]', 'mar', 'Richiesta cancellazione dati', 'compito', false, 'Chiedo la cancellazione dei miei dati.', 'compito a Sante: risposta entro 30 giorni.', 'Vedi il compito') ], out: [] },
+  dpo: { nome: 'DPO', indirizzo: 'dpo@next-srl.eu', col: 'var(--ink3)', in: [], out: [] },
+  dmarc: { nome: 'Rapporti DMARC', indirizzo: 'dmarc@next-srl.eu', col: 'var(--ink3)', in: [ m('google.com', '06:00', 'Rapporto giornaliero', 'fatto', false, 'Rapporto tecnico sulla consegna delle mail.', 'letto: nessun problema di consegna.', 'Apri') ], out: [] }
+};
+const INIZIALE = { ordine: ['sante', 'info', 'pec', 'amm', 'acq', 'com', 'ass', 'exp', 'pri', 'dpo', 'dmarc'], puntate: ['sante', 'info', 'pec', 'amm', 'acq'], taglie: { sante: 6 }, alte: {}, versione: 4, aperta: null, mini: ['exp', 'pri', 'dpo', 'dmarc'] };
+const CHIAVE = 'next-caselle-v4';
+const mailDi = (n) => (n.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '') || 'mittente') + '@esempio.it';
+const iniziali = (n) => (n.replace(/[^A-Za-z ]/g, ' ').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?');
+const risposta = (x, r) => {
+  if (!x || !r) return {};
+  const inoltro = r === 'i';
+  return { titolo: inoltro ? 'Inoltro' : (r === 't' ? 'Risposta a tutti' : 'Risposta'),
+    a: inoltro ? '' : x.daNome + ' <' + x.daMail + '>' + (r === 't' && x.haCc ? '; ' + x.cc : ''),
+    oggetto: (inoltro ? 'I: ' : 'R: ') + x.oggetto,
+    testo: inoltro ? '' : 'Buongiorno,\n\n[qui la bozza preparata dal sistema]\n\nCordiali saluti\nSante Bortoletto\nNext S.r.l.' };
+};
+const TAGLIE = [2, 3, 6];
+const NOME_TAGLIA = { 2: 'un terzo', 3: 'metà', 6: 'intera' };
+const BREVE_TAGLIA = { 2: '⅓', 3: '½', 6: '1' };
+const ALTEZZE = [300, 420, 580];
+const NOME_ALTEZZA = ['bassa', 'media', 'alta'];
+const BREVE_ALTEZZA = ['B', 'M', 'A'];
+const WA_IN = [
+  ['paola', 'Grazie, ricevute. Mi manca solo la foto del contatore.'],
+  ['roberto', 'Sono dal cliente di Treviso, firma oggi. Appena ho il contratto firmato te lo giro e lo carichiamo.', '0:24'],
+  ['cliente1', 'Va bene martedì mattina per l’installazione?'],
+  ['ghiotto', 'Le foto le carico stasera.']
+];
+const suona = () => { try { const C = window.AudioContext || window.webkitAudioContext; if (!C) return; const a = new C(); [880, 1175].forEach((f, k) => { const o = a.createOscillator(); const g = a.createGain(); const t0 = a.currentTime + k * 0.14; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.15, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18); o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + 0.2); }); } catch (e) {} };
+const WA = [
+  { id: 'paola', nome: 'Paola (Solaris)', ruolo: 'pratiche Solaris', tel: '+39 [NUMERO]', aperta: true, storia: [
+    { da: 'lei', ora: '10:12', testo: 'Buongiorno, mi mandate le foto dell’impianto Olivier?' },
+    { da: 'next', ora: '10:14', testo: 'Buongiorno Paola, le ho caricate adesso: le trova al link che le ho mandato per mail.' } ] },
+  { id: 'roberto', nome: 'Roberto Polotto', ruolo: 'commerciale Next', tel: '+39 [NUMERO]', aperta: true, storia: [
+    { da: 'lei', ora: '09:05', testo: 'Oggi pomeriggio sono dal cliente di Treviso.' } ] },
+  { id: 'cristina', nome: 'Cristina', ruolo: 'ufficio Next', tel: '+39 [NUMERO]', aperta: true, storia: [] },
+  { id: 'belloni', nome: 'Alessandro Belloni', ruolo: 'commerciale Next', tel: '+39 [NUMERO]', aperta: false, storia: [] },
+  { id: 'italsol', nome: 'ITALSOL SRL', ruolo: 'fornitore', tel: '+39 [NUMERO]', aperta: false, storia: [] },
+  { id: 'meta51', nome: 'META 51 SRL', ruolo: 'fornitore', tel: '+39 [NUMERO]', aperta: false, storia: [] },
+  { id: 'cliente1', nome: '[CLIENTE] Rossi', ruolo: 'cliente · pratica in corso', tel: '+39 [NUMERO]', aperta: true, storia: [
+    { da: 'lei', ora: 'ieri', testo: 'Quando passate per l’installazione?' } ] },
+  { id: 'cliente2', nome: '[CLIENTE] Bianchi', ruolo: 'cliente · impianto installato', tel: '+39 [NUMERO]', aperta: false, storia: [] },
+  { id: 'ghiotto', nome: 'Ghiotto Impianti', ruolo: 'installatore', tel: '+39 [NUMERO]', aperta: false, storia: [
+    { da: 'next', ora: 'lun', testo: 'Buongiorno, ci servono le foto dell’impianto di [CLIENTE].' } ] }
+];
+class Component extends DCLogic {
+  componentWillUnmount() { clearInterval(this.giroWa); clearTimeout(this.viaToast); }
+  componentDidMount() {
+    let lay = null;
+    try { const t = window.localStorage.getItem(CHIAVE); if (t) lay = JSON.parse(t); } catch (e) {}
+    let h = '';
+    try { h = (window.location.hash || '').slice(1); } catch (e) {}
+    if (h && CASELLE[h]) lay = { ...(lay || INIZIALE), aperta: h, mini: ((lay || INIZIALE).mini || []).filter((y) => y !== h) };
+    if (lay) this.setState({ lay });
+    this.giroWa = setInterval(() => {
+      this.setState((st) => {
+        const k = ((st && st.waK) || 0) % WA_IN.length;
+        const chi = WA_IN[k][0]; const testo = WA_IN[k][1]; const voce = WA_IN[k][2] || '';
+        const w = (st && st.wa) || { aperto: false, chi: 'paola', testo: '', inviati: {} };
+        const prima = (w.inviati || {})[chi] || [];
+        return { waK: k + 1, waToast: { chi, testo, voce }, waNon: ((st && st.waNon) || 0) + 1,
+          wa: { ...w, inviati: { ...(w.inviati || {}), [chi]: [...prima, { da: 'lei', ora: 'adesso', testo: voce ? 'Vocale ' + voce + ' · ' + testo : testo }] } } };
+      });
+      /* suona(); — spento finché i messaggi sono d'esempio */
+      clearTimeout(this.viaToast); this.viaToast = setTimeout(() => this.setState({ waToast: null }), 9000);
+    }, 120000);
+  }
+  portaFuori(id) {
+    let w = null;
+    try { w = window.open('https://nextsrl-sim.github.io/area-posta/#' + id, 'next-casella-' + id, 'popup,width=900,height=760'); } catch (e) {}
+    this.finestre = this.finestre || {};
+    this.finestre[id] = w;
+    this.setState((st) => ({ fuori: [...((st && st.fuori) || []).filter((x) => x !== id), id] }));
+    if (w) { const t = setInterval(() => { if (!w || w.closed) { clearInterval(t); this.riportaDentro(id); } }, 800); }
+  }
+  riportaDentro(id) {
+    try { const w = this.finestre && this.finestre[id]; if (w && !w.closed) w.close(); } catch (e) {}
+    this.setState((st) => ({ fuori: ((st && st.fuori) || []).filter((x) => x !== id) }));
+  }
+  salva(lay) { this.setState({ lay }); try { window.localStorage.setItem(CHIAVE, JSON.stringify(lay)); } catch (e) {} }
+  renderVals() {
+    const s = this.state || {};
+    const lay0 = s.lay || INIZIALE;
+    const lay = { ...lay0, mini: lay0.mini || [], taglie: lay0.taglie || {}, alte: lay0.alte || {} };
+    const vista = s.vista || {};
+    const sel = s.sel || {};
+    const sposta = (da, a) => {
+      if (!da || da === a) return;
+      const o = lay.ordine.filter((x) => x !== da);
+      const i = o.indexOf(a);
+      o.splice(i < 0 ? o.length : i, 0, da);
+      this.salva({ ...lay, ordine: o });
+    };
+    const base = (id) => {
+      const c = CASELLE[id];
+      const nuove = c.in.filter((x) => x.nuova).length;
+      return { ...c, id, nonLette: String(nuove), nc: nuove ? '#0891B2' : 'var(--ink3)', nb: nuove ? 'var(--acw)' : 'var(--ln)',
+        drag: (e) => { this.trascina = id; try { e.dataTransfer.setData('text/plain', id); } catch (x) {} },
+        drop: (e) => { if (e && e.preventDefault) e.preventDefault(); sposta(this.trascina, id); this.trascina = null; } };
+    };
+    const aperta = (id) => lay.puntate.includes(id) || lay.aperta === id;
+    const vuota = { chi: '—', ora: '', oggetto: 'nessuna mail' };
+    const mini = lay.ordine.filter((id) => !aperta(id) && lay.mini.includes(id)).map((id) => {
+      const c = base(id);
+      return { ...c, nArrivate: String(c.in.length), apri: () => this.salva({ ...lay, aperta: id }),
+        aFascetta: () => this.salva({ ...lay, mini: lay.mini.filter((y) => y !== id) }) };
+    });
+    const chiuse = lay.ordine.filter((id) => !aperta(id) && !lay.mini.includes(id)).map((id) => {
+      const c = base(id);
+      const tutte = [...c.in, ...c.out];
+      const altre = tutte.slice(1);
+      const nastro = altre.length ? [...altre, ...altre] : [];
+      return { ...c, ultima: tutte[0] || vuota, nastro, durata: String(Math.max(18, altre.length * 9)), apri: () => this.salva({ ...lay, aperta: id }),
+        aMini: () => this.salva({ ...lay, mini: [...lay.mini, id] }) };
+    });
+    const fuori = s.fuori || [];
+    const fuoriVista = fuori.map((id) => ({ ...base(id), dentro: () => this.riportaDentro(id) }));
+    const aperte = lay.ordine.filter((id) => aperta(id) && !fuori.includes(id)).map((id) => {
+      const c = base(id);
+      const p = lay.puntate.includes(id);
+      const t = lay.taglie[id] || 2;
+      const hi = lay.alte[id] === undefined ? 1 : lay.alte[id];
+      const v = vista[id] || 'in';
+      const elenco = v === 'in' ? c.in : c.out;
+      const k = sel[id + v] || 0;
+      const lista = elenco.map((x, i) => ({ ...x, tc: TAG[x.tag].c, tb: TAG[x.tag].b, tag: TAG[x.tag].t, peso: x.nuova ? '800' : '600',
+        bordo: i === k ? c.col : 'transparent', bg: i === k ? 'var(--sf2)' : 'var(--sf)', pick: () => { this.setState({ sel: { ...sel, [id + v]: i } }); if (t === 2) this.salva({ ...lay, taglie: { ...lay.taglie, [id]: 3 } }); } }));
+      const x = elenco[k] || elenco[0] || { chi: '—', ora: '', oggetto: 'Nessuna mail', testo: '', sistema: 'niente da fare.', az: 'Aggiorna' };
+      const apriIntera = () => {
+        const inArr = v === 'in';
+        const daNome = inArr ? x.chi : 'Next S.r.l.';
+        const daMail = inArr ? mailDi(x.chi) : c.indirizzo;
+        const allegati = /preventivo|fattura|ddt|ordine|rapporto|procedura|offerta/i.test(x.oggetto) ? [{ tipo: 'PDF', nome: x.oggetto.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '') + '.pdf', peso: '184 KB' }] : [];
+        this.setState({ risp: null, intera: { ...x, casella: c.nome, cartella: inArr ? 'Posta in arrivo' : 'Posta inviata', col: c.col,
+          tc: TAG[x.tag].c, tb: TAG[x.tag].b, tag: TAG[x.tag].t, daNome, daMail, iniziali: iniziali(daNome),
+          a: inArr ? 'Next S.r.l. <' + c.indirizzo + '>' : x.chi + ' <' + mailDi(x.chi) + '>',
+          haCc: inArr && id !== 'sante', cc: 'Sante Bortoletto <sante@next-srl.eu>',
+          data: /\d/.test(x.ora) ? 'mer 28/10/2026 ' + x.ora : x.ora, allegati, haAllegati: allegati.length > 0,
+          firma: inArr ? '' : 'Next S.r.l.\nnext-srl.eu' } });
+      };
+      return { ...c, lista, apriIntera, span: String(t), colonne: t === 2 ? '40px minmax(0, 1fr)' : '40px minmax(0, 0.95fr) minmax(0, 1.25fr)', prev: t === 2 ? 'none' : 'flex', daLeggere: t === 2 ? '' : ' da leggere', taglia: NOME_TAGLIA[t], w0: '#0891B2', w1: t > 2 ? '#0891B2' : 'var(--ln)', w2: t > 3 ? '#0891B2' : 'var(--ln)', h0: '#0891B2', h1: hi > 0 ? '#0891B2' : 'var(--ln)', h2: hi > 1 ? '#0891B2' : 'var(--ln)', h: String(ALTEZZE[hi]), altezza: NOME_ALTEZZA[hi], altezzaBreve: BREVE_ALTEZZA[hi], sel: { ...x, verso: v === 'in' ? 'Da' : 'A' },
+        nIn: String(c.in.length), nOut: String(c.out.length),
+        inSel: v === 'in' ? 'true' : 'false', outSel: v === 'out' ? 'true' : 'false',
+        inBg: v === 'in' ? 'var(--acw)' : 'transparent', inFg: v === 'in' ? '#0891B2' : 'var(--ink2)',
+        outBg: v === 'out' ? 'var(--acw)' : 'transparent', outFg: v === 'out' ? '#0891B2' : 'var(--ink2)',
+        vaiIn: () => this.setState({ vista: { ...vista, [id]: 'in' } }), vaiOut: () => this.setState({ vista: { ...vista, [id]: 'out' } }),
+        puntaLabel: p ? 'Togli la puntina' : 'Tieni aperta', pBd: p ? '#0891B2' : 'var(--ln)', pBg: p ? 'var(--acw)' : 'var(--sf)', pFg: p ? '#0891B2' : 'var(--ink3)',
+        punta: () => this.salva({ ...lay, puntate: p ? lay.puntate.filter((y) => y !== id) : [...lay.puntate, id], aperta: p ? id : (lay.aperta === id ? null : lay.aperta) }),
+        chiudi: () => this.salva({ ...lay, puntate: lay.puntate.filter((y) => y !== id), aperta: lay.aperta === id ? null : lay.aperta }),
+        allarga: () => this.salva({ ...lay, taglie: { ...lay.taglie, [id]: TAGLIE[(TAGLIE.indexOf(t) + 1) % TAGLIE.length] } }),
+        stacca: () => this.portaFuori(id),
+        alza: () => this.salva({ ...lay, alte: { ...lay.alte, [id]: (hi + 1) % ALTEZZE.length } }) };
+    });
+    let temaV = 'giorno';
+    try { temaV = (this.state && this.state.tema) || window.localStorage.getItem('next-tema') || 'giorno'; } catch (e) {}
+    const temaX = { tema: temaV, temaLabel: temaV === 'notte' ? 'Passa al tema di giorno' : 'Passa al tema di notte', temaIcona: temaV === 'notte' ? 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4' : 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z',
+      cambiaTema: () => { const n = temaV === 'notte' ? 'giorno' : 'notte'; this.setState({ tema: n }); try { window.localStorage.setItem('next-tema', n); } catch (e) {} } };
+    const fuoriPagina = (url, nome) => () => { try { window.open(url, 'next-pagina-' + nome, 'popup,width=1320,height=900'); } catch (e) {} };
+    const apriFuoriArea = fuoriPagina('https://nextsrl-sim.github.io/area-lavoro/', 'area');
+    const apriFuoriPosta = fuoriPagina('https://nextsrl-sim.github.io/area-posta/', 'posta');
+    const waS = s.wa || { aperto: false, chi: 'paola', testo: '', inviati: {} };
+    const setWa = (x) => this.setState({ wa: { ...waS, ...x } });
+    const wc = WA.find((k) => k.id === waS.chi) || WA[0];
+    const extra = (waS.inviati || {})[wc.id] || [];
+    const tw = s.waToast;
+    const twc = tw ? (WA.find((k) => k.id === tw.chi) || WA[0]) : null;
+    const waIn = { ha: (s.waNon || 0) > 0, n: String(s.waNon || 0), toast: !!tw,
+      ultimo: tw ? { nome: twc.nome, ruolo: twc.ruolo, testo: tw.testo, voce: tw.voce || '', haVoce: !!tw.voce } : {},
+      chiudiToast: () => this.setState({ waToast: null }),
+      rispondi: () => this.setState({ waToast: null, waNon: 0, wa: { ...waS, aperto: true, chi: tw ? tw.chi : waS.chi } }) };
+    const wa = { aperto: !!waS.aperto, chiuso: !waS.aperto, testo: waS.testo || '',
+      apri: () => this.setState({ waNon: 0, wa: { ...waS, aperto: true } }), chiudi: () => setWa({ aperto: false }),
+      scrivi: (e) => setWa({ testo: e && e.target ? e.target.value : '' }),
+      invia: () => { const t = (waS.testo || '').trim(); if (!t) return; setWa({ testo: '', inviati: { ...(waS.inviati || {}), [wc.id]: [...extra, { da: 'next', ora: 'ora', testo: wc.aperta ? t : '[Modello di ricontatto] ' + t }] } }); },
+      cerca: (e) => setWa({ cerca: e && e.target ? e.target.value : '' }),
+      titoloLista: (waS.cerca || '').trim() ? 'Dalla rubrica' : 'Recenti',
+      contatti: (((waS.cerca || '').trim()) ? WA.filter((k) => (k.nome + ' ' + k.ruolo).toLowerCase().includes(waS.cerca.trim().toLowerCase())) : WA.slice(0, 4).concat(WA.find((k) => k.id === waS.chi && WA.indexOf(k) > 3) ? [wc] : [])).map((k) => { const sel = k.id === wc.id; return { ...k, sel: sel ? 'true' : 'false', bd: sel ? '#16A34A' : 'var(--ln)', bg: sel ? 'var(--grw)' : 'var(--sf)', fg: sel ? '#15803D' : 'var(--ink2)', pall: k.aperta ? '#16A34A' : '#B45309', scegli: () => setWa({ chi: k.id }) }; }),
+      c: { ...wc, finestra: wc.aperta ? 'Conversazione aperta: il messaggio parte così come lo scrivi' : 'Conversazione chiusa da più di 24 ore: parte il modello di ricontatto approvato',
+        fc: wc.aperta ? '#15803D' : '#B45309', tasto: wc.aperta ? 'Invia' : 'Invia modello', nota: wc.aperta ? '' : 'WhatsApp non permette testo libero dopo 24 ore',
+        segnaposto: wc.aperta ? 'Scrivi a ' + wc.nome + '…' : 'Testo da mettere nel modello di ricontatto…' },
+      storia: [...wc.storia, ...extra].map((h) => ({ ...h, lato: h.da === 'next' ? 'flex-end' : 'flex-start', bg: h.da === 'next' ? 'var(--grw)' : 'var(--sf)' })) };
+    return { waIn, wa, ...temaX, apriFuoriArea, apriFuoriPosta, fuoriVista, haFuori: fuoriVista.length > 0, mini, chiuse, aperte, haIntera: !!s.intera, intera: s.intera || {}, chiudiIntera: () => this.setState({ intera: null, risp: null }),
+      inRisposta: !!(s.intera && s.risp), risposta: risposta(s.intera, s.risp),
+      rispondi: () => this.setState({ risp: 'r' }), rispondiTutti: () => this.setState({ risp: 't' }), inoltra: () => this.setState({ risp: 'i' }), annullaRisposta: () => this.setState({ risp: null }), sopra: (e) => { if (e && e.preventDefault) e.preventDefault(); }, ripristina: () => this.salva(INIZIALE) };
+  }
+}
+</script>
+</body>
+</html>
