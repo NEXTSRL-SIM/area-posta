@@ -850,7 +850,8 @@ async function pvLeggiTutto() {
   for (const c of Object.keys(j.caselle || {})) {
     const id = PV_ID[c]; if (!id) continue;
     const x = j.caselle[c];
-    per[id] = { in: (x.in || []).map((m) => pvVoce(m, c, 'in')), out: (x.out || []).map((m) => pvVoce(m, c, 'out')), errore: x.errore || null };
+    /* la pubblicità non si mostra (decisione di Sante, 29/10): resta solo nella casella di posta */
+    per[id] = { in: (x.in || []).filter((m) => m.chi_tipo !== 'pubblicita').map((m) => pvVoce(m, c, 'in')), out: (x.out || []).map((m) => pvVoce(m, c, 'out')), errore: x.errore || null };
   }
   return { per, alle: j.letto_alle };
 }
