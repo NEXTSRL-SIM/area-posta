@@ -278,7 +278,7 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 
 <section aria-label="Caselle chiuse" style="display: flex; flex-direction: column; gap: 6px;">
 <sc-for list="{{chiuse}}" as="c" hint-placeholder-count="6">
-<div draggable="true" onDragStart="{{c.drag}}" onDragOver="{{sopra}}" onDrop="{{c.drop}}" style="display: grid; grid-template-columns: 14px 190px minmax(0, 300px) minmax(0, 1fr) 30px 30px; gap: 12px; align-items: center; background: color-mix(in srgb, {{c.col}} 11%, var(--sf)); border: 1px solid var(--ln); border-radius: 12px; height: 42px; padding: 0 6px 0 10px; cursor: grab;">
+<div draggable="true" onDragStart="{{c.drag}}" onDragOver="{{sopra}}" onDrop="{{c.drop}}" style="display: grid; grid-template-columns: 14px 190px minmax(0, 300px) minmax(0, 1fr) 30px 30px; gap: 12px; align-items: center; background: var(--sf); border: 2px solid {{c.col}}; border-radius: 12px; height: 42px; padding: 0 6px 0 10px; cursor: grab;">
 <svg aria-hidden="true" width="12" height="16" viewBox="0 0 12 16" fill="#94A3B8"><circle cx="3" cy="3" r="1.4"></circle><circle cx="9" cy="3" r="1.4"></circle><circle cx="3" cy="8" r="1.4"></circle><circle cx="9" cy="8" r="1.4"></circle><circle cx="3" cy="13" r="1.4"></circle><circle cx="9" cy="13" r="1.4"></circle></svg>
 <button onClick="{{c.apri}}" style="font: 700 13px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink); cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 0; text-align: left;"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{c.col}};"></span>{{c.nome}}<span style="font-size: 11px; font-weight: 800; border-radius: 999px; padding: 1px 7px; color: {{c.nc}}; background: {{c.nb}};">{{c.nonLette}}</span></button>
 <span style="font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><b style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; color: var(--ink3);">{{c.ultima.ora}}</b> <b>{{c.ultima.chi}}</b> — {{c.ultima.oggetto}}</span>
@@ -304,8 +304,8 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 
 <section aria-label="Caselle aperte" class="{{clsC}}" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px;">
 <sc-for list="{{aperte}}" as="c" hint-placeholder-count="4">
-<article draggable="true" onDragStart="{{c.drag}}" onDragOver="{{sopra}}" onDrop="{{c.drop}}" style="grid-column: span {{c.span}}; background: var(--sf); border: 1px solid var(--ln); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; height: {{c.h}}px; min-width: 0;">
-<div style="display: flex; align-items: center; gap: 8px; padding: 9px 10px 9px 12px; border-bottom: 1px solid var(--ln); background: color-mix(in srgb, {{c.col}} 11%, var(--sf));">
+<article draggable="true" onDragStart="{{c.drag}}" onDragOver="{{sopra}}" onDrop="{{c.drop}}" style="grid-column: span {{c.span}}; background: var(--sf); border: 2px solid {{c.col}}; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; height: {{c.h}}px; min-width: 0;">
+<div style="display: flex; align-items: center; gap: 8px; padding: 9px 10px 9px 12px; border-bottom: 2px solid {{c.col}}; background: var(--sf);">
 <span style="cursor: grab; display: flex; padding: 2px;"><svg aria-hidden="true" width="12" height="16" viewBox="0 0 12 16" fill="#94A3B8"><circle cx="3" cy="3" r="1.4"></circle><circle cx="9" cy="3" r="1.4"></circle><circle cx="3" cy="8" r="1.4"></circle><circle cx="9" cy="8" r="1.4"></circle><circle cx="3" cy="13" r="1.4"></circle><circle cx="9" cy="13" r="1.4"></circle></svg></span>
 <span style="width: 8px; height: 8px; border-radius: 50%; background: {{c.col}};"></span>
 <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0;"><h2 style="margin: 0; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.nome}}</h2><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.indirizzo}}</span></div>
@@ -332,8 +332,8 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 </div>
 <div style="padding: 12px 14px; overflow-y: auto; display: {{c.prev}}; flex-direction: column; gap: 8px; min-width: 0;">
 <span style="font-size: 16px; font-weight: 700; line-height: 1.35;">{{c.sel.oggetto}}</span>
-<span style="font-size: 12.5px; color: var(--ink3);">{{c.sel.verso}} {{c.sel.chi}} · {{c.sel.ora}}</span>
-<p style="margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere;">{{c.sel.testo}}</p><sc-if value="{{c.sel.haDocs}}"><div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{c.sel.docs}}" as="d"><a href="{{d.url}}" target="_blank" rel="noopener" title="Apri {{d.nome}}" style="display: flex; align-items: center; gap: 10px; border: 1px solid var(--ln); border-radius: 10px; padding: 6px 12px 6px 8px; text-decoration: none; color: var(--ink); background: var(--sf);"><svg aria-hidden="true" width="26" height="31" viewBox="0 0 30 36" style="flex: 0 0 auto;"><path d="M3 1h16l8 8v24a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z" fill="#fff" stroke="#D5DBE3"></path><path d="M19 1v8h8" fill="#E5E7EB"></path><rect x="1" y="20" width="22" height="10" rx="1.5" fill="{{d.fascia}}"></rect><text x="12" y="27.8" font-family="Arial,sans-serif" font-size="{{d.fs}}" font-weight="700" fill="#fff" text-anchor="middle">{{d.est}}</text></svg><span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;">{{d.nome}}</span><span style="font-size: 11px; color: var(--ink3);">{{d.est}}</span></span></a></sc-for></div></sc-if>
+<sc-if value="{{c.sel.mostraMeta}}"><span style="font-size: 12.5px; color: var(--ink3);">{{c.sel.verso}} {{c.sel.chi}} · {{c.sel.ora}}</span></sc-if><sc-if value="{{c.sel.haInd}}"><div style="display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1px 8px; font-size: 11.5px; color: var(--ink2); line-height: 1.45;"><span style="color: var(--ink3);">Da</span><span style="overflow-wrap: anywhere;">{{c.sel.daInd}}</span><span style="color: var(--ink3);">A</span><span style="overflow-wrap: anywhere;">{{c.sel.aInd}}</span><span style="color: var(--ink3);">Data</span><span>{{c.sel.dataInd}}</span></div></sc-if><sc-if value="{{c.sel.haDocs}}"><div style="display: flex; flex-wrap: wrap; gap: 5px;"><sc-for list="{{c.sel.docs}}" as="d"><a href="{{d.url}}" target="_blank" rel="noopener" title="Apri {{d.nome}}" style="display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--ln); border-radius: 8px; padding: 3px 8px 3px 4px; text-decoration: none; color: var(--ink); background: var(--sf); max-width: 220px;"><svg aria-hidden="true" width="17" height="20" viewBox="0 0 30 36" style="flex: 0 0 auto;"><path d="M3 1h16l8 8v24a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z" fill="#fff" stroke="#D5DBE3"></path><path d="M19 1v8h8" fill="#E5E7EB"></path><rect x="1" y="20" width="22" height="10" rx="1.5" fill="{{d.fascia}}"></rect><text x="12" y="27.8" font-family="Arial,sans-serif" font-size="{{d.fs}}" font-weight="700" fill="#fff" text-anchor="middle">{{d.est}}</text></svg><span style="font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{d.nome}}</span></a></sc-for></div></sc-if>
+<p style="margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere;">{{c.sel.testo}}</p>
 <sc-if value="{{c.sel.haSistema}}"><div style="background: var(--acw); border: 1px solid var(--acw); border-radius: 10px; padding: 8px 10px; font-size: 11.5px; line-height: 1.45; color: #0891B2;"><b>Il sistema:</b> {{c.sel.sistema}}</div></sc-if>
 <div style="display: grid; grid-template-columns: {{c.sel.colBott}}; gap: 6px; margin-top: auto;">
 <sc-if value="{{c.sel.haAz}}"><button style="font: 700 13.5px Manrope, sans-serif; border: 1px solid #0891B2; border-radius: 10px; height: 40px; background: #0891B2; color: #FFFFFF; cursor: pointer;">{{c.sel.az}}</button></sc-if>
@@ -652,7 +652,7 @@ class Component extends DCLogic {
           data: /\d/.test(x.ora) ? 'mer 28/10/2026 ' + x.ora : x.ora, allegati, haAllegati: allegati.length > 0, finta: true, vera: false,
           firma: inArr ? '' : 'Next S.r.l.\nnext-srl.eu' } });
       };
-      return { ...c, lista, apriIntera, span: String(t), colonne: t === 2 ? '40px minmax(0, 1fr)' : '40px minmax(0, 0.95fr) minmax(0, 1.25fr)', prev: t === 2 ? 'none' : 'flex', daLeggere: t === 2 ? '' : ' da leggere', taglia: NOME_TAGLIA[t], w0: '#0891B2', w1: t > 2 ? '#0891B2' : 'var(--ln)', w2: t > 3 ? '#0891B2' : 'var(--ln)', h0: '#0891B2', h1: hi > 0 ? '#0891B2' : 'var(--ln)', h2: hi > 1 ? '#0891B2' : 'var(--ln)', h: String(this.solo ? Math.max(420, (window.innerHeight || 800) - 70) : ALTEZZE[hi]), altezza: NOME_ALTEZZA[hi], altezzaBreve: BREVE_ALTEZZA[hi], sel: { ...x, verso: v === 'in' ? 'Da' : 'A', ...this.selVera(x) },
+      return { ...c, lista, apriIntera, span: String(t), colonne: t === 2 ? '40px minmax(0, 1fr)' : '40px minmax(0, 0.95fr) minmax(0, 1.25fr)', prev: t === 2 ? 'none' : 'flex', daLeggere: t === 2 ? '' : ' da leggere', taglia: NOME_TAGLIA[t], w0: '#0891B2', w1: t > 2 ? '#0891B2' : 'var(--ln)', w2: t > 3 ? '#0891B2' : 'var(--ln)', h0: '#0891B2', h1: hi > 0 ? '#0891B2' : 'var(--ln)', h2: hi > 1 ? '#0891B2' : 'var(--ln)', h: String(this.solo ? Math.max(420, (window.innerHeight || 800) - 70) : ALTEZZE[hi]), altezza: NOME_ALTEZZA[hi], altezzaBreve: BREVE_ALTEZZA[hi], sel: { ...x, verso: v === 'in' ? 'Da' : 'A', mostraMeta: !x.vera, ...this.selVera(x) },
         nIn: String(c.in.length), nOut: String(c.out.length),
         inSel: v === 'in' ? 'true' : 'false', outSel: v === 'out' ? 'true' : 'false',
         inBg: v === 'in' ? 'var(--acw)' : 'transparent', inFg: v === 'in' ? '#0891B2' : 'var(--ink2)',
@@ -891,12 +891,15 @@ Object.assign(TAG, {
   sconosciuto: { t: 'Da riconoscere', c: 'var(--ink2)', b: 'transparent' }
 });
 Component.prototype.selVera = function (x) {
-  if (!x || !x.vera) return { docs: [], haDocs: false, haSistema: !!x.sistema, haAz: !!x.az, colBott: x.az ? 'repeat(2, minmax(0, 1fr))' : 'minmax(0, 1fr)' };
+  if (!x || !x.vera) return { docs: [], haDocs: false, haInd: false, daInd: '', aInd: '', dataInd: '', haSistema: !!x.sistema, haAz: !!x.az, colBott: x.az ? 'repeat(2, minmax(0, 1fr))' : 'minmax(0, 1fr)' };
   const t = PV_TESTI[x.chiave];
   if (!t) setTimeout(() => this.postaVeraApri(x), 0);
   const docs = (t && t.docs) || [];
   return { testo: !t || t.carica ? 'Sto aprendo la mail…' : (t.errore ? 'Non riesco ad aprirla: ' + t.errore + '.' : (t.testo || '(mail senza testo)')),
-    docs, haDocs: docs.length > 0, haSistema: !!x.sistema, haAz: false, colBott: 'minmax(0, 1fr)' };
+    docs, haDocs: docs.length > 0, haSistema: !!x.sistema, haAz: false, colBott: 'minmax(0, 1fr)',
+    haInd: true, daInd: x.cartella === 'INBOX' ? ((t && t.nome) || x.chi) + ' <' + ((t && t.da) || x.da) + '>' : 'Next S.r.l.',
+    aInd: pvPulisci((t && t.a) || x.a) || (x.cartella === 'INBOX' ? x.casella + '@next-srl.eu' : x.chi),
+    dataInd: pvData(x.iso), docsAttesa: !t && x.haClip };
 };
 Component.prototype.postaVeraApri = function (x) {
   const t = PV_TESTI[x.chiave];
