@@ -172,6 +172,12 @@ nav[aria-label="Menu Next"] .mn-fuori:hover{color:#22D3EE;background:rgba(34,211
 @keyframes entra{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
 @keyframes pulsa{0%,100%{opacity:1}50%{opacity:.35}}
 *{scrollbar-width:none}*::-webkit-scrollbar{display:none}
+html.finestra nav[aria-label="Menu Next"],html.solo nav[aria-label="Menu Next"]{display:none!important}
+html.solo main{padding:10px!important;gap:0!important}
+html.solo main > *:not(.solo-tieni){display:none!important}
+html.solo .solo-tieni{grid-template-columns:1fr!important}
+html.solo article > div:first-child > button{display:none!important}
+html.solo .solo-tieni > *{grid-column:1 / -1!important}
 html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 </style>
 </helmet>
@@ -209,6 +215,7 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 <a href="https://nextsrl-sim.github.io/area-lavoro/" role="tab" aria-selected="false" style="font-size: 13.5px; font-weight: 700; color: var(--ink2); text-decoration: none; padding: 10px 14px; border-bottom: 2px solid transparent;">Area di lavoro</a>
 <a href="#" role="tab" aria-selected="true" style="font-size: 13.5px; font-weight: 700; color: #0891B2; text-decoration: none; padding: 10px 14px; border-bottom: 2px solid #0891B2;">Posta</a>
 <a href="https://nextsrl-sim.github.io/area-automatismi/" role="tab" aria-selected="false" style="font-size: 13.5px; font-weight: 700; color: var(--ink2); text-decoration: none; padding: 10px 14px; border-bottom: 2px solid transparent;">Automatismi</a>
+<button onClick="{{inFinestra}}" title="Apri questa scheda in una finestra, da spostare su un altro monitor" aria-label="Apri questa scheda in una finestra" style="margin-left: auto; align-self: center; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--ln); background: var(--sf); color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="14" height="14" rx="2"></rect><path d="M11 3h10v10M21 3l-9 9"></path></svg></button>
 </div>
 
 <header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px;">
@@ -262,7 +269,7 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 </section>
 </sc-if>
 
-<section aria-label="Caselle aperte" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px;">
+<section aria-label="Caselle aperte" class="{{clsC}}" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px;">
 <sc-for list="{{aperte}}" as="c" hint-placeholder-count="4">
 <article draggable="true" onDragStart="{{c.drag}}" onDragOver="{{sopra}}" onDrop="{{c.drop}}" style="grid-column: span {{c.span}}; background: var(--sf); border: 1px solid var(--ln); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; height: {{c.h}}px; min-width: 0;">
 <div style="display: flex; align-items: center; gap: 8px; padding: 9px 10px 9px 12px; border-bottom: 1px solid var(--ln);">
@@ -512,6 +519,10 @@ const WA = [
 class Component extends DCLogic {
   componentWillUnmount() { clearInterval(this.giroWa); clearTimeout(this.viaToast); }
   componentDidMount() {
+    try { const h0 = (window.location.hash || '').slice(1);
+      if (h0 === 'finestra') document.documentElement.classList.add('finestra');
+      if (h0.indexOf('solo-') === 0) { this.solo = h0.slice(5); document.documentElement.classList.add('solo'); this.setState({ solo: this.solo }); document.title = 'Next · posta'; }
+    } catch (e) {}
     let lay = null;
     try { const t = window.localStorage.getItem(CHIAVE); if (t) lay = JSON.parse(t); } catch (e) {}
     let h = '';
@@ -534,7 +545,7 @@ class Component extends DCLogic {
   }
   portaFuori(id) {
     let w = null;
-    try { w = window.open('https://nextsrl-sim.github.io/area-posta/#' + id, 'next-casella-' + id, 'popup,width=900,height=760'); } catch (e) {}
+    try { w = window.open('https://nextsrl-sim.github.io/area-posta/#solo-' + id, 'next-casella-' + id, 'popup,width=900,height=760'); } catch (e) {}
     this.finestre = this.finestre || {};
     this.finestre[id] = w;
     this.setState((st) => ({ fuori: [...((st && st.fuori) || []).filter((x) => x !== id), id] }));
@@ -544,7 +555,7 @@ class Component extends DCLogic {
     try { const w = this.finestre && this.finestre[id]; if (w && !w.closed) w.close(); } catch (e) {}
     this.setState((st) => ({ fuori: ((st && st.fuori) || []).filter((x) => x !== id) }));
   }
-  salva(lay) { this.setState({ lay }); try { window.localStorage.setItem(CHIAVE, JSON.stringify(lay)); } catch (e) {} }
+  salva(lay) { this.setState({ lay }); if (this.solo) return; try { window.localStorage.setItem(CHIAVE, JSON.stringify(lay)); } catch (e) {} }
   renderVals() {
     const s = this.state || {};
     const lay0 = s.lay || INIZIALE;
@@ -582,10 +593,10 @@ class Component extends DCLogic {
     });
     const fuori = s.fuori || [];
     const fuoriVista = fuori.map((id) => ({ ...base(id), dentro: () => this.riportaDentro(id) }));
-    const aperte = lay.ordine.filter((id) => aperta(id) && !fuori.includes(id)).map((id) => {
+    const aperte = (this.solo && CASELLE[this.solo] ? [this.solo] : lay.ordine.filter((id) => aperta(id) && !fuori.includes(id))).map((id) => {
       const c = base(id);
       const p = lay.puntate.includes(id);
-      const t = lay.taglie[id] || 2;
+      const t = this.solo ? 6 : (lay.taglie[id] || 2);
       const hi = lay.alte[id] === undefined ? 1 : lay.alte[id];
       const v = vista[id] || 'in';
       const elenco = v === 'in' ? c.in : c.out;
@@ -605,7 +616,7 @@ class Component extends DCLogic {
           data: /\d/.test(x.ora) ? 'mer 28/10/2026 ' + x.ora : x.ora, allegati, haAllegati: allegati.length > 0,
           firma: inArr ? '' : 'Next S.r.l.\nnext-srl.eu' } });
       };
-      return { ...c, lista, apriIntera, span: String(t), colonne: t === 2 ? '40px minmax(0, 1fr)' : '40px minmax(0, 0.95fr) minmax(0, 1.25fr)', prev: t === 2 ? 'none' : 'flex', daLeggere: t === 2 ? '' : ' da leggere', taglia: NOME_TAGLIA[t], w0: '#0891B2', w1: t > 2 ? '#0891B2' : 'var(--ln)', w2: t > 3 ? '#0891B2' : 'var(--ln)', h0: '#0891B2', h1: hi > 0 ? '#0891B2' : 'var(--ln)', h2: hi > 1 ? '#0891B2' : 'var(--ln)', h: String(ALTEZZE[hi]), altezza: NOME_ALTEZZA[hi], altezzaBreve: BREVE_ALTEZZA[hi], sel: { ...x, verso: v === 'in' ? 'Da' : 'A' },
+      return { ...c, lista, apriIntera, span: String(t), colonne: t === 2 ? '40px minmax(0, 1fr)' : '40px minmax(0, 0.95fr) minmax(0, 1.25fr)', prev: t === 2 ? 'none' : 'flex', daLeggere: t === 2 ? '' : ' da leggere', taglia: NOME_TAGLIA[t], w0: '#0891B2', w1: t > 2 ? '#0891B2' : 'var(--ln)', w2: t > 3 ? '#0891B2' : 'var(--ln)', h0: '#0891B2', h1: hi > 0 ? '#0891B2' : 'var(--ln)', h2: hi > 1 ? '#0891B2' : 'var(--ln)', h: String(this.solo ? Math.max(420, (window.innerHeight || 800) - 24) : ALTEZZE[hi]), altezza: NOME_ALTEZZA[hi], altezzaBreve: BREVE_ALTEZZA[hi], sel: { ...x, verso: v === 'in' ? 'Da' : 'A' },
         nIn: String(c.in.length), nOut: String(c.out.length),
         inSel: v === 'in' ? 'true' : 'false', outSel: v === 'out' ? 'true' : 'false',
         inBg: v === 'in' ? 'var(--acw)' : 'transparent', inFg: v === 'in' ? '#0891B2' : 'var(--ink2)',
@@ -646,7 +657,9 @@ class Component extends DCLogic {
         fc: wc.aperta ? '#15803D' : '#B45309', tasto: wc.aperta ? 'Invia' : 'Invia modello', nota: wc.aperta ? '' : 'WhatsApp non permette testo libero dopo 24 ore',
         segnaposto: wc.aperta ? 'Scrivi a ' + wc.nome + '…' : 'Testo da mettere nel modello di ricontatto…' },
       storia: [...wc.storia, ...extra].map((h) => ({ ...h, lato: h.da === 'next' ? 'flex-end' : 'flex-start', bg: h.da === 'next' ? 'var(--grw)' : 'var(--sf)' })) };
-    return { waIn, wa, ...temaX, apriFuoriArea, apriFuoriPosta, fuoriVista, haFuori: fuoriVista.length > 0, mini, chiuse, aperte, haIntera: !!s.intera, intera: s.intera || {}, chiudiIntera: () => this.setState({ intera: null, risp: null }),
+    const inFinestra = () => { try { window.open('https://nextsrl-sim.github.io/area-posta/#finestra', 'next-scheda-posta', 'popup,width=1320,height=900'); } catch (e) {} };
+    const clsC = this.solo ? 'solo-tieni' : '';
+    return { inFinestra, clsC, waIn, wa, ...temaX, apriFuoriArea, apriFuoriPosta, fuoriVista, haFuori: fuoriVista.length > 0, mini, chiuse, aperte, haIntera: !!s.intera, intera: s.intera || {}, chiudiIntera: () => this.setState({ intera: null, risp: null }),
       inRisposta: !!(s.intera && s.risp), risposta: risposta(s.intera, s.risp),
       rispondi: () => this.setState({ risp: 'r' }), rispondiTutti: () => this.setState({ risp: 't' }), inoltra: () => this.setState({ risp: 'i' }), annullaRisposta: () => this.setState({ risp: null }), sopra: (e) => { if (e && e.preventDefault) e.preventDefault(); }, ripristina: () => this.salva(INIZIALE) };
   }
