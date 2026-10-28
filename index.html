@@ -84,6 +84,13 @@
     var xdc = document.querySelector('x-dc');
     var codice = document.querySelector('script[type="text/x-dc"]');
     if (!xdc || !codice) return;
+    /* l'accesso del portale vale anche quando la pagina è aperta da sola (app sul desktop, altro monitor):
+       chi entra dal portale lo lascia su questo computer, la pagina aperta da sola lo ritrova. */
+    try {
+      var ps = sessionStorage.getItem('regia_pass');
+      if (ps) { localStorage.setItem('next_regia_pass', ps); var ch = sessionStorage.getItem('regia_chi'); if (ch) localStorage.setItem('next_regia_chi', ch); }
+      else { var pl = localStorage.getItem('next_regia_pass'); if (pl) { sessionStorage.setItem('regia_pass', pl); var cl = localStorage.getItem('next_regia_chi'); if (cl) sessionStorage.setItem('regia_chi', cl); } }
+    } catch (e) {}
     try { if (window.self !== window.top) document.documentElement.classList.add('incorniciata'); } catch (e) { document.documentElement.classList.add('incorniciata'); }
     var helmet = xdc.querySelector('helmet');
     if (helmet) { while (helmet.firstChild) document.head.appendChild(helmet.firstChild); helmet.remove(); }
@@ -271,7 +278,7 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 
 <section aria-label="Caselle chiuse" style="display: flex; flex-direction: column; gap: 6px;">
 <sc-for list="{{chiuse}}" as="c" hint-placeholder-count="6">
-<div draggable="true" onDragStart="{{c.drag}}" onDragOver="{{sopra}}" onDrop="{{c.drop}}" style="display: grid; grid-template-columns: 14px 190px minmax(0, 300px) minmax(0, 1fr) 30px 30px; gap: 12px; align-items: center; background: var(--sf); border: 1px solid var(--ln); border-radius: 12px; height: 42px; padding: 0 6px 0 10px; cursor: grab;">
+<div draggable="true" onDragStart="{{c.drag}}" onDragOver="{{sopra}}" onDrop="{{c.drop}}" style="display: grid; grid-template-columns: 14px 190px minmax(0, 300px) minmax(0, 1fr) 30px 30px; gap: 12px; align-items: center; background: color-mix(in srgb, {{c.col}} 11%, var(--sf)); border: 1px solid var(--ln); border-radius: 12px; height: 42px; padding: 0 6px 0 10px; cursor: grab;">
 <svg aria-hidden="true" width="12" height="16" viewBox="0 0 12 16" fill="#94A3B8"><circle cx="3" cy="3" r="1.4"></circle><circle cx="9" cy="3" r="1.4"></circle><circle cx="3" cy="8" r="1.4"></circle><circle cx="9" cy="8" r="1.4"></circle><circle cx="3" cy="13" r="1.4"></circle><circle cx="9" cy="13" r="1.4"></circle></svg>
 <button onClick="{{c.apri}}" style="font: 700 13px Manrope, sans-serif; border: 0; background: transparent; color: var(--ink); cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 0; text-align: left;"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{c.col}};"></span>{{c.nome}}<span style="font-size: 11px; font-weight: 800; border-radius: 999px; padding: 1px 7px; color: {{c.nc}}; background: {{c.nb}};">{{c.nonLette}}</span></button>
 <span style="font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><b style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; color: var(--ink3);">{{c.ultima.ora}}</b> <b>{{c.ultima.chi}}</b> — {{c.ultima.oggetto}}</span>
@@ -298,7 +305,7 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 <section aria-label="Caselle aperte" class="{{clsC}}" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px;">
 <sc-for list="{{aperte}}" as="c" hint-placeholder-count="4">
 <article draggable="true" onDragStart="{{c.drag}}" onDragOver="{{sopra}}" onDrop="{{c.drop}}" style="grid-column: span {{c.span}}; background: var(--sf); border: 1px solid var(--ln); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; height: {{c.h}}px; min-width: 0;">
-<div style="display: flex; align-items: center; gap: 8px; padding: 9px 10px 9px 12px; border-bottom: 1px solid var(--ln);">
+<div style="display: flex; align-items: center; gap: 8px; padding: 9px 10px 9px 12px; border-bottom: 1px solid var(--ln); background: color-mix(in srgb, {{c.col}} 11%, var(--sf));">
 <span style="cursor: grab; display: flex; padding: 2px;"><svg aria-hidden="true" width="12" height="16" viewBox="0 0 12 16" fill="#94A3B8"><circle cx="3" cy="3" r="1.4"></circle><circle cx="9" cy="3" r="1.4"></circle><circle cx="3" cy="8" r="1.4"></circle><circle cx="9" cy="8" r="1.4"></circle><circle cx="3" cy="13" r="1.4"></circle><circle cx="9" cy="13" r="1.4"></circle></svg></span>
 <span style="width: 8px; height: 8px; border-radius: 50%; background: {{c.col}};"></span>
 <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0;"><h2 style="margin: 0; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.nome}}</h2><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.indirizzo}}</span></div>
@@ -316,17 +323,17 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 </div>
 <div style="overflow-y: auto; border-right: 1px solid var(--ln); min-width: 0;">
 <sc-for list="{{c.lista}}" as="m" hint-placeholder-count="4">
-<button onClick="{{m.pick}}" style="font: inherit; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--ln); border-left: 3px solid {{m.bordo}}; background: {{m.bg}}; padding: 6px 9px; cursor: pointer; display: flex; flex-direction: column; gap: 1px; color: var(--ink);">
-<span style="display: flex; gap: 6px; align-items: baseline;"><span style="font-size: 10.5px; font-weight: {{m.peso}}; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{m.chi}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; color: var(--ink3);">{{m.ora}}</span></span>
-<span style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{m.oggetto}}</span>
-<span><span style="font-size: 9px; font-weight: 700; border-radius: 999px; padding: 1px 6px; color: {{m.tc}}; background: {{m.tb}};">{{m.tag}}</span></span>
+<button onClick="{{m.pick}}" style="font: inherit; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--ln); border-left: 3px solid {{m.bordo}}; background: {{m.bg}}; padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 3px; color: var(--ink);">
+<span style="display: flex; gap: 6px; align-items: baseline;"><span title="{{m.nonLetta}}" style="flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: {{m.punto}}; align-self: center;"></span><span style="font-size: 12.5px; font-weight: {{m.peso}}; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{m.chi}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink3);">{{m.ora}}</span></span>
+<span style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{m.oggetto}}</span>
+<span><span style="font-size: 10px; font-weight: 700; border-radius: 999px; padding: 1px 7px; color: {{m.tc}}; background: {{m.tb}};">{{m.tag}}</span></span>
 </button>
 </sc-for>
 </div>
 <div style="padding: 12px 14px; overflow-y: auto; display: {{c.prev}}; flex-direction: column; gap: 8px; min-width: 0;">
-<span style="font-size: 13px; font-weight: 700; line-height: 1.35;">{{c.sel.oggetto}}</span>
-<span style="font-size: 10.5px; color: var(--ink3);">{{c.sel.verso}} {{c.sel.chi}} · {{c.sel.ora}}</span>
-<p style="margin: 0; font-size: 12px; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere;">{{c.sel.testo}}</p><sc-if value="{{c.sel.haDocs}}"><div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{c.sel.docs}}" as="d"><a href="{{d.url}}" target="_blank" rel="noopener" title="Apri {{d.nome}}" style="display: flex; align-items: center; gap: 10px; border: 1px solid var(--ln); border-radius: 10px; padding: 6px 12px 6px 8px; text-decoration: none; color: var(--ink); background: var(--sf);"><svg aria-hidden="true" width="26" height="31" viewBox="0 0 30 36" style="flex: 0 0 auto;"><path d="M3 1h16l8 8v24a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z" fill="#fff" stroke="#D5DBE3"></path><path d="M19 1v8h8" fill="#E5E7EB"></path><rect x="1" y="20" width="22" height="10" rx="1.5" fill="{{d.fascia}}"></rect><text x="12" y="27.8" font-family="Arial,sans-serif" font-size="{{d.fs}}" font-weight="700" fill="#fff" text-anchor="middle">{{d.est}}</text></svg><span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;">{{d.nome}}</span><span style="font-size: 11px; color: var(--ink3);">{{d.est}}</span></span></a></sc-for></div></sc-if>
+<span style="font-size: 16px; font-weight: 700; line-height: 1.35;">{{c.sel.oggetto}}</span>
+<span style="font-size: 12.5px; color: var(--ink3);">{{c.sel.verso}} {{c.sel.chi}} · {{c.sel.ora}}</span>
+<p style="margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere;">{{c.sel.testo}}</p><sc-if value="{{c.sel.haDocs}}"><div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{c.sel.docs}}" as="d"><a href="{{d.url}}" target="_blank" rel="noopener" title="Apri {{d.nome}}" style="display: flex; align-items: center; gap: 10px; border: 1px solid var(--ln); border-radius: 10px; padding: 6px 12px 6px 8px; text-decoration: none; color: var(--ink); background: var(--sf);"><svg aria-hidden="true" width="26" height="31" viewBox="0 0 30 36" style="flex: 0 0 auto;"><path d="M3 1h16l8 8v24a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z" fill="#fff" stroke="#D5DBE3"></path><path d="M19 1v8h8" fill="#E5E7EB"></path><rect x="1" y="20" width="22" height="10" rx="1.5" fill="{{d.fascia}}"></rect><text x="12" y="27.8" font-family="Arial,sans-serif" font-size="{{d.fs}}" font-weight="700" fill="#fff" text-anchor="middle">{{d.est}}</text></svg><span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;">{{d.nome}}</span><span style="font-size: 11px; color: var(--ink3);">{{d.est}}</span></span></a></sc-for></div></sc-if>
 <sc-if value="{{c.sel.haSistema}}"><div style="background: var(--acw); border: 1px solid var(--acw); border-radius: 10px; padding: 8px 10px; font-size: 11.5px; line-height: 1.45; color: #0891B2;"><b>Il sistema:</b> {{c.sel.sistema}}</div></sc-if>
 <div style="display: grid; grid-template-columns: {{c.sel.colBott}}; gap: 6px; margin-top: auto;">
 <sc-if value="{{c.sel.haAz}}"><button style="font: 700 13.5px Manrope, sans-serif; border: 1px solid #0891B2; border-radius: 10px; height: 40px; background: #0891B2; color: #FFFFFF; cursor: pointer;">{{c.sel.az}}</button></sc-if>
@@ -483,7 +490,7 @@ const CASELLE = {
           m('GHIOTTO IMPIANTI', '09:48', 'Fattura cantiere [CLIENTE]', 'fatto', false, 'In allegato la fattura.', 'importo come da accordo: accettata, bonifico in fila.', 'Vedi il bonifico'),
           m('[CLIENTE]', 'ieri', 'Copia della fattura', 'bozza', true, 'Potete rimandarmi la fattura del saldo?', 'fattura trovata, risposta pronta col PDF.', 'Invia la risposta') ],
     out: [ m('[CLIENTE]', '16:40', 'Fattura n. [N.]', 'auto', false, 'In allegato la fattura.', 'inviata appena confermata.', 'Vedi la fattura') ] },
-  acq: { nome: 'Acquisti', indirizzo: 'acquisti@next-srl.eu', col: '#0891B2',
+  acq: { nome: 'Acquisti', indirizzo: 'acquisti@next-srl.eu', col: '#2563EB',
     in: [ m('ITALSOL SRL', '11:14', 'Conferma d’ordine CO [N.]', 'fatto', true, 'In allegato la conferma d’ordine.', 'confrontata con l’ordine: torna. Ordine confermato, bonifico in fila.', 'Vedi l’ordine'),
           m('ITALSOL SRL', '10:40', 'DDT [N.] del 28/10', 'fatto', false, 'Documento di trasporto.', 'allegato alla ricezione del cantiere.', 'Vedi la ricezione'),
           m('META 51 SRL', '09:30', 'Offerta batterie aggiuntive', 'compito', true, 'L’offerta per le batterie.', 'prezzi come listino: decidi tu se accettarla.', 'Accetta'),
@@ -493,7 +500,7 @@ const CASELLE = {
     in: [ m('[CLIENTE]', '10:55', 'Preventivo ricevuto, alcune domande', 'bozza', true, 'Ho ricevuto il preventivo, la batteria è compresa?', 'risposta pronta con il dettaglio della batteria; avvisato Roberto.', 'Invia la risposta'),
           m('[AZIENDA]', '09:40', 'Richiesta impianto aziendale', 'compito', true, 'Vorremmo valutare un impianto per il capannone.', 'azienda creata, compito a Roberto per il sopralluogo.', 'Vedi il compito') ],
     out: [ m('[CLIENTE]', '08:30', 'Il suo preventivo', 'auto', false, 'In allegato il preventivo.', 'partito dal portale preventivi.', 'Vedi il preventivo') ] },
-  ass: { nome: 'Assistenza', indirizzo: 'assistenza@next-srl.eu', col: '#0891B2',
+  ass: { nome: 'Assistenza', indirizzo: 'assistenza@next-srl.eu', col: '#DB2777',
     in: [ m('[CLIENTE]', '08:50', 'L’app non mostra la produzione', 'fatto', false, 'Da ieri l’app non mostra niente.', 'Riccardo ha mandato la procedura per il WiFi.', 'Vedi la chat') ],
     out: [ m('[CLIENTE]', '08:52', 'Procedura WiFi', 'auto', false, 'Ecco come ricollegare l’inverter.', 'mandata da Riccardo.', 'Vedi') ] },
   exp: { nome: 'Export', indirizzo: 'export@next-srl.eu', col: 'var(--ink3)', in: [ m('[CONTATTO]', 'ven', 'Richiesta informazioni', 'info', false, 'Informazioni sui prodotti.', 'nessuna azione richiesta.', 'Apri') ], out: [] },
@@ -629,7 +636,7 @@ class Component extends DCLogic {
       const v = vista[id] || 'in';
       const elenco = v === 'in' ? c.in : c.out;
       const k = sel[id + v] || 0;
-      const lista = elenco.map((x, i) => ({ ...x, tc: TAG[x.tag].c, tb: TAG[x.tag].b, tag: TAG[x.tag].t, peso: x.nuova ? '800' : '600',
+      const lista = elenco.map((x, i) => ({ ...x, tc: (TAG[x.tag] || TAG.info).c, tb: (TAG[x.tag] || TAG.info).b, tag: (TAG[x.tag] || TAG.info).t, peso: x.nuova ? '800' : '500', punto: x.nuova ? '#0891B2' : 'transparent', nonLetta: x.nuova ? 'da leggere' : '',
         bordo: i === k ? c.col : 'transparent', bg: i === k ? 'var(--sf2)' : 'var(--sf)', pick: () => { if (x.vera && this.postaVeraApri) this.postaVeraApri(x); this.setState({ sel: { ...sel, [id + v]: i } }); if (t === 2) this.salva({ ...lay, taglie: { ...lay.taglie, [id]: 3 } }); } }));
       const x = elenco[k] || elenco[0] || { chi: '—', ora: '', oggetto: 'Nessuna mail', testo: '', sistema: 'niente da fare.', az: 'Aggiorna' };
       const apriIntera = () => {
@@ -691,7 +698,7 @@ class Component extends DCLogic {
     const clsC = this.solo ? 'solo-tieni' : '';
     const pvTesta = !window.WA_SOLO_VERO ? { sotto: 'dati di esempio', col: '#16A34A', titolo: 'Postino in ascolto continuo', nota: 'ultima mail 11:14 · smistata 11:14' }
       : s.pvStato === 'ok' ? { sotto: 'posta vera, ultimi 7 giorni', col: '#16A34A', titolo: 'Caselle lette', nota: 'alle ' + new Date(s.pvAlle).toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' }) + ' · si rileggono ogni 3 minuti' }
-      : s.pvStato === 'no' ? { sotto: 'posta vera', col: '#B91C1C', titolo: 'Caselle non collegate', nota: 'entra dal portale per vederle' }
+      : s.pvStato === 'no' ? { sotto: 'posta vera', col: '#B91C1C', titolo: 'Caselle non collegate', nota: 'aprila una volta dal portale: poi funziona anche da sola' }
       : { sotto: 'posta vera', col: '#D97706', titolo: 'Sto leggendo le caselle…', nota: 'ci vuole qualche secondo' };
     return { pvTesta, inFinestra, clsC, waIn, wa, ...temaX, apriFuoriArea, apriFuoriPosta, fuoriVista, haFuori: fuoriVista.length > 0, mini, chiuse, aperte, haIntera: !!s.intera, intera: s.intera || {}, chiudiIntera: () => this.setState({ intera: null, risp: null }),
       inRisposta: !!(s.intera && s.risp), risposta: risposta(s.intera, s.risp),
@@ -819,12 +826,14 @@ const pvDoc = (nome, casella, cartella, uid) => {
 };
 /* una mail com'è nelle liste della pagina */
 const pvVoce = (m, casella, verso) => {
-  const tag = verso === 'out' ? 'inviata' : (m.non_letta ? 'nuova' : (m.cliente ? 'cliente' : 'letta'));
-  const chi = verso === 'out' ? pvPulisci((m.a || '').replace(/<[^>]*>/g, '').replace(/"/g, '')) || 'destinatario' : pvNome(m);
+  /* chi scrive (o a chi abbiamo scritto): riconosciuto dalla rubrica di Odoo, dal dominio o da regole semplici */
+  const tag = m.chi_tipo || (verso === 'out' ? 'sconosciuto' : (m.cliente ? 'cliente' : 'sconosciuto'));
+  const grezzo = verso === 'out' ? pvPulisci((m.a || '').replace(/<[^>]*>/g, '').replace(/"/g, '')) || 'destinatario' : pvNome(m);
+  const chi = m.chi_nome ? (m.chi_persona ? m.chi_nome + ' · ' + m.chi_persona : m.chi_nome) : grezzo;
   return { vera: true, chiave: casella + ':' + m.cartella + ':' + m.uid, casella, cartella: m.cartella, uid: m.uid, iso: m.data,
     chi, ora: pvOra(m.data), oggetto: pvPulisci(m.oggetto) || '(senza oggetto)', tag, nuova: !!m.non_letta, da: m.da || '', a: m.a || '',
     cliente: m.cliente || '', haClip: !!m.allegati,
-    testo: '', sistema: m.cliente ? 'mittente riconosciuto: cliente ' + m.cliente + '.' : '', az: '' };
+    testo: '', sistema: '', az: '' };
 };
 /* legge tutte le caselle; risponde con { per: { idPagina: { in, out, errore } }, alle } oppure null */
 async function pvLeggiTutto() {
@@ -872,10 +881,14 @@ const pvScheda = (v, indirizzoCasella, nomeCasella, col) => {
 };
 /* — pagina Posta: le caselle con le mail vere — */
 Object.assign(TAG, {
-  nuova: { t: 'Da leggere', c: '#0891B2', b: 'var(--acw)' },
   cliente: { t: 'Cliente', c: '#15803D', b: 'var(--grw)' },
-  letta: { t: 'Letta', c: 'var(--ink3)', b: 'var(--ln)' },
-  inviata: { t: 'Inviata', c: 'var(--ink2)', b: 'var(--ln)' }
+  fornitore: { t: 'Fornitore', c: '#B45309', b: 'var(--amw)' },
+  contatto: { t: 'In rubrica', c: 'var(--ink2)', b: 'var(--ln)' },
+  interno: { t: 'Next', c: '#0891B2', b: 'var(--acw)' },
+  ente: { t: 'Ente', c: '#6D4AE0', b: 'var(--viw)' },
+  banca: { t: 'Banca', c: '#0F766E', b: 'var(--grw)' },
+  pubblicita: { t: 'Pubblicità', c: 'var(--ink3)', b: 'var(--ln)' },
+  sconosciuto: { t: 'Da riconoscere', c: 'var(--ink2)', b: 'transparent' }
 });
 Component.prototype.selVera = function (x) {
   if (!x || !x.vera) return { docs: [], haDocs: false, haSistema: !!x.sistema, haAz: !!x.az, colBott: x.az ? 'repeat(2, minmax(0, 1fr))' : 'minmax(0, 1fr)' };
@@ -914,6 +927,7 @@ Component.prototype.postaVeraAvvia = function () {
   let ultima = Date.now();
   window.addEventListener('focus', () => { if (Date.now() - ultima > 60000) { ultima = Date.now(); giro(); } });
 };
+TAG.ricevuta = { t: 'Ricevuta PEC', c: 'var(--ink3)', b: 'var(--ln)' };
 </script>
 </body>
 </html>
