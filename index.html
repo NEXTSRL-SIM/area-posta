@@ -905,7 +905,7 @@ const pvPezzi = (testo) => {
   return fuori;
 };
 /* la mail impaginata come in Outlook, dentro una cornice chiusa (niente script), link in una scheda nuova */
-const pvDocHtml = (html) => '<!doctype html><html><head><meta charset="utf-8"><base target="_blank"><style>body{margin:0;padding:10px 6px;background:#fff;color:#0F172A;font:14px/1.5 -apple-system,Segoe UI,Arial,sans-serif;overflow-wrap:anywhere}img{max-width:100%;height:auto}table{max-width:100%}</style></head><body>' + html + '</body></html>';
+const pvDocHtml = (html) => '<!doctype html><html><head><meta charset="utf-8"><base target="_blank"><style>body{margin:0;padding:10px 6px;background:#fff;color:#0F172A;font:14px/1.5 -apple-system,Segoe UI,Arial,sans-serif;overflow-wrap:anywhere}img{max-width:100%;height:auto}table{max-width:100%}*{scrollbar-width:none}*::-webkit-scrollbar{display:none}</style></head><body>' + html + '</body></html>';
 /* la scheda per la finestra "mail intera" */
 const pvScheda = (v, indirizzoCasella, nomeCasella, col) => {
   const t = PV_TESTI[v.chiave] || {};
