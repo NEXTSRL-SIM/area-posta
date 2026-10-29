@@ -338,7 +338,7 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 </div>
 <div style="overflow-y: auto; border-right: 1px solid var(--ln); min-width: 0;">
 <sc-for list="{{c.lista}}" as="m" hint-placeholder-count="4">
-<button onClick="{{m.pick}}" title="{{m.evNome}}" style="font: inherit; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--ln); border-left: {{m.bordoW}} solid {{m.bordo}}; background: {{m.bg}}; padding: 8px 10px 8px {{m.padL}}; cursor: pointer; display: flex; flex-direction: column; gap: 3px; color: var(--ink);">
+<button onClick="{{m.pick}}" title="{{m.evNome}}" style="font: inherit; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--ln); border-left: {{m.bordoW}} solid {{m.bordo}}; background: {{m.bg}}; box-shadow: {{m.selSh}}; padding: 8px 10px 8px {{m.padL}}; cursor: pointer; display: flex; flex-direction: column; gap: 3px; color: var(--ink);">
 <span style="display: flex; gap: 6px; align-items: baseline;"><span title="{{m.nonLetta}}" style="flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: {{m.punto}}; align-self: center;"></span><span style="font-size: 12.5px; font-weight: {{m.peso}}; flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{m.chi}}</span><span title="{{m.tagSpiega}}" style="flex: 0 0 auto; font-size: 9.5px; font-weight: 700; border-radius: 999px; padding: 0 6px; line-height: 15px; color: {{m.tc}}; background: {{m.tb}}; border: 1px solid {{m.tc}}33;">{{m.tag}}</span><span style="flex-grow: 1;"></span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink3);">{{m.ora}}</span></span>
 <span style="display: flex; align-items: center; gap: 8px; min-width: 0;"><span style="flex: 0 1 auto; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 5px; {{m.titSt}}">{{m.oggetto}}</span></span><sc-if value="{{m.haEt}}"><span style="display: flex; flex-wrap: wrap; gap: 4px;"><sc-for list="{{m.etL}}" as="e"><span style="display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700; color: var(--ink2); background: var(--sf2); border: 1px solid var(--ln); border-radius: 6px; padding: 0 6px; line-height: 16px; white-space: nowrap;"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{e.c}};"></span>{{e.t}}</span></sc-for></span></sc-if>
 
@@ -1118,8 +1118,9 @@ const evQuanti = (lay, id) => (((lay.scelteEv || {})[id]) || []).length + (((lay
 function evRiga(x, sel, colCasella) {
   const C = evDi(x), L = etDi(x);
   const et = { haEt: L.length > 0, etL: L.map((t) => ({ t: t.nome, c: t.colore })) };
-  if (!C) return { ...et, bordo: sel ? colCasella : 'transparent', bordoW: '3px', padL: '10px', bg: sel ? 'var(--sf2)' : 'var(--sf)', titSt: '', haEv: false, evNome: '', evSt: '' };
-  return { ...et, bordo: C.c, bordoW: '6px', padL: '9px', bg: 'linear-gradient(90deg, ' + C.c + (sel ? '30' : '1C') + ' 0%, ' + C.c + (sel ? '12' : '08') + ' 55%, ' + (sel ? 'var(--sf2)' : 'var(--sf)') + ' 100%)',
+  if (!C) return { ...et, selSh: 'none', bordo: sel ? colCasella : 'transparent', bordoW: '3px', padL: '10px', bg: sel ? 'var(--sf2)' : 'var(--sf)', titSt: '', haEv: false, evNome: '', evSt: '' };
+  /* la mail aperta resta riconoscibile anche se evidenziata: accanto alla fascia dell'evidenziazione c'è la linea del colore della casella (Sante 29/10) */
+  return { ...et, selSh: sel ? 'inset 3px 0 0 ' + colCasella : 'none', bordo: C.c, bordoW: '6px', padL: sel ? '12px' : '9px', bg: 'linear-gradient(90deg, ' + C.c + (sel ? '30' : '1C') + ' 0%, ' + C.c + (sel ? '12' : '08') + ' 55%, ' + (sel ? 'var(--sf2)' : 'var(--sf)') + ' 100%)',
     titSt: 'text-decoration: underline; text-decoration-color: ' + C.c + '; text-decoration-thickness: 2px; text-underline-offset: 3px;', haEv: true, evNome: 'Evidenziata: ' + C.t, evSt: '' };
 }
 /* il filtro della casella: due gruppi in più (evidenziate, etichette); in ogni gruppo una o più scelte, nessuna = non filtra */
