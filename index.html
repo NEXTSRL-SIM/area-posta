@@ -230,7 +230,9 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 #pvStrumento.pv-str-alto::before{background:linear-gradient(180deg,color-mix(in srgb,var(--sf) 96%,#fff),var(--sf));}
 #pvStrumento svg{filter:drop-shadow(0 0 1.5px var(--sf)) drop-shadow(0 0 3px var(--sf))}
 section[aria-label="Caselle minori"].pv-barra-pronta{outline:2px dashed #06B6D4;outline-offset:6px;border-radius:12px;background:rgba(6,182,212,.07)}
-#pvStrumento.pv-str-alto{box-shadow:0 0 0 1px rgba(6,182,212,.45),0 4px 14px rgba(15,23,42,.18),inset 0 1px 0 rgba(255,255,255,.95)!important}
+#pvStrumento.pv-str-alto{padding:1px 6px 1px 2px!important;border-radius:999px!important;border:1px solid var(--ln)!important;box-shadow:none!important;transition:none!important}
+#pvStrumento.pv-str-alto button,#pvStrumento.pv-str-alto label{width:28px!important;height:28px!important;border-radius:8px!important}
+#pvStrumento.pv-str-alto [data-pv-presa]{height:24px!important}
 #pvStrumento button:hover,#pvStrumento label:hover{background:rgba(6,182,212,.14)!important}
 </style>
 </helmet>
@@ -1290,7 +1292,7 @@ Component.prototype.strumento = function (s) {
     w: { ...x, ...this.attBottone(x), ...this.evBottone(x), ...this.rispBottoni(x, 'w'), apri, cestino } };
 };
 /* DOVE STA LO STRUMENTO (PORTALE NEXT-110, Sante 29/10):
-   - da solo segue la mail che clicchi: si mette all'altezza della riga cliccata, sul bordo destro della casella (dalla parte del testo libera);
+   - da solo segue la mail che clicchi e si mette nel grigio accanto alla sua casella (sotto, di lato o sopra), mai sopra l'anteprima;
    - trascinato in un punto qualunque resta lì finché non clicchi un'altra mail, poi torna a seguirti;
    - lasciato sulla barra in alto (quella delle caselle minori) si FISSA: a sinistra o a destra secondo dove lo lasci, pieno e non più trasparente;
      scorrendo la pagina resta attaccato in cima. Doppio clic sui puntini: torna libero. */
@@ -1312,14 +1314,32 @@ function pvStrumAuto(comp) {
   let pos = null;
   if (p && p.modo === 'alto') pos = pvPostoBarra(el, z, p.lato);
   if (!pos) {
+    /* cerca il «grigio»: uno spazio vuoto vicino alla casella della mail aperta, che non copra né l'anteprima né altre caselle.
+       Ordine: sotto la casella, accanto (a destra, poi a sinistra) all'altezza della mail cliccata, sopra la casella.
+       Se non c'è spazio vuoto: in fondo alla colonna dell'elenco (mai sull'anteprima), lontano dalla mail cliccata. */
     let x = (W - w) / 2, y = H - hh - 18;
     const riga = document.querySelector('[data-attiva="si"]');
     const art = riga ? riga.closest('article') : null;
     if (art && !(comp.state || {}).intera) {
-      const a = art.getBoundingClientRect(), r = riga.getBoundingClientRect();
-      x = a.right / z - w - 14;
-      y = (r.top + r.height / 2) / z - hh / 2;
-      y = Math.max(a.top / z + 50, Math.min(y, a.bottom / z - hh - 10));
+      const R = (e) => { const q = e.getBoundingClientRect(); return { l: q.left / z, t: q.top / z, r: q.right / z, b: q.bottom / z }; };
+      const a = R(art), rg = R(riga), m = 8;
+      const hd = document.querySelector('header'); const sinistra = hd ? R(hd).l : 0;
+      const ostacoli = [...document.querySelectorAll('article, header, section[aria-label="Caselle minori"]')].map(R).filter((o) => o.r > o.l);
+      const libero = (px, py) => px >= sinistra - 2 && py >= 4 && px + w <= W - 4 && py + hh <= H - 4 &&
+        !ostacoli.some((o) => px < o.r + 4 && px + w > o.l - 4 && py < o.b + 4 && py + hh > o.t - 4);
+      const cy = Math.max(a.t + 4, Math.min((rg.t + rg.b) / 2 - hh / 2, a.b - hh - 4));
+      const prove = [
+        [a.l + (a.r - a.l - w) / 2, a.b + m], [a.r - w, a.b + m], [a.l, a.b + m],
+        [a.r + m * 2, cy], [a.l - w - m * 2, cy],
+        [a.l + (a.r - a.l - w) / 2, a.t - hh - m]];
+      const buona = prove.find(([px, py]) => libero(px, py));
+      if (buona) { x = buona[0]; y = buona[1]; }
+      else {
+        // nessun grigio: dentro la colonna dell'elenco, in fondo (o in cima se la mail cliccata è in fondo)
+        x = rg.l + Math.max(0, (rg.r - rg.l - w) / 2);
+        const fondo = Math.min(a.b, H) - hh - 10, cima = a.t + 50;
+        y = (rg.b > fondo - 4 && rg.t < fondo + hh + 4) ? cima : fondo;
+      }
     }
     pos = { x: Math.round(Math.max(8, Math.min(x, W - w - 8))), y: Math.round(Math.max(8, Math.min(y, H - hh - 8))) };
   }
