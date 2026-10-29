@@ -232,10 +232,10 @@ button[data-attiva="si"]::after{content:'';position:absolute;left:-6px;top:0;bot
 @media (prefers-reduced-motion:reduce){.pv-luce{animation:none;-webkit-text-fill-color:currentColor}button[data-attiva="si"]::after{animation:none}}
 /* strumento nel colore della casella della mail attiva, variante B (PORTALE NEXT-110, Sante 30/10) */
 #pvStrumento{border-color:color-mix(in srgb,var(--sc) 55%,#fff)!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--sc) 35%,transparent),0 0 16px color-mix(in srgb,var(--sc) 40%,transparent),0 12px 32px rgba(15,23,42,.22)!important}
-#pvStrumento svg{color:var(--sc)!important;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--sc) 70%,transparent))!important}
-#pvStrumento button:hover,#pvStrumento label:hover{background:var(--sc)!important}
-#pvStrumento button:hover svg,#pvStrumento label:hover svg{color:#fff!important;filter:drop-shadow(0 0 6px var(--sc))!important}
-#pvStrumento i{background:var(--sc)!important}
+#pvStrumento button[style*="width: 34px"] svg,#pvStrumento label[style*="width: 34px"] svg{color:var(--sc)!important;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--sc) 70%,transparent))!important}
+#pvStrumento button[style*="width: 34px"]:hover,#pvStrumento label[style*="width: 34px"]:hover{background:var(--sc)!important}
+#pvStrumento button[style*="width: 34px"]:hover svg,#pvStrumento label[style*="width: 34px"]:hover svg{color:#fff!important;filter:drop-shadow(0 0 6px var(--sc))!important}
+#pvStrumento span[data-pv-presa] i{background:var(--sc)!important}
 #pvStrumento::after{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;background:linear-gradient(100deg,transparent 30%,var(--sc) 45%,#fff 50%,var(--sc) 55%,transparent 70%) 0 0/250% 100%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:pvLuce 2.6s linear infinite;pointer-events:none}
 #pvStrumento.pv-str-alto::after{display:none}
 #pvStrumento.pv-str-alto{box-shadow:none!important;border-color:var(--ln)!important}
