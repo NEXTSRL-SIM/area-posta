@@ -349,7 +349,7 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 <sc-if value="{{c.sel.haSistema}}"><div style="background: var(--acw); border: 1px solid var(--acw); border-radius: 10px; padding: 8px 10px; font-size: 11.5px; line-height: 1.45; color: #0891B2;"><b>Il sistema:</b> {{c.sel.sistema}}</div></sc-if>
 <div style="display: grid; grid-template-columns: {{c.sel.colBott}}; gap: 6px; margin-top: auto;">
 <sc-if value="{{c.sel.haAz}}"><button style="font: 700 13.5px Manrope, sans-serif; border: 1px solid #0891B2; border-radius: 10px; height: 40px; background: #0891B2; color: #FFFFFF; cursor: pointer;">{{c.sel.az}}</button></sc-if>
-<sc-if value="{{c.sel.haDaFare}}"><button type="button" onClick="{{c.sel.daFare}}" aria-pressed="{{c.sel.daFareSi}}" title="{{c.sel.daFareT}}" style="font: 700 13.5px Manrope, sans-serif; border: 1px solid {{c.sel.daFareBd}}; border-radius: 10px; height: 40px; padding: 0 14px; background: {{c.sel.daFareBg}}; color: {{c.sel.daFareFg}}; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>{{c.sel.daFareEt}}</button></sc-if><button onClick="{{c.apriIntera}}" style="font: 700 13.5px Manrope, sans-serif; border: 1px solid var(--ln); border-radius: 10px; height: 40px; background: var(--sf); color: var(--ink); cursor: pointer;">Apri intera</button>
+<sc-if value="{{c.sel.haDaFare}}"><label title="{{c.sel.daFareT}}" style="position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font: 700 13.5px Manrope, sans-serif; border: 1px solid {{c.sel.daFareBd}}; border-radius: 10px; height: 40px; padding: 0 14px; background: {{c.sel.daFareBg}}; color: {{c.sel.daFareFg}}; cursor: pointer; box-sizing: border-box; min-width: 0;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: 0 0 auto;"><path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.sel.daFareEt}}</span><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="flex: 0 0 auto;"><path d="M6 9l6 6 6-6"></path></svg><select aria-label="Metti la mail in una scheda" onChange="{{c.sel.daFare}}" style="position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;"><option value="" selected disabled>Metti in…</option><sc-for list="{{c.sel.daFareOpz}}" as="o"><option value="{{o.id}}">{{o.t}}</option></sc-for></select></label></sc-if><button onClick="{{c.apriIntera}}" style="font: 700 13.5px Manrope, sans-serif; border: 1px solid var(--ln); border-radius: 10px; height: 40px; background: var(--sf); color: var(--ink); cursor: pointer;">Apri intera</button>
 </div>
 </div>
 </div>
@@ -381,7 +381,7 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 </div></sc-if>
 
 <div style="padding: 18px 26px 6px; display: flex; flex-direction: column; gap: 14px;">
-<div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;"><h2 style="margin: 0; font-size: 19px; font-weight: 700; line-height: 1.3;">{{intera.oggetto}}</h2><sc-if value="{{intera.haDaFare}}"><button type="button" onClick="{{intera.daFare}}" aria-pressed="{{intera.daFareSi}}" title="{{intera.daFareT}}" style="font: 700 12.5px Manrope, sans-serif; border: 1px solid {{intera.daFareBd}}; border-radius: 10px; height: 32px; padding: 0 11px; margin-left: auto; background: {{intera.daFareBg}}; color: {{intera.daFareFg}}; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>{{intera.daFareEt}}</button></sc-if><span style="font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 2px 8px; color: {{intera.tc}}; background: {{intera.tb}};">{{intera.tag}}</span></div>
+<div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;"><h2 style="margin: 0; font-size: 19px; font-weight: 700; line-height: 1.3;">{{intera.oggetto}}</h2><sc-if value="{{intera.haDaFare}}"><label title="{{intera.daFareT}}" style="position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font: 700 12.5px Manrope, sans-serif; border: 1px solid {{intera.daFareBd}}; border-radius: 10px; height: 32px; padding: 0 11px; margin-left: auto; background: {{intera.daFareBg}}; color: {{intera.daFareFg}}; cursor: pointer; box-sizing: border-box; min-width: 0;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: 0 0 auto;"><path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{intera.daFareEt}}</span><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="flex: 0 0 auto;"><path d="M6 9l6 6 6-6"></path></svg><select aria-label="Metti la mail in una scheda" onChange="{{intera.daFare}}" style="position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;"><option value="" selected disabled>Metti in…</option><sc-for list="{{intera.daFareOpz}}" as="o"><option value="{{o.id}}">{{o.t}}</option></sc-for></select></label></sc-if><span style="font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 2px 8px; color: {{intera.tc}}; background: {{intera.tb}};">{{intera.tag}}</span></div>
 <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: start;">
 <span style="width: 40px; height: 40px; border-radius: 50%; background: var(--acw); color: #0891B2; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800;">{{intera.iniziali}}</span>
 <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 12.5px; color: var(--ink2);">
@@ -1006,26 +1006,37 @@ const ATT_CHIAVE = 'next-attivita-v1';
 const attLeggi = () => { try { const l = JSON.parse(window.localStorage.getItem(ATT_CHIAVE) || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
 const attScrivi = (l) => { try { window.localStorage.setItem(ATT_CHIAVE, JSON.stringify(l.slice(0, 500))); } catch (e) {} };
 const attChi = () => { try { const c = String(window.sessionStorage.getItem('regia_chi') || '').toLowerCase(); for (const p of ['sante', 'cristina', 'roberto', 'belloni']) if (c.includes(p)) return p; } catch (e) {} return 'sante'; };
+/* le schede (widget dell'Area di lavoro) in cui si può mettere una mail o spostare un'attività.
+   Le Fatture allo SDI no: quelle le scrive Odoo da solo. */
+const ATT_SCHEDE = [['att', 'Attività da fare'], ['bon', 'Bonifici da fare'], ['ofo', 'Offerte dei fornitori da confermare'], ['ord', 'Ordini dei clienti da generare'],
+  ['fat', 'Fatture dei fornitori'], ['ric', 'Incassi da attribuire'], ['fot', 'Foto e documenti richiesti'], ['mai', 'Mail che chiedono qualcosa'], ['fir', 'Firma dei contratti'], ['com', 'Il commercialista attende']];
+const attNomeScheda = (id) => (ATT_SCHEDE.find((x) => x[0] === id) || ATT_SCHEDE[0])[1];
 const attDiMail = (chiave) => attLeggi().find((a) => a.mail && a.mail.chiave === chiave && !a.fatta) || null;
 /* la mail (voce della posta vera, o scheda della mail intera) diventa un'attività */
-function attDaMail(v) {
+function attDaMail(v, scheda) {
   if (!v || !v.chiave) return null;
-  const c = attDiMail(v.chiave); if (c) return c;
+  const c = attDiMail(v.chiave); if (c) { if (scheda) attSposta(c.id, scheda); return c; }
   const l = attLeggi();
-  const a = { id: 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), testo: String(v.oggetto || '(senza oggetto)').trim(), chi: attChi(), creata: new Date().toISOString(), fatta: null,
+  const a = { id: 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), testo: String(v.oggetto || '(senza oggetto)').trim(), chi: attChi(), scheda: scheda || 'att', creata: new Date().toISOString(), fatta: null,
     mail: { chiave: v.chiave, casella: String(v.casella || ''), cartella: String(v.cartella || ''), uid: v.uid || null, mittente: String(v.daNome || v.chi || v.da || ''), data: v.iso || null } };
   l.unshift(a); attScrivi(l); return a;
 }
 function attSegna(id, fatta) { const l = attLeggi(); const a = l.find((x) => x.id === id); if (!a) return; a.fatta = fatta ? new Date().toISOString() : null; attScrivi(l); }
+function attSposta(id, scheda) { const l = attLeggi(); const a = l.find((x) => x.id === id); if (!a || !ATT_SCHEDE.some((x) => x[0] === scheda)) return; a.scheda = scheda; attScrivi(l); }
+/* l'elenco per il menu «Sposta in…»: tutte le schede tranne quella dove sta già */
+const attOpzioni = (dove) => ATT_SCHEDE.filter((x) => x[0] !== dove).map(([id, t]) => ({ id, t }));
 function attTogli(id) { attScrivi(attLeggi().filter((x) => x.id !== id)); }
-/* il pulsante sulla mail: «Da fare» oppure «Nelle attività» se c'è già */
+/* il pulsante sulla mail: un menu «Da fare in…» con tutte le schede; se la mail c'è già, dice dove sta */
 Component.prototype.attBottone = function (v) {
   if (!v || !v.vera || !v.chiave) return { haDaFare: false };
   const c = attDiMail(v.chiave);
-  return { haDaFare: true, daFareEt: c ? 'Nelle attività' : 'Da fare', daFareSi: c ? 'true' : 'false',
+  const dove = c ? (c.scheda || 'att') : null;
+  const opz = ATT_SCHEDE.map(([id, t]) => ({ id, t: (id === dove ? '✓ ' : '') + t }));
+  if (c) opz.push({ id: 'via', t: '✕ Togli dalle schede' });
+  return { haDaFare: true, daFareEt: c ? '✓ In: ' + attNomeScheda(dove) : 'Da fare in…', daFareSi: c ? 'true' : 'false', daFareOpz: opz,
     daFareBd: c ? '#16A34A' : '#0891B2', daFareBg: c ? 'var(--grw)' : '#0891B2', daFareFg: c ? '#15803D' : '#FFFFFF',
-    daFareT: c ? 'Questa mail è già un’attività da fare (tocca per toglierla)' : 'Trasforma questa mail in un’attività da fare',
-    daFare: () => { if (c) attTogli(c.id); else attDaMail(v); this.setState({ attT: Date.now() }); } };
+    daFareT: c ? 'Questa mail è già nella scheda «' + attNomeScheda(dove) + '»: scegli un’altra scheda per spostarla, o toglila' : 'Metti questa mail fra le cose da fare: scegli la scheda (Attività, Bonifici, Ordini…)',
+    daFare: (e) => { const k = e && e.target ? e.target.value : ''; if (!k) return; if (k === 'via') { if (c) attTogli(c.id); } else attDaMail(v, k); try { e.target.selectedIndex = 0; } catch (x) {} this.setState({ attT: Date.now() }); } };
 };
 /* le altre pagine aperte (Posta ↔ Area di lavoro) si aggiornano da sole */
 window.addEventListener('storage', (e) => { if (e.key === ATT_CHIAVE && window.__attRidisegna) window.__attRidisegna(); });
