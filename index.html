@@ -223,7 +223,7 @@ html.solo .solo-tieni > *{grid-column:1 / -1!important}
 html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 
 /* mail aperta: riflesso lento sulle scritte (PORTALE NEXT-110) */
-.pv-luce{background-image:linear-gradient(100deg,var(--ink) 0%,var(--ink) 40%,var(--lc) 50%,var(--ink) 60%,var(--ink) 100%);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:pvLuce 4.5s linear infinite}
+.pv-luce{background-image:linear-gradient(100deg,var(--ink) 0%,var(--ink) 32%,var(--lc) 42%,color-mix(in srgb,var(--lc) 45%,#fff) 50%,var(--lc) 58%,var(--ink) 68%,var(--ink) 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:pvLuce 2.6s linear infinite}
 @keyframes pvLuce{from{background-position:100% 0}to{background-position:-50% 0}}
 @media (prefers-reduced-motion:reduce){.pv-luce{animation:none;-webkit-text-fill-color:currentColor}}
 </style>
