@@ -322,12 +322,14 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 <span style="width: 11px; height: 11px; border-radius: 50%; background: {{c.col}}; flex: 0 0 auto;"></span>
 <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0;"><h2 style="margin: 0; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.nome}}</h2><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.indirizzo}}</span></div>
 <span title="{{c.nonLette}} da leggere" style="font-size: 11px; font-weight: 800; border-radius: 999px; padding: 1px 7px; white-space: nowrap; color: {{c.nc}}; background: {{c.nb}};">{{c.nonLette}}{{c.daLeggere}}</span>
+<button onClick="{{c.filtro}}" aria-label="{{c.filtroTitolo}}" title="{{c.filtroTitolo}}" style="position: relative; width: 30px; height: 30px; border-radius: 8px; border: 1px solid {{c.fBd}}; background: {{c.fBg}}; color: {{c.fFg}}; cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"></path></svg><sc-if value="{{c.fAttivo}}"><span style="position: absolute; top: -5px; right: -5px; min-width: 15px; height: 15px; border-radius: 999px; background: #0891B2; color: #fff; font-size: 9.5px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; padding: 0 3px;">{{c.fNasc}}</span></sc-if></button>
 <button onClick="{{c.stacca}}" aria-label="Apri in una finestra separata" title="Apri in una finestra separata (per un altro monitor)" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--ln); background: var(--sf); color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="14" height="14" rx="2"></rect><path d="M11 3h10v10M21 3l-9 9"></path></svg></button>
 <button onClick="{{c.allarga}}" aria-label="Larghezza: {{c.taglia}}" title="Larghezza: {{c.taglia}} — clic per cambiare" style="width: 30px; height: 30px; padding: 0; border-radius: 8px; border: 1px solid var(--ln); background: var(--sf); cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 18 18"><rect x="1.5" y="1.5" width="3" height="15" rx="1.2" fill="{{c.w0}}"></rect><rect x="7.5" y="1.5" width="3" height="15" rx="1.2" fill="{{c.w1}}"></rect><rect x="13.5" y="1.5" width="3" height="15" rx="1.2" fill="{{c.w2}}"></rect></svg></button>
 <button onClick="{{c.alza}}" aria-label="Altezza: {{c.altezza}}" title="Altezza: {{c.altezza}} — clic per cambiare" style="width: 30px; height: 30px; padding: 0; border-radius: 8px; border: 1px solid var(--ln); background: var(--sf); cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 18 18"><rect x="1.5" y="1.5" width="15" height="3" rx="1.2" fill="{{c.h2}}"></rect><rect x="1.5" y="7.5" width="15" height="3" rx="1.2" fill="{{c.h1}}"></rect><rect x="1.5" y="13.5" width="15" height="3" rx="1.2" fill="{{c.h0}}"></rect></svg></button>
 <button onClick="{{c.punta}}" aria-label="{{c.puntaLabel}}" title="{{c.puntaLabel}}" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid {{c.pBd}}; background: {{c.pBg}}; color: {{c.pFg}}; cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6l-1 6 3 3H7l3-3zM12 13v8"></path></svg></button>
 <button onClick="{{c.chiudi}}" aria-label="Riduci a fascetta" title="Riduci a fascetta" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--ln); background: var(--sf); color: var(--ink2); cursor: pointer; display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
 </div>
+<sc-if value="{{c.filtroAperto}}"><div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--ln); background: var(--sf2);"><span style="font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--ink3); margin-right: 2px;">Mostra</span><sc-for list="{{c.categorie}}" as="g" hint-placeholder-count="5"><button onClick="{{g.cambia}}" aria-pressed="{{g.on}}" title="{{g.spiega}}" style="font: 700 11.5px Manrope, sans-serif; height: 26px; padding: 0 9px; border-radius: 999px; cursor: pointer; border: 1px solid {{g.bd}}; background: {{g.bg}}; color: {{g.fg}}; text-decoration: {{g.td}}; display: inline-flex; align-items: center; gap: 5px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{g.pallino}};"></span>{{g.nome}} <span style="font-weight: 500; opacity: .75;">{{g.n}}</span></button></sc-for><span style="flex-grow: 1;"></span><button onClick="{{c.filtroTutte}}" style="font: 700 11.5px Manrope, sans-serif; height: 26px; padding: 0 9px; border-radius: 8px; cursor: pointer; border: 1px solid var(--ln); background: var(--sf); color: var(--ink2);">Mostra tutte</button></div></sc-if>
 <div style="display: grid; grid-template-columns: {{c.colonne}}; flex-grow: 1; min-height: 0;">
 <div role="tablist" aria-label="Cartella" style="display: flex; flex-direction: column; gap: 4px; padding: 6px 4px; background: var(--sf2); border-right: 1px solid var(--ln);">
 <button role="tab" aria-selected="{{c.inSel}}" aria-label="Entrata, {{c.nIn}}" title="Entrata" onClick="{{c.vaiIn}}" style="font: 700 10px Manrope, sans-serif; border: 0; border-radius: 8px; padding: 6px 0; cursor: pointer; background: {{c.inBg}}; color: {{c.inFg}}; display: flex; flex-direction: column; align-items: center; gap: 2px;"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"></path><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>{{c.nIn}}</button>
@@ -617,8 +619,12 @@ class Component extends DCLogic {
       o.splice(i < 0 ? o.length : i, 0, da);
       this.salva({ ...lay, ordine: o });
     };
+    /* filtro per categoria, casella per casella (PORTALE NEXT-110, 29/10): le categorie spente non si vedono; si ricorda nella disposizione */
+    const nascoste = lay.nascoste || {};
+    const filtri = s.filtri || {};
     const base = (id) => {
-      const c = CASELLE[id];
+      const c0 = CASELLE[id], nasc = nascoste[id] || [];
+      const c = nasc.length ? { ...c0, in: c0.in.filter((x) => !nasc.includes(x.tag)), out: c0.out.filter((x) => !nasc.includes(x.tag)) } : c0;
       const nuove = c.in.filter((x) => x.nuova).length;
       return { ...c, id, nonLette: String(nuove), nc: nuove ? '#0891B2' : 'var(--ink3)', nb: nuove ? 'var(--acw)' : 'var(--ln)',
         drag: (e) => { this.trascina = id; try { e.dataTransfer.setData('text/plain', id); } catch (x) {} },
@@ -649,6 +655,15 @@ class Component extends DCLogic {
       const v = vista[id] || 'in';
       const elenco = v === 'in' ? c.in : c.out;
       const k = sel[id + v] || 0;
+      const nasc = nascoste[id] || [];
+      const conta = {};
+      for (const y of [...CASELLE[id].in, ...CASELLE[id].out]) if (y.vera || y.tag) conta[y.tag] = (conta[y.tag] || 0) + 1;
+      const chiavi = CAT_ORDINE.filter((g) => conta[g] || nasc.includes(g)).concat(Object.keys(conta).filter((g) => !CAT_ORDINE.includes(g) && TAG[g]));
+      const metti = (arr) => this.salva({ ...lay, nascoste: { ...nascoste, [id]: arr } });
+      const categorie = chiavi.map((g) => { const on = !nasc.includes(g), T = TAG[g] || TAG.info; return { nome: T.t, spiega: (on ? 'Nascondi: ' : 'Mostra: ') + (T.s || T.t), n: String(conta[g] || 0), on: on ? 'true' : 'false',
+        bd: on ? T.c : 'var(--ln)', bg: on ? T.b : 'transparent', fg: on ? T.c : 'var(--ink3)', td: on ? 'none' : 'line-through', pallino: on ? T.c : 'var(--ln)',
+        cambia: () => metti(on ? [...nasc, g] : nasc.filter((z) => z !== g)) }; });
+      const fAperto = !!filtri[id];
       const lista = elenco.map((x, i) => ({ ...x, tc: (TAG[x.tag] || TAG.info).c, tb: (TAG[x.tag] || TAG.info).b, tag: (TAG[x.tag] || TAG.info).t, tagSpiega: (TAG[x.tag] || TAG.info).s || '', peso: '800', punto: x.nuova ? '#0891B2' : 'transparent', nonLetta: x.nuova ? 'da leggere' : '',
         bordo: i === k ? c.col : 'transparent', bg: i === k ? 'var(--sf2)' : 'var(--sf)', pick: () => { if (x.vera && this.postaVeraApri) this.postaVeraApri(x); this.setState({ sel: { ...sel, [id + v]: i } }); if (t === 2) this.salva({ ...lay, taglie: { ...lay.taglie, [id]: 3 } }); } }));
       const x = elenco[k] || elenco[0] || { chi: '—', ora: '', oggetto: 'Nessuna mail', testo: '', sistema: 'niente da fare.', az: 'Aggiorna' };
@@ -676,6 +691,11 @@ class Component extends DCLogic {
         chiudi: () => this.salva({ ...lay, puntate: lay.puntate.filter((y) => y !== id), aperta: lay.aperta === id ? null : lay.aperta }),
         allarga: () => this.salva({ ...lay, taglie: { ...lay.taglie, [id]: TAGLIE[(TAGLIE.indexOf(t) + 1) % TAGLIE.length] } }),
         stacca: () => this.portaFuori(id),
+        categorie, filtroAperto: fAperto, fAttivo: nasc.length > 0, fNasc: String(nasc.length),
+        filtroTitolo: nasc.length ? 'Filtro attivo: ' + nasc.map((g) => (TAG[g] || TAG.info).t).join(', ') + ' nascoste' : 'Filtra per categoria',
+        fBd: nasc.length || fAperto ? '#0891B2' : 'var(--ln)', fBg: nasc.length || fAperto ? 'var(--acw)' : 'var(--sf)', fFg: nasc.length || fAperto ? '#0891B2' : 'var(--ink2)',
+        filtro: () => this.setState({ filtri: { ...filtri, [id]: !fAperto } }),
+        filtroTutte: () => metti([]),
         alza: () => this.salva({ ...lay, alte: { ...lay.alte, [id]: (hi + 1) % ALTEZZE.length } }) };
     });
     let temaV = 'giorno';
@@ -926,6 +946,7 @@ Object.assign(TAG, {
   cliente: { t: 'Cliente', c: '#15803D', b: 'var(--grw)', s: 'Cliente in Odoo (o in pratica sul portale)' },
   fornitore: { t: 'Fornitore', c: '#B45309', b: 'var(--amw)', s: 'Fornitore in Odoo' },
   contatto: { t: 'In rubrica', c: 'var(--ink2)', b: 'var(--ln)', s: 'In rubrica Odoo, ma né cliente né fornitore' },
+  installatore: { t: 'Installatore', c: '#9A3412', b: 'var(--amw)', s: 'Installatore della rete Next (elenco installatori)' },
   interno: { t: 'Interna', c: '#0891B2', b: 'var(--acw)', s: 'Mandata da una nostra casella @next-srl.eu (inoltro o copia fra caselle)' },
   ente: { t: 'Ente', c: '#6D4AE0', b: 'var(--viw)', s: 'Pubblica amministrazione: Agenzia, INPS, Comune, GSE…' },
   banca: { t: 'Banca', c: '#0F766E', b: 'var(--grw)', s: 'Banca o servizio di pagamento' },
@@ -933,6 +954,7 @@ Object.assign(TAG, {
   sconosciuto: { t: 'Da riconoscere', c: 'var(--ink2)', b: 'transparent', s: 'Indirizzo che non è in Odoo: va riconosciuto' },
   ricevuta: { t: 'Ricevuta PEC', c: 'var(--ink3)', b: 'var(--ln)', s: 'Ricevuta di accettazione o consegna della PEC' }
 });
+const CAT_ORDINE = ['cliente', 'fornitore', 'installatore', 'contatto', 'interno', 'ente', 'banca', 'sconosciuto', 'ricevuta'];
 Component.prototype.selVera = function (x) {
   if (!x || !x.vera) return { docs: [], haDocs: false, haInd: false, daInd: '', aInd: '', dataInd: '', pezzi: [{ t: (x && x.testo) || '', testo: true, link: false }], haHtml: false, noHtml: true, htmlDoc: '', haSistema: !!x.sistema, haAz: !!x.az, colBott: x.az ? 'repeat(2, minmax(0, 1fr))' : 'minmax(0, 1fr)' };
   const t = PV_TESTI[x.chiave];
