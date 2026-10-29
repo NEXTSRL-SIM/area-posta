@@ -231,7 +231,7 @@ html.incorniciata nav[aria-label="Menu Next"]{display:none!important}
 #pvStrumento svg{filter:drop-shadow(0 0 1.5px var(--sf)) drop-shadow(0 0 3px var(--sf))}
 section[aria-label="Caselle minori"].pv-barra-pronta{outline:2px dashed #06B6D4;outline-offset:6px;border-radius:12px;background:rgba(6,182,212,.07)}
 #pvStrumento.pv-str-alto{padding:1px 6px 1px 2px!important;border-radius:999px!important;border:1px solid var(--ln)!important;box-shadow:none!important;transition:none!important}
-#pvStrumento.pv-str-alto button,#pvStrumento.pv-str-alto label{width:28px!important;height:28px!important;border-radius:8px!important}
+#pvStrumento.pv-str-alto button[style*="width: 34px"],#pvStrumento.pv-str-alto label[style*="width: 34px"]{width:28px!important;height:28px!important;border-radius:8px!important}
 #pvStrumento.pv-str-alto [data-pv-presa]{height:24px!important}
 #pvStrumento button:hover,#pvStrumento label:hover{background:rgba(6,182,212,.14)!important}
 </style>
@@ -1132,7 +1132,7 @@ const evQuanti = (lay, id) => (((lay.scelteEv || {})[id]) || []).length + (((lay
 function evRiga(x, sel, colCasella) {
   const C = evDi(x), L = etDi(x);
   const et = { haEt: L.length > 0, etL: L.map((t) => ({ t: t.nome, c: t.colore })) };
-  const luce = { luce: sel ? 'pv-luce' : '', lc: colCasella };  /* la mail aperta: un riflesso lento del colore della casella scorre sulle scritte, come nelle sessioni in lavoro (Sante 29/10) */
+  const luce = { luce: sel && ((this.state || {}).attiva || {}).chiave === x.chiave ? 'pv-luce' : '', lc: colCasella };  /* la mail aperta: un riflesso lento del colore della casella scorre sulle scritte, come nelle sessioni in lavoro (Sante 29/10) */
   if (!C) return { ...et, ...luce, selSh: 'none', bordo: sel ? colCasella : 'transparent', bordoW: '3px', padL: '10px', bg: sel ? 'var(--sf2)' : 'var(--sf)', titSt: '', haEv: false, evNome: '', evSt: '' };
   /* la mail aperta resta riconoscibile anche se evidenziata: accanto alla fascia dell'evidenziazione c'è la linea del colore della casella (Sante 29/10) */
   return { ...et, ...luce, selSh: 'none', bordo: C.c, bordoW: '6px', padL: '9px', bg: 'linear-gradient(90deg, ' + C.c + (sel ? '30' : '1C') + ' 0%, ' + C.c + (sel ? '12' : '08') + ' 55%, ' + (sel ? 'var(--sf2)' : 'var(--sf)') + ' 100%)',
