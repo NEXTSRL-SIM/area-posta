@@ -869,11 +869,17 @@ const pvDoc = (nome, casella, cartella, uid) => {
   return { nome: vis.charAt(0).toUpperCase() + vis.slice(1), est, fascia: est === 'PDF' ? '#E5322D' : '#2F6FD6', fs: est.length > 3 ? '6' : '7.5',
     url: pass ? PV_API + '?file=1&t=' + encodeURIComponent(pass) + '&casella=' + encodeURIComponent(casella) + '&cartella=' + encodeURIComponent(cartella) + '&uid=' + uid + '&nome=' + encodeURIComponent(nome) : '#' };
 };
+/* posta inviata, come Outlook: se il destinatario non è nella rubrica di Odoo si vede il suo indirizzo mail (più «+N» se erano di più) — Sante 29/10 */
+const pvDest = (a) => {
+  const ind = String(a || '').match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi) || [];
+  const unici = ind.filter((x, i) => ind.findIndex((y) => y.toLowerCase() === x.toLowerCase()) === i);
+  return unici.length ? unici[0].toLowerCase() + (unici.length > 1 ? ' +' + (unici.length - 1) : '') : '';
+};
 /* una mail com'è nelle liste della pagina */
 const pvVoce = (m, casella, verso) => {
   /* chi scrive (o a chi abbiamo scritto): riconosciuto dalla rubrica di Odoo, dal dominio o da regole semplici */
   const tag = m.chi_tipo || (verso === 'out' ? 'sconosciuto' : (m.cliente ? 'cliente' : 'sconosciuto'));
-  const grezzo = verso === 'out' ? pvPulisci((m.a || '').replace(/<[^>]*>/g, '').replace(/"/g, '')) || 'destinatario' : pvNome(m);
+  const grezzo = verso === 'out' ? (pvDest(m.a) || 'destinatario') : pvNome(m);
   const chi = m.chi_nome ? (m.chi_persona ? m.chi_nome + ' · ' + m.chi_persona : m.chi_nome) : grezzo;
   return { vera: true, chiave: casella + ':' + m.cartella + ':' + m.uid, casella, cartella: m.cartella, uid: m.uid, iso: m.data,
     chi, ora: pvOra(m.data), oggetto: pvPulisci(m.oggetto) || '(senza oggetto)', tag, nuova: !!m.non_letta, da: m.da || '', a: m.a || '',
