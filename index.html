@@ -682,7 +682,7 @@ class Component extends DCLogic {
         cambia: () => metti(on ? nasc.filter((z) => z !== g) : [...nasc, g]) }; });
       const fAperto = !!filtri[id];
       const lista = elenco.map((x, i) => ({ ...x, tc: (TAG[x.tag] || TAG.info).c, tb: (TAG[x.tag] || TAG.info).b, tag: (TAG[x.tag] || TAG.info).t, tagSpiega: (TAG[x.tag] || TAG.info).s || '', peso: '800', punto: x.nuova ? '#0891B2' : 'transparent', nonLetta: x.nuova ? 'da leggere' : '',
-        ...evRiga(x, i === k, c.col), attivaS: ((this.state || {}).attiva || {}).chiave === x.chiave ? 'si' : '', haRispF: (PR_FATTE[x.chiave] || x.fatta) === 'r', haInolF: (PR_FATTE[x.chiave] || x.fatta) === 'i', pick: () => { if (x.vera && this.postaVeraApri) this.postaVeraApri(x); this.setState({ sel: { ...sel, [id + v]: i }, attiva: { chiave: x.chiave, id } }); if (t === 2) this.salva({ ...lay, taglie: { ...lay.taglie, [id]: 3 } }); } }));
+        ...evRiga(x, i === k, c.col, ((this.state || {}).attiva || {}).chiave), attivaS: ((this.state || {}).attiva || {}).chiave === x.chiave ? 'si' : '', haRispF: (PR_FATTE[x.chiave] || x.fatta) === 'r', haInolF: (PR_FATTE[x.chiave] || x.fatta) === 'i', pick: () => { if (x.vera && this.postaVeraApri) this.postaVeraApri(x); this.setState({ sel: { ...sel, [id + v]: i }, attiva: { chiave: x.chiave, id } }); if (t === 2) this.salva({ ...lay, taglie: { ...lay.taglie, [id]: 3 } }); } }));
       const x = elenco[k] || elenco[0] || { chi: '—', ora: '', oggetto: 'Nessuna mail', testo: '', sistema: 'niente da fare.', az: 'Aggiorna' };
       const apriIntera = () => {
         if (x.vera) { const mk = () => pvScheda(x, c.indirizzo, c.nome, c.col); this.setState({ risp: null, intera: mk() }); pvLeggiMail(x).then(() => { if (this.state && this.state.intera && this.state.intera.chiave === x.chiave) this.setState({ intera: mk() }); }); return; }
@@ -1129,10 +1129,10 @@ function evPassa(x, fEv, fEt) {
   return true;
 }
 const evQuanti = (lay, id) => (((lay.scelteEv || {})[id]) || []).length + (((lay.scelteEt || {})[id]) || []).length;
-function evRiga(x, sel, colCasella) {
+function evRiga(x, sel, colCasella, chAtt) {
   const C = evDi(x), L = etDi(x);
   const et = { haEt: L.length > 0, etL: L.map((t) => ({ t: t.nome, c: t.colore })) };
-  const luce = { luce: sel && ((this.state || {}).attiva || {}).chiave === x.chiave ? 'pv-luce' : '', lc: colCasella };  /* la mail aperta: un riflesso lento del colore della casella scorre sulle scritte, come nelle sessioni in lavoro (Sante 29/10) */
+  const luce = { luce: sel && chAtt === x.chiave ? 'pv-luce' : '', lc: colCasella };  /* la mail aperta: un riflesso lento del colore della casella scorre sulle scritte, come nelle sessioni in lavoro (Sante 29/10) */
   if (!C) return { ...et, ...luce, selSh: 'none', bordo: sel ? colCasella : 'transparent', bordoW: '3px', padL: '10px', bg: sel ? 'var(--sf2)' : 'var(--sf)', titSt: '', haEv: false, evNome: '', evSt: '' };
   /* la mail aperta resta riconoscibile anche se evidenziata: accanto alla fascia dell'evidenziazione c'è la linea del colore della casella (Sante 29/10) */
   return { ...et, ...luce, selSh: 'none', bordo: C.c, bordoW: '6px', padL: '9px', bg: 'linear-gradient(90deg, ' + C.c + (sel ? '30' : '1C') + ' 0%, ' + C.c + (sel ? '12' : '08') + ' 55%, ' + (sel ? 'var(--sf2)' : 'var(--sf)') + ' 100%)',
