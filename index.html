@@ -1432,7 +1432,7 @@ function cartAltre(c, v, vai) {
     box.innerHTML = voci.map(function (v, i) {
       return '<div data-i="' + i + '" style="padding:7px 10px;border-radius:7px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;' + (i === sel ? 'background:#E0F2FE;' : '') + '"><span>' + v.indirizzo.replace(/</g, '&lt;') + (v.nome ? ' <span style="color:#64748B">· ' + String(v.nome).replace(/</g, '&lt;') + '</span>' : '') + '</span><span style="color:#94A3B8;font-size:11px">' + v.volte + '</span></div>';
     }).join('');
-    var z = campo.currentCSSZoom || 1, r = campo.getBoundingClientRect();
+    var z = document.body.currentCSSZoom || 1, r = campo.getBoundingClientRect();
     box.style.left = (r.left / z) + 'px'; box.style.top = ((r.bottom + 4) / z) + 'px'; box.style.width = Math.max(260, r.width / z) + 'px';
     box.style.display = 'block';
   }
@@ -1469,6 +1469,78 @@ function cartAltre(c, v, vai) {
   }, true);
   document.addEventListener('focusout', function (e) { if (e.target === campo) setTimeout(chiudi, 150); }, true);
   window.addEventListener('scroll', function () { if (box && box.style.display !== 'none') disegna(); }, true);
+})();
+</script>
+<style>
+/* PORTALE NEXT-110 (Sante 30/10): la finestra Rispondi / Inoltra si ridimensiona dall'angolo in basso a destra; il testo cresce con lei */
+#pvStrumento [role="dialog"]{resize:both!important;min-width:520px;min-height:430px;max-width:calc(100vw - 40px)!important}
+#pvStrumento [role="dialog"] > div:nth-child(2){flex:1 1 auto;min-height:0;overflow:auto}
+#pvStrumento [role="dialog"] textarea{flex:1 1 auto}
+#pvStorico{position:fixed;z-index:2147482000;display:none;flex-direction:column;background:var(--sf,#fff);border:1px solid var(--ln,#E2E8F0);border-radius:14px;box-shadow:0 24px 60px rgba(15,23,42,.28);font:500 12.5px Manrope,system-ui,sans-serif;color:var(--ink,#0F172A);overflow:hidden}
+#pvStorico .st-t{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--ln,#E2E8F0)}
+#pvStorico .st-t b{flex:1;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pvStorico .st-t button{width:26px;height:26px;border:1px solid var(--ln,#E2E8F0);border-radius:7px;background:transparent;color:inherit;cursor:pointer}
+#pvStorico .st-l{flex:1;overflow:auto;padding:4px 6px}
+#pvStorico .st-r{padding:7px 8px;border-radius:8px;border-bottom:1px solid var(--ln,#EEF2F6)}
+#pvStorico .st-r:hover{background:rgba(6,182,212,.08)}
+#pvStorico .st-m{display:flex;gap:6px;align-items:center;color:#64748B;font-size:11px}
+#pvStorico .st-o{margin-top:2px;line-height:1.35}
+#pvStoricoTab{position:fixed;z-index:2147482000;display:none;writing-mode:vertical-rl;padding:10px 5px;border-radius:0 9px 9px 0;background:#0891B2;color:#fff;font:700 11px Manrope,system-ui,sans-serif;letter-spacing:.06em;cursor:pointer;border:0}
+</style>
+<script>
+/* PORTALE NEXT-110 (Sante 30/10): a destra della finestra Rispondi / Inoltra, le ultime mail ricevute da e inviate al primo
+   destinatario scritto nel campo A. Si chiude con la ×, si riapre con la linguetta «Storico». Dati: posta-indirizzi?storia= */
+(function () {
+  var API = 'https://pnxhthrheqeucoisifjw.supabase.co/functions/v1/posta-indirizzi';
+  var pan = null, tab = null, chiusoPer = null, mostrato = null, cache = {};
+  function pass() { try { return window.sessionStorage.getItem('regia_pass'); } catch (e) { return null; } }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function crea() {
+    if (pan) return;
+    pan = document.createElement('div'); pan.id = 'pvStorico';
+    pan.innerHTML = '<div class="st-t"><b></b><button type="button" title="Chiudi" aria-label="Chiudi lo storico">✕</button></div><div class="st-l"></div>';
+    document.body.appendChild(pan);
+    pan.querySelector('button').addEventListener('click', function () { chiusoPer = mostrato; pan.style.display = 'none'; });
+    tab = document.createElement('button'); tab.id = 'pvStoricoTab'; tab.type = 'button'; tab.textContent = 'STORICO';
+    tab.title = 'Mostra le ultime mail con questo indirizzo';
+    document.body.appendChild(tab);
+    tab.addEventListener('click', function () { chiusoPer = null; });
+  }
+  function riga(m) {
+    var d = m.data ? new Date(m.data) : null;
+    var dd = d ? d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Rome' }) : '';
+    var su = m.verso === 'inviata';
+    return '<div class="st-r"><div class="st-m"><span style="color:' + (su ? '#0891B2' : '#16A34A') + ';font-weight:800">' + (su ? '↑ inviata' : '↓ ricevuta') + '</span><span>' + dd + '</span><span>· ' + esc(m.casella) + '</span>' + (m.allegati ? '<span title="con allegati">📎</span>' : '') + '</div><div class="st-o">' + esc(m.oggetto || '(senza oggetto)') + '</div></div>';
+  }
+  function carica(ind) {
+    if (cache[ind]) return Promise.resolve(cache[ind]);
+    var t = pass(); if (!t) return Promise.resolve([]);
+    return fetch(API + '?t=' + encodeURIComponent(t) + '&storia=' + encodeURIComponent(ind)).then(function (r) { return r.json(); })
+      .then(function (j) { cache[ind] = (j && j.ok && j.mail) || []; return cache[ind]; }).catch(function () { return []; });
+  }
+  function giro() {
+    var dlg = document.querySelector('#pvStrumento [role="dialog"]');
+    var campo = dlg && dlg.querySelector('input[aria-label="Destinatari"]');
+    var ind = campo && (String(campo.value).match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i) || [])[0];
+    crea();
+    if (!dlg || !ind) { pan.style.display = 'none'; tab.style.display = 'none'; mostrato = null; return; }
+    ind = ind.toLowerCase();
+    var z = document.body.currentCSSZoom || 1, r = dlg.getBoundingClientRect();
+    var L = r.right / z + 10, T = r.top / z, Hh = r.height / z, W = 320, vw = window.innerWidth / (z || 1);
+    if (L + W > vw - 8) L = Math.max(8, vw - W - 8);
+    if (chiusoPer === ind) { pan.style.display = 'none'; tab.style.display = 'block'; tab.style.left = (r.right / z) + 'px'; tab.style.top = (T + 60) + 'px'; return; }
+    tab.style.display = 'none';
+    pan.style.left = L + 'px'; pan.style.top = T + 'px'; pan.style.height = Hh + 'px'; pan.style.width = W + 'px'; pan.style.display = 'flex';
+    if (mostrato === ind) return;
+    mostrato = ind;
+    pan.querySelector('b').textContent = 'Con ' + ind;
+    pan.querySelector('.st-l').innerHTML = '<div style="padding:10px;color:#64748B">Cerco le ultime mail…</div>';
+    carica(ind).then(function (l) {
+      if (mostrato !== ind) return;
+      pan.querySelector('.st-l').innerHTML = l.length ? l.map(riga).join('') : '<div style="padding:10px;color:#64748B">Nessuna mail con questo indirizzo negli archivi della posta.</div>';
+    });
+  }
+  setInterval(giro, 500);
 })();
 </script>
 </body>
