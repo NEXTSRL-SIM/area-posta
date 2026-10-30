@@ -2487,6 +2487,30 @@ html.pv-scrivi #pvFuori{display:none!important}
     if (forzata && sceltaPer !== cas) { sceltaPer = cas; scelta = forzata; }
     if (sceltaPer !== cas) { sceltaPer = cas; var pred = (firme || []).filter(function (f) { return (f.caselle || []).indexOf(cas) >= 0; })[0]; scelta = pred ? pred.id : 'standard'; }
     if (sel.value !== scelta && sel.querySelector('option[value="' + scelta + '"]')) sel.value = scelta;
+    anteprima(dlg, cas);
+  }
+  /* (Sante 30/10) la firma si vede: sotto il testo, dentro la finestra, com'è la firma che partirà (non si scrive lì) */
+  var UFF = { sante: 'Sante Bortoletto', info: 'Next S.r.l.', amministrazione: 'Ufficio Amministrativo', acquisti: 'Ufficio Acquisti', commerciale: 'Ufficio Commerciale',
+    assistenza: 'Ufficio Assistenza', export: 'Ufficio Export', privacy: 'Privacy', pec: 'Next S.r.l. — PEC' };
+  function cartiglio(cas, html, logo) {
+    var c = '#1f7a8c', mail = cas === 'pec' ? 'nextsrl2023@legalmail.it' : (cas || 'info') + '@next-srl.eu';
+    var dentro = html != null ? '<div style="font-family:Helvetica,Arial,sans-serif;font-size:12.5px;color:#000;line-height:1.5">' + html + '</div>'
+      : (cas === 'sante' ? '' : '<b style="color:' + c + '">' + esc(UFF[cas] || 'Next S.r.l.') + '</b><br>') + '<strong>Next S.r.l. società a socio unico</strong><br>Via XIII Martiri, 88 - 30027 San Donà di Piave (VE)<br>Tel. 0421.1706618<br><span style="color:' + c + '">' + esc(mail) + '</span><br><span style="color:' + c + '">www.next-srl.eu</span> – <span style="color:' + c + '">www.next-srl.net</span>';
+    var saluti = html == null && cas === 'sante' ? '<div style="font-size:15px;color:#000;line-height:1.55;margin-bottom:12px">Cordiali saluti,<br><i>Sante Bortoletto</i></div>' : '';
+    if (html != null && !logo) return dentro;
+    return saluti + '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;font-family:Helvetica,Arial,sans-serif;font-size:12.5px;color:#000"><tr><td style="padding:0 14px 0 0;vertical-align:middle"><img src="' + LOGO + '" alt="Next" style="width:130px;height:auto;display:block"></td>'
+      + '<td style="border-left:2px solid ' + c + ';padding:0 0 0 14px;vertical-align:middle;line-height:1.5">' + dentro + '</td></tr></table>';
+  }
+  function anteprima(dlg, cas) {
+    var ed = dlg.querySelector('#pvEd'); if (!ed || !ed.querySelector('.ed-t')) return;
+    var box = ed.querySelector(':scope > .ed-firma');
+    if (!box) { box = document.createElement('div'); box.className = 'ed-firma'; box.setAttribute('aria-label', 'La firma che partirà con la mail'); ed.appendChild(box); }
+    var sc = scelta || 'standard', f = null; if (/^[0-9a-f-]{36}$/i.test(sc)) f = (firme || []).filter(function (x) { return x.id === sc; })[0] || null;
+    var k = cas + '|' + sc + '|' + (f ? (f.aggiornata || '') + String(f.html || '').length : '');
+    if (box.getAttribute('data-k') === k) return; box.setAttribute('data-k', k);
+    var h = sc === 'nessuna' ? '<span class="ed-f-vuota">Nessuna firma</span>'
+      : cartiglio(cas, f ? String(f.html || '').replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+\s*=\s*("[^"]*"|'[^']*')/gi, '') : null, f ? !!f.logo : true);
+    box.innerHTML = '<span class="ed-f-t">Firma</span>' + h;
   }
   /* ---- gestione delle firme ---- */
   function apriGestione(cas) {
@@ -2609,6 +2633,9 @@ html.pv-scrivi #pvFuori{display:none!important}
 #pvEd .ed-b button span{font-size:14px!important}
 #pvEd .ed-b select{height:25px;font-size:12.5px}
 #pvEd .ed-b .sep{height:16px}
+#pvEd .ed-firma{position:relative;flex:0 0 auto;padding:16px 14px 12px;border-top:1px dashed var(--ln,#E2E8F0);background:#fff;font-family:Helvetica,Arial,sans-serif;user-select:none;opacity:.92}
+#pvEd .ed-firma .ed-f-t{position:absolute;top:3px;right:8px;font:600 9.5px Manrope,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3,#94A3B8)}
+#pvEd .ed-firma .ed-f-vuota{font:500 12px Manrope,sans-serif;color:var(--ink3,#94A3B8)}
 #pvOpz{display:inline-flex;align-items:center;gap:1px;margin-left:4px}
 #pvOpz button{width:26px;height:26px;padding:0;border:0;border-radius:7px;background:transparent;color:#A1A1AA;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative}
 #pvOpz button:hover{background:rgba(100,116,139,.10);color:#52525B}
