@@ -1582,12 +1582,9 @@ html.pv-scrivi #pvFuori{display:none!important}
     var tent = 0, tf = setInterval(function () {
       tent++;
       if (!bozza) { clearInterval(tf); return; }
-      if (P().apriScrivi && P().apriScrivi(bozza.k, bozza)) {
+      if (riapri(bozza)) {
         clearInterval(tf); fuoriAperta = true;
         try { window.localStorage.removeItem('pv_fuori_' + fuoriId); } catch (e) {}
-        if (window.pvEditorImposta) window.pvEditorImposta(bozza.html || '');
-        if (window.pvFirmaImposta) window.pvFirmaImposta(bozza.firma || 'standard');
-        if (bozza.w && bozza.h) dim = { w: bozza.w, h: bozza.h };
       } else if (tent > 120) { clearInterval(tf); document.body.insertAdjacentHTML('beforeend', '<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:600 14px Manrope,sans-serif;color:#475569">La mail a cui rispondi non è tra quelle caricate: chiudi questa finestra e riprova dalla posta.</div>'); }
     }, 500);
   }
@@ -1822,12 +1819,42 @@ html.pv-scrivi #pvFuori{display:none!important}
     root.style.setProperty('--pvTestaW', (w + 8) + 'px');
   }
   (function segui() { try { aggancia(); } catch (e) {} requestAnimationFrame(segui); })();
+  /* riapre la finestra di scrittura da una bozza: testo, firma, misura, e le mail che erano aperte a fianco */
+  function riapri(bz) {
+    if (!(P().apriScrivi && P().apriScrivi(bz.k, bz))) return false;
+    if (window.pvEditorImposta) window.pvEditorImposta(bz.html || '');
+    if (window.pvFirmaImposta) window.pvFirmaImposta(bz.firma || 'standard');
+    if (bz.w && bz.h) dim = { w: bz.w, h: bz.h };
+    if (bz.attivo) attivo = bz.attivo;
+    var da = (bz.aperti || []).slice(0, 3);
+    if (da.length) setTimeout(function () { chiudiCorpo(); da.forEach(function (m) { apriCorpo(m); }); giro(); }, 900);
+    return true;
+  }
+  function bozzaOra() {
+    var s = P().scrivi && P().scrivi(), dlg = document.querySelector('#pvStrumento [role="dialog"]'); if (!s || !dlg) return null;
+    var v = function (n) { var c = dlg.querySelector('input[aria-label="' + n + '"]'); return c ? c.value : ''; };
+    var og = document.getElementById('pvOgg');
+    return { k: s.chiave, modo: s.modo, stato: s.stato, a: v('Destinatari'), cc: v('Copia'), oggetto: og && og.style.display !== 'none' ? og.value : v('Oggetto'),
+      html: window.pvEditorHtml ? window.pvEditorHtml() : '', testo: s.testo || '', firma: window.pvFirmaScelta ? window.pvFirmaScelta() : 'standard', w: dim && dim.w, h: dim && dim.h,
+      aperti: aperti.map(function (p) { return p.m; }), attivo: attivo };
+  }
+  /* chiusa con la X la finestra staccata, la mail non spedita torna dentro la posta da cui era partita, come i widget */
+  if (fuoriId) window.addEventListener('pagehide', function () {
+    if (!fuoriAperta) return; var bz = bozzaOra(); if (!bz || bz.stato === 'fatto' || bz.stato === 'invio') return;
+    try { window.localStorage.setItem('pv_rientro', JSON.stringify(bz)); } catch (e) {}
+  });
+  if (!fuoriId) window.addEventListener('storage', function (e) {
+    if (e.key !== 'pv_rientro' || !e.newValue) return;
+    var bz = null; try { bz = JSON.parse(e.newValue); window.localStorage.removeItem('pv_rientro'); } catch (x) {}
+    if (bz) riapri(bz);
+  });
   function portaFuori() {
     var s = P().scrivi && P().scrivi(), dlg = document.querySelector('#pvStrumento [role="dialog"]'); if (!s || !dlg) return;
     var v = function (n) { var c = dlg.querySelector('input[aria-label="' + n + '"]'); return c ? c.value : ''; };
     var og = document.getElementById('pvOgg');
     var bz = { k: s.chiave, modo: s.modo, a: v('Destinatari'), cc: v('Copia'), oggetto: og && og.style.display !== 'none' ? og.value : v('Oggetto'),
-      html: window.pvEditorHtml ? window.pvEditorHtml() : '', testo: s.testo || '', firma: window.pvFirmaScelta ? window.pvFirmaScelta() : 'standard', w: dim && dim.w, h: dim && dim.h };
+      html: window.pvEditorHtml ? window.pvEditorHtml() : '', testo: s.testo || '', firma: window.pvFirmaScelta ? window.pvFirmaScelta() : 'standard', w: dim && dim.w, h: dim && dim.h,
+      aperti: aperti.map(function (p) { return p.m; }), attivo: attivo };
     var id = 'b' + Date.now();
     try { window.localStorage.setItem('pv_fuori_' + id, JSON.stringify(bz)); } catch (e) { return; }
     var W = Math.min(window.screen.availWidth || 1500, 1500), H = Math.min(window.screen.availHeight || 900, 900), w = null;
@@ -1880,8 +1907,10 @@ html.pv-scrivi #pvFuori{display:none!important}
       if (!p.el.classList.contains('grande')) { p.el.style.left = cL + 'px'; p.el.style.top = (T + i * (hh + gap)) + 'px'; p.el.style.height = hh + 'px'; p.el.style.width = CW + 'px'; }
       p.el.style.display = 'flex';
     });
+    /* nella finestra staccata il gruppo (scrittura + storico + mail aperte) sta al centro */
+    if (fuoriId && !manuale && !tr) { var lar = W + 10 + (n ? CW + 10 : 0); root.style.setProperty('--pvDx', Math.round(-lar / 2) + 'px'); }
     /* la prima volta che il gruppo esce dallo schermo a destra, lo riporto dentro spostando tutto insieme (una volta sola, poi decide Sante) */
-    if (n && !manuale && !tr) { var fuori = cL + CW + 8 - vw; if (fuori > 1) { var dx = parseFloat(root.style.getPropertyValue('--pvDx')) || 0, lib = r.left / z - 8; var sp = Math.min(fuori, Math.max(0, lib)); if (sp > 1) { root.style.setProperty('--pvDx', (dx - sp) + 'px'); manuale = true; } } }
+    if (n && !manuale && !tr && !fuoriId) { var fuori = cL + CW + 8 - vw; if (fuori > 1) { var dx = parseFloat(root.style.getPropertyValue('--pvDx')) || 0, lib = r.left / z - 8; var sp = Math.min(fuori, Math.max(0, lib)); if (sp > 1) { root.style.setProperty('--pvDx', (dx - sp) + 'px'); manuale = true; } } }
     if (mostrato === ind) { if (lista.length) disegnaLista(); return; }
     mostrato = ind; gruppi = tutti.slice(0, 8); lista = lista.filter(function (m) { return gruppi.indexOf(m.__ind) >= 0; }); firma = '';
     pan.querySelector('b').textContent = gruppi.length > 1 ? 'Storico di ' + gruppi.length + ' indirizzi' : 'Con ' + gruppi[0];
@@ -2376,6 +2405,57 @@ html.pv-scrivi #pvFuori{display:none!important}
   }
   (function segui() { try { aggancia(); } catch (e) {} requestAnimationFrame(segui); })();
   setInterval(giro, 400);
+})();
+</script>
+<style>
+/* PORTALE NEXT-110 (Sante 30/10): la ricerca resta a portata quando si scorre la posta verso il basso */
+#pvCerca{position:fixed;z-index:440;top:10px;left:50%;transform:translate(-50%,-70px);transition:transform .22s ease,opacity .22s ease;opacity:0;display:flex;align-items:center;gap:8px;width:min(520px,calc(100vw - 40px));height:40px;box-sizing:border-box;padding:0 6px 0 12px;border-radius:12px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.82);backdrop-filter:blur(12px) saturate(1.5);-webkit-backdrop-filter:blur(12px) saturate(1.5);box-shadow:0 0 0 1px rgba(6,182,212,.35),0 12px 32px rgba(15,23,42,.22)}
+#pvCerca.su{transform:translate(-50%,0);opacity:1}
+#pvCerca input{flex:1;min-width:0;border:0;outline:none;background:transparent;font:500 14px Manrope,sans-serif;color:#0F172A}
+#pvCerca button{width:30px;height:30px;border:0;border-radius:8px;background:rgba(100,116,139,.12);color:#334155;cursor:pointer;display:none;align-items:center;justify-content:center}
+html.pv-scrivi #pvCerca{display:none}
+</style>
+<script>
+/* PORTALE NEXT-110 (Sante 30/10): «la ricerca fissata in alto, quando scorro verso il basso non la vedo più».
+   Quando la casella di ricerca della pagina esce dallo schermo, ne compare una uguale in alto al centro, sganciata:
+   scrive nella ricerca vera della pagina (stesse regole: si scrive e si preme Invio), la ✕ toglie la ricerca. */
+(function () {
+  var bar = null;
+  function vera() { return document.querySelector('input[aria-label="Cerca nella posta"]'); }
+  function crea() {
+    bar = document.createElement('div'); bar.id = 'pvCerca'; bar.setAttribute('role', 'search');
+    bar.innerHTML = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>'
+      + '<input type="text" aria-label="Cerca nella posta (sempre a portata)" placeholder="Cerca: nome, indirizzo o oggetto, poi Invio">'
+      + '<button type="button" title="Togli la ricerca e torna all’elenco" aria-label="Togli la ricerca"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>';
+    document.body.appendChild(bar);
+    var i = bar.querySelector('input');
+    i.addEventListener('input', function () {
+      var v = vera(); if (!v) return;
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(v, i.value);
+      v.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    i.addEventListener('keydown', function (e) {
+      var v = vera(); if (!v) return;
+      if (e.key === 'Enter' || e.key === 'Escape') { v.dispatchEvent(new KeyboardEvent('keydown', { key: e.key, code: e.key, bubbles: true })); }
+    });
+    bar.querySelector('button').addEventListener('click', function () {
+      var v = vera(), via = v && v.closest('label') && v.closest('label').querySelector('button'); if (via) via.click();
+      i.value = '';
+    });
+  }
+  function giro() {
+    var v = vera(); if (!v) return;
+    if (!bar) crea();
+    var z = document.body.currentCSSZoom || 1, r = v.getBoundingClientRect();
+    var fuori = r.bottom / z < 0 || r.top / z > window.innerHeight / z;
+    bar.classList.toggle('su', fuori);
+    var i = bar.querySelector('input');
+    if (document.activeElement !== i && i.value !== v.value) i.value = v.value;
+    var via = v.closest('label') && v.closest('label').querySelector('button');
+    bar.querySelector('button').style.display = via ? 'inline-flex' : 'none';
+  }
+  setInterval(giro, 250);
+  window.addEventListener('scroll', giro, true);
 })();
 </script>
 </body>
