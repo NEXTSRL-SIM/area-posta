@@ -1089,7 +1089,7 @@ Component.prototype.convRiga = function (x, c) {
         al: noi ? 'flex-end' : 'flex-start', bg: noi ? 'color-mix(in srgb, ' + col + ' 7%, var(--sf))' : 'var(--sf)',
         bd: noi ? 'color-mix(in srgb, ' + col + ' 22%, var(--ln))' : 'var(--ln)', bl: noi ? 'var(--ln)' : '#CBD5E1', br: noi ? col : 'var(--ln)',
         bwl: noi ? '1px' : '2px', bwr: noi ? '2px' : '1px', cc: noi ? 'color-mix(in srgb, ' + col + ' 80%, #000)' : 'var(--ink)',
-        sh: qui ? '0 0 0 1.5px color-mix(in srgb, ' + col + ' 60%, transparent), 0 0 12px color-mix(in srgb, ' + col + ' 35%, transparent)'
+        sh: qui ? '0 0 0 1px color-mix(in srgb, ' + col + ' 40%, transparent), 0 0 7px color-mix(in srgb, ' + col + ' 22%, transparent)'
           : ((s.convVedi && s.convVedi.y && s.convVedi.y.chiave === y.chiave) ? '0 0 0 1.5px ' + col : 'none'),
         qui: qui ? '· è questa' : '',
         pick: () => { this._noPick = Date.now(); if (qui) { this.setState({ convVedi: null }); return; } if (this.postaVeraApri) this.postaVeraApri(y); this.setState({ convVedi: { id: c.id, y }, attiva: { chiave: y.chiave, id: y.pid } }); } };
@@ -1940,9 +1940,11 @@ html.pv-scrivi #pvFuori{display:none!important}
     }
     var b = testaBar.querySelector('#pvSoloMia');
     var aperte = mostrato && chiusoPer !== mostrato;
-    var t = aperte ? 'Solo questa' : 'Mostra storico';
-    if (b.getAttribute('data-t') !== t) { b.setAttribute('data-t', t); b.title = aperte ? 'Chiudi tutte le finestre a fianco e resta solo su quella in cui scrivi' : 'Riapri lo storico delle mail con questi indirizzi';
-      b.innerHTML = (aperte ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="10" height="15" rx="2"/><path d="M17 8l4 4-4 4"/></svg>' : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="7" height="15" rx="2"/><rect x="13.5" y="4.5" width="7" height="15" rx="2"/></svg>') + t; }
+    /* (Sante 30/10) un solo tasto «Storico»: acceso quando lo storico è aperto a fianco; clic = lo chiude, e il tasto resta per riaprirlo */
+    var t = aperte ? 'on' : 'off';
+    if (b.getAttribute('data-t') !== t) { b.setAttribute('data-t', t); b.title = aperte ? 'Chiudi lo storico a fianco e resta solo sulla mail che scrivi' : 'Apri lo storico delle mail con questi indirizzi';
+      b.classList.toggle('pv-on', aperte);
+      b.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5v4h4"/><path d="M12 7.5V12l3 2"/></svg>Storico'; }
     b.style.display = mostrato ? 'inline-flex' : 'none';
     /* la nuova mail per ora non si porta fuori: niente freccetta */
     testaBar.querySelector('#pvFuori').style.display = '';
@@ -2582,6 +2584,7 @@ html.pv-scrivi #pvFuori{display:none!important}
 /* più piccoli e fini, come chiesto (Sante 30/10) */
 #pvSoloMia{height:24px!important;padding:0 7px!important;font:500 11px -apple-system,BlinkMacSystemFont,Manrope,sans-serif!important;border-radius:6px!important;color:#52525B!important}
 #pvSoloMia svg{width:11px;height:11px}
+#pvSoloMia.pv-on{background:#E0F2FE!important;border-color:#7DD3FC!important;color:#0369A1!important}
 #pvFuori{width:24px!important;height:24px!important;border-radius:6px!important;color:#71717A!important}
 #pvFuori svg{width:12px;height:12px}
 /* barra della formattazione un pelino più grande (Sante 30/10) */
