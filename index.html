@@ -1571,6 +1571,8 @@ function cartAltre(c, v, vai) {
     fetch(API + '?t=' + encodeURIComponent(t) + '&q=' + encodeURIComponent(q)).then(function (r) { return r.json(); }).then(function (j) {
       if (pezzo(campo && campo.value) !== q) return;
       voci = (j && j.ok && j.indirizzi) || []; sel = voci.length ? 0 : -1; disegna();
+      /* i nomi delle persone, per le schede dello storico (Sante 30/10) */
+      try { window.pvNomi = window.pvNomi || {}; voci.forEach(function (v) { if (v && v.nome) window.pvNomi[String(v.indirizzo).toLowerCase()] = String(v.nome); }); } catch (e) {}
     }).catch(function () { chiudi(); });
   }
   document.addEventListener('input', function (e) {
@@ -1794,7 +1796,7 @@ html.pv-scrivi #pvFuori{display:none!important}
       var schede = pan.querySelector('.st-tabs');
       schede.innerHTML = gruppi.length > 1 ? gruppi.map(function (g) {
         var n = lista.filter(function (m) { return m.__ind === g; }).length;
-        return '<button type="button" role="tab" class="st-tab' + (g === attivo ? ' on' : '') + '" data-g="' + esc(g) + '" title="' + esc(g) + '">' + esc(g.split('@')[0]) + '<i>' + (caricati[g] ? n : '…') + '</i></button>';
+        return '<button type="button" role="tab" class="st-tab' + (g === attivo ? ' on' : '') + '" data-g="' + esc(g) + '" title="' + esc(g) + '">' + esc(nomeTab(g)) + '<i>' + (caricati[g] ? n : '…') + '</i></button>';
       }).join('') : '';
       var sue = lista.filter(function (m) { return m.__ind === attivo; });
       l.innerHTML = (gruppi.length > 1 ? '<div class="st-gt">' + esc(attivo) + '</div>' : '')
@@ -1804,6 +1806,17 @@ html.pv-scrivi #pvFuori{display:none!important}
     var f = JSON.stringify(lista.map(function (m) { var e = ev(m); return chiaveDi(m) + (e ? e.id : '') + et(m).map(function (x) { return x.id; }).join(','); })) + aperti.map(function (p) { return chiaveDi(p.m); }).join(',');
     if (f === firma) return; firma = f;
     l.innerHTML = lista.length ? lista.map(riga).join('') : '<div style="padding:10px;color:#64748B">Nessuna mail con questo indirizzo negli archivi della posta.</div>';
+  }
+  /* sulla scheda il nome della persona, se lo conosciamo dalle mail (Sante 30/10); se no l'indirizzo */
+  function nomeTab(g) {
+    var N = window.pvNomi = window.pvNomi || {}, k = String(g || '').toLowerCase();
+    if (N[k]) return N[k];
+    if (N[k] === undefined) { N[k] = ''; var t = pass();
+      if (t) fetch(API + '?t=' + encodeURIComponent(t) + '&q=' + encodeURIComponent(k)).then(function (r) { return r.json(); }).then(function (j) {
+        ((j && j.indirizzi) || []).forEach(function (v) { if (v && v.nome) N[String(v.indirizzo).toLowerCase()] = String(v.nome); });
+        if (N[k]) { firma = ''; disegnaLista(); }
+      }).catch(function () {}); }
+    return g;
   }
   function carica(ind) {
     if (cache[ind]) return Promise.resolve(cache[ind]);
