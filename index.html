@@ -1138,6 +1138,8 @@ function evCarica(comp) {
 }
 const evDi = (x) => (x && x.chiave && EV[x.chiave]) ? evCol(EV[x.chiave].colore) : null;
 const etDi = (x) => (x && x.chiave && ET[x.chiave]) ? ET[x.chiave].map(etTag).filter(Boolean) : [];
+/* PORTALE NEXT-110 (Sante 30/10): ponte per gli script aggiunti in fondo (storico a fianco della finestra Rispondi) */
+window.pvPonte = { leggi: (v) => pvLeggiMail(v), evDi: (x) => evDi(x), etDi: (x) => etDi(x) };
 function evPassa(x, fEv, fEt) {
   const k = x && x.chiave;
   if (fEv && fEv.length) { const e = k ? EV[k] : null; if (!e || !evCol(e.colore)) return false; if (!fEv.includes('__tutte') && !fEv.includes(e.colore)) return false; }
@@ -1472,45 +1474,107 @@ function cartAltre(c, v, vai) {
 })();
 </script>
 <style>
-/* PORTALE NEXT-110 (Sante 30/10): la finestra Rispondi / Inoltra si ridimensiona dall'angolo in basso a destra; il testo cresce con lei */
-#pvStrumento [role="dialog"]{resize:both!important;min-width:520px;min-height:430px;max-width:calc(100vw - 40px)!important}
+/* PORTALE NEXT-110 (Sante 30/10): la finestra Rispondi / Inoltra si ridimensiona dall'angolo in basso a destra, si sposta
+   trascinandola dalla barra del titolo; il testo cresce con lei */
+#pvStrumento [role="dialog"]{resize:both!important;min-width:520px;min-height:430px;max-width:calc(100vw - 40px)!important;
+  transform:translate(calc(var(--pvSh,0px) + var(--pvDx,0px)),var(--pvDy,0px));transition:transform .18s ease}
+html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
+#pvStrumento [role="dialog"] > div:first-child{cursor:move;user-select:none}
+#pvStrumento [role="dialog"] > div:first-child button{cursor:pointer}
 #pvStrumento [role="dialog"] > div:nth-child(2){flex:1 1 auto;min-height:0;overflow:auto}
 #pvStrumento [role="dialog"] textarea{flex:1 1 auto}
-#pvStorico{position:fixed;z-index:2147482000;display:none;flex-direction:column;background:var(--sf,#fff);border:1px solid var(--ln,#E2E8F0);border-radius:14px;box-shadow:0 24px 60px rgba(15,23,42,.28);font:500 12.5px Manrope,system-ui,sans-serif;color:var(--ink,#0F172A);overflow:hidden}
-#pvStorico .st-t{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--ln,#E2E8F0)}
-#pvStorico .st-t b{flex:1;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#pvStorico .st-t button{width:26px;height:26px;border:1px solid var(--ln,#E2E8F0);border-radius:7px;background:transparent;color:inherit;cursor:pointer}
-#pvStorico .st-l{flex:1;overflow:auto;padding:4px 6px}
-#pvStorico .st-r{padding:7px 8px;border-radius:8px;border-bottom:1px solid var(--ln,#EEF2F6)}
+#pvStorico,#pvCorpo{position:fixed;z-index:2147482000;display:none;flex-direction:column;background:var(--sf,#fff);border:1px solid var(--ln,#E2E8F0);border-radius:14px;box-shadow:0 24px 60px rgba(15,23,42,.28);font:500 12.5px Manrope,system-ui,sans-serif;color:var(--ink,#0F172A);overflow:hidden}
+#pvStorico .st-t,#pvCorpo .st-t{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--ln,#E2E8F0)}
+#pvStorico .st-t b,#pvCorpo .st-t b{flex:1;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pvStorico .st-t button,#pvCorpo .st-t button{width:26px;height:26px;border:1px solid var(--ln,#E2E8F0);border-radius:7px;background:transparent;color:inherit;cursor:pointer;flex:0 0 auto}
+#pvStorico .st-l{flex:1;overflow:auto;padding:6px}
+#pvStorico .st-gt{display:flex;justify-content:space-between;gap:8px;align-items:baseline;padding:2px 9px 6px;font:800 11px Manrope,system-ui,sans-serif;letter-spacing:.02em;color:#0E7490;word-break:break-all}
+#pvStorico .st-gt span{font-weight:600;color:#94A3B8;white-space:nowrap}
+#pvSoloMia{height:28px;border:1px solid var(--ln,#E2E8F0);border-radius:8px;background:transparent;color:var(--ink2,#334155);cursor:pointer;font:600 11.5px Manrope,system-ui,sans-serif;padding:0 9px;display:inline-flex;align-items:center;gap:5px}
+#pvSoloMia:hover{background:rgba(6,182,212,.08)}
+#pvStorico .st-r{display:block;width:100%;text-align:left;border:0;background:transparent;font:inherit;color:inherit;cursor:pointer;padding:7px 9px;margin:0 0 3px;border-radius:8px;border-left:4px solid transparent;box-sizing:border-box}
 #pvStorico .st-r:hover{background:rgba(6,182,212,.08)}
-#pvStorico .st-m{display:flex;gap:6px;align-items:center;color:#64748B;font-size:11px}
-#pvStorico .st-o{margin-top:2px;line-height:1.35}
+#pvStorico .st-r.sel{box-shadow:0 0 0 2px #06B6D4 inset;background:rgba(6,182,212,.10)}
+#pvStorico .st-o{font-weight:800;font-size:12.8px;line-height:1.35;color:var(--ink,#0F172A);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#pvStorico .st-m{display:flex;flex-wrap:wrap;gap:6px;align-items:center;color:#64748B;font-size:11px;margin-top:3px}
+#pvStorico .st-e{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+#pvStorico .st-e span{display:inline-flex;align-items:center;gap:5px;font:700 10.5px Manrope,system-ui,sans-serif;color:var(--ink2,#334155);background:var(--sf2,#F1F5F9);border:1px solid var(--ln,#E2E8F0);border-radius:6px;padding:0 7px;line-height:18px}
+#pvStorico .st-e i{width:7px;height:7px;border-radius:50%;display:block}
+#pvCorpo .cp-h{padding:10px 14px;border-bottom:1px solid var(--ln,#E2E8F0);font-size:12px;color:#475569;line-height:1.5}
+#pvCorpo .cp-h div:first-child{font:800 14px Manrope,system-ui,sans-serif;color:var(--ink,#0F172A);margin-bottom:3px}
+#pvCorpo .cp-c{flex:1;min-height:0;overflow:auto;background:#fff}
+#pvCorpo .cp-c iframe{width:100%;height:100%;border:0;display:block;background:#fff}
+#pvCorpo .cp-c pre{margin:0;padding:12px 14px;white-space:pre-wrap;font:400 13.5px/1.6 Manrope,system-ui,sans-serif;color:#0F172A}
+#pvCorpo .cp-d{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-top:1px solid var(--ln,#E2E8F0)}
+#pvCorpo .cp-d a{font:600 11.5px Manrope,system-ui,sans-serif;color:#0E7490;text-decoration:none;border:1px solid var(--ln,#E2E8F0);border-radius:7px;padding:3px 8px}
 #pvStoricoTab{position:fixed;z-index:2147482000;display:none;writing-mode:vertical-rl;padding:10px 5px;border-radius:0 9px 9px 0;background:#0891B2;color:#fff;font:700 11px Manrope,system-ui,sans-serif;letter-spacing:.06em;cursor:pointer;border:0}
 </style>
 <script>
 /* PORTALE NEXT-110 (Sante 30/10): a destra della finestra Rispondi / Inoltra, le ultime mail ricevute da e inviate al primo
-   destinatario scritto nel campo A. Si chiude con la ×, si riapre con la linguetta «Storico». Dati: posta-indirizzi?storia= */
+   destinatario scritto nel campo A, con le stesse evidenziazioni ed etichette della posta. Oggetto in grassetto, sotto i dettagli.
+   Cliccando una mail il corpo si apre a fianco (la finestra si sposta a sinistra per fare posto).
+   La finestra si trascina dalla barra del titolo. Si chiude con la ×, si riapre con la linguetta «Storico».
+   Dati: posta-indirizzi?storia= (posta_storico v2 con cartella e uid); corpo: pvLeggiMail della pagina. */
 (function () {
   var API = 'https://pnxhthrheqeucoisifjw.supabase.co/functions/v1/posta-indirizzi';
-  var pan = null, tab = null, chiusoPer = null, mostrato = null, cache = {};
+  var pan = null, tab = null, corpo = null, chiusoPer = null, mostrato = null, cache = {}, scelta = null, lista = [], firma = '', gruppi = [], caricati = {};
+  var root = document.documentElement;
   function pass() { try { return window.sessionStorage.getItem('regia_pass'); } catch (e) { return null; } }
-  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function zoom() { return document.body.currentCSSZoom || 1; }
+  function chiaveDi(m) { return m && m.casella && m.cartella && m.uid ? m.casella + ':' + m.cartella + ':' + m.uid : ''; }
+  function P() { return window.pvPonte || {}; }
+  function ev(m) { try { return P().evDi ? P().evDi({ chiave: chiaveDi(m) }) : null; } catch (e) { return null; } }
+  function et(m) { try { return P().etDi ? P().etDi({ chiave: chiaveDi(m) }) : []; } catch (e) { return []; } }
   function crea() {
     if (pan) return;
     pan = document.createElement('div'); pan.id = 'pvStorico';
-    pan.innerHTML = '<div class="st-t"><b></b><button type="button" title="Chiudi" aria-label="Chiudi lo storico">✕</button></div><div class="st-l"></div>';
+    pan.innerHTML = '<div class="st-t"><b></b><button type="button" title="Chiudi" aria-label="Chiudi lo storico">✕</button></div><div class="st-l" role="listbox" aria-label="Ultime mail con questo indirizzo"></div>';
     document.body.appendChild(pan);
-    pan.querySelector('button').addEventListener('click', function () { chiusoPer = mostrato; pan.style.display = 'none'; });
+    pan.querySelector('.st-t button').addEventListener('click', function () { chiusoPer = mostrato; chiudiCorpo(); pan.style.display = 'none'; });
+    pan.querySelector('.st-l').addEventListener('click', function (e) {
+      var r = e.target.closest('.st-r'); if (!r) return;
+      var m = lista[+r.getAttribute('data-i')]; if (!m) return;
+      if (scelta && chiaveDi(scelta) === chiaveDi(m)) { chiudiCorpo(); return; }
+      apriCorpo(m);
+    });
     tab = document.createElement('button'); tab.id = 'pvStoricoTab'; tab.type = 'button'; tab.textContent = 'STORICO';
     tab.title = 'Mostra le ultime mail con questo indirizzo';
     document.body.appendChild(tab);
     tab.addEventListener('click', function () { chiusoPer = null; });
+    corpo = document.createElement('div'); corpo.id = 'pvCorpo';
+    corpo.innerHTML = '<div class="st-t"><b>Mail</b><button type="button" title="Chiudi" aria-label="Chiudi la mail">✕</button></div><div class="cp-h"></div><div class="cp-c"></div><div class="cp-d" style="display:none"></div>';
+    document.body.appendChild(corpo);
+    corpo.querySelector('.st-t button').addEventListener('click', chiudiCorpo);
   }
-  function riga(m) {
+  function riga(m, i) {
     var d = m.data ? new Date(m.data) : null;
-    var dd = d ? d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Rome' }) : '';
-    var su = m.verso === 'inviata';
-    return '<div class="st-r"><div class="st-m"><span style="color:' + (su ? '#0891B2' : '#16A34A') + ';font-weight:800">' + (su ? '↑ inviata' : '↓ ricevuta') + '</span><span>' + dd + '</span><span>· ' + esc(m.casella) + '</span>' + (m.allegati ? '<span title="con allegati">📎</span>' : '') + '</div><div class="st-o">' + esc(m.oggetto || '(senza oggetto)') + '</div></div>';
+    var dd = d ? d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Rome' }) + ' ' + d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' }) : '';
+    var su = m.verso === 'inviata', e = ev(m), t = et(m);
+    var stile = e ? 'border-left-color:' + e.c + ';background:linear-gradient(90deg,' + e.c + '26,' + e.c + '0A 70%,transparent)' : '';
+    var sel = scelta && chiaveDi(scelta) === chiaveDi(m) ? ' sel' : '';
+    return '<button type="button" role="option" class="st-r' + sel + '" data-i="' + i + '" style="' + stile + '" title="Apri la mail a fianco">'
+      + '<div class="st-o"' + (e ? ' style="text-decoration:underline;text-decoration-color:' + e.c + ';text-decoration-thickness:2px;text-underline-offset:3px"' : '') + '>' + esc(m.oggetto || '(senza oggetto)') + '</div>'
+      + '<div class="st-m"><span style="color:' + (su ? '#0891B2' : '#16A34A') + ';font-weight:800">' + (su ? '↑ inviata' : '↓ ricevuta') + '</span><span>' + dd + '</span><span>· ' + esc(m.casella) + '</span>' + (m.allegati ? '<span title="con allegati">📎</span>' : '') + (e ? '<span style="color:' + e.f + ';font-weight:800">● ' + esc(e.t) + '</span>' : '') + '</div>'
+      + (t.length ? '<div class="st-e">' + t.map(function (x) { return '<span><i style="background:' + esc(x.colore) + '"></i>' + esc(x.nome) + '</span>'; }).join('') + '</div>' : '')
+      + '</button>';
+  }
+  function disegnaLista() {
+    var l = pan.querySelector('.st-l');
+    if (gruppi.length > 1 || lista.length) {
+      var f2 = JSON.stringify(lista.map(function (m) { var e = ev(m); return chiaveDi(m) + (e ? e.id : '') + et(m).map(function (x) { return x.id; }).join(','); })) + (scelta ? chiaveDi(scelta) : '') + gruppi.join('|');
+      if (f2 === firma) return; firma = f2;
+      var h = '', i0 = 0;
+      gruppi.forEach(function (g, gi) {
+        var sue = lista.filter(function (m) { return m.__ind === g; });
+        h += '<div class="st-g"' + (gi ? ' style="border-top:1px solid var(--ln,#CBD5E1);margin-top:8px;padding-top:8px"' : '') + '><div class="st-gt">' + esc(g) + '<span>' + (caricati[g] ? sue.length + ' mail' : 'cerco…') + '</span></div>'
+          + (sue.length ? sue.map(function (m) { return riga(m, lista.indexOf(m)); }).join('') : (caricati[g] ? '<div style="padding:4px 9px 6px;color:#64748B">Nessuna mail con questo indirizzo.</div>' : '')) + '</div>';
+      });
+      l.innerHTML = h; return;
+    }
+    var f = JSON.stringify(lista.map(function (m) { var e = ev(m); return chiaveDi(m) + (e ? e.id : '') + et(m).map(function (x) { return x.id; }).join(','); })) + (scelta ? chiaveDi(scelta) : '');
+    if (f === firma) return; firma = f;
+    l.innerHTML = lista.length ? lista.map(riga).join('') : '<div style="padding:10px;color:#64748B">Nessuna mail con questo indirizzo negli archivi della posta.</div>';
   }
   function carica(ind) {
     if (cache[ind]) return Promise.resolve(cache[ind]);
@@ -1518,26 +1582,113 @@ function cartAltre(c, v, vai) {
     return fetch(API + '?t=' + encodeURIComponent(t) + '&storia=' + encodeURIComponent(ind)).then(function (r) { return r.json(); })
       .then(function (j) { cache[ind] = (j && j.ok && j.mail) || []; return cache[ind]; }).catch(function () { return []; });
   }
+  function apriCorpo(m) {
+    scelta = m; firma = ''; disegnaLista();
+    corpo.querySelector('.st-t b').textContent = m.verso === 'inviata' ? 'Mail inviata' : 'Mail ricevuta';
+    corpo.querySelector('.cp-h').innerHTML = '<div>' + esc(m.oggetto || '(senza oggetto)') + '</div><div>Da: ' + esc(m.mittente || '') + '</div>';
+    corpo.querySelector('.cp-c').innerHTML = '<pre style="color:#64748B">Apro la mail…</pre>';
+    var dd = corpo.querySelector('.cp-d'); dd.style.display = 'none'; dd.innerHTML = '';
+    root.classList.add('pv-con-corpo');
+    if (!m.uid || !P().leggi) { corpo.querySelector('.cp-c').innerHTML = '<pre>Questa mail non si può aprire da qui.</pre>'; return; }
+    var k = chiaveDi(m);
+    P().leggi({ chiave: k, casella: m.casella, cartella: m.cartella, uid: m.uid, da: m.mittente }).then(function (x) {
+      if (!scelta || chiaveDi(scelta) !== k) return;
+      var c = corpo.querySelector('.cp-c');
+      if (!x || x.errore) { c.innerHTML = '<pre>Non riesco ad aprirla adesso' + (x && x.errore ? ': ' + esc(x.errore) : '') + '.</pre>'; return; }
+      var h = corpo.querySelector('.cp-h');
+      var data = x.data ? new Date(x.data).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+      h.innerHTML = '<div>' + esc(m.oggetto || '(senza oggetto)') + '</div><div>Da: ' + esc(x.nome ? x.nome + ' <' + (x.da || '') + '>' : (x.da || m.mittente || '')) + '</div>' + (x.a ? '<div>A: ' + esc(x.a) + '</div>' : '') + (data ? '<div>' + data + '</div>' : '');
+      if (x.html) {
+        var f = document.createElement('iframe');
+        f.setAttribute('sandbox', 'allow-popups allow-popups-to-escape-sandbox');
+        f.setAttribute('referrerpolicy', 'no-referrer');
+        f.srcdoc = '<base target="_blank"><style>body{margin:12px 14px;font:14px/1.55 Helvetica,Arial,sans-serif;color:#0F172A;word-wrap:break-word}img{max-width:100%;height:auto}</style>' + x.html;
+        c.innerHTML = ''; c.appendChild(f);
+      } else c.innerHTML = '<pre>' + esc(x.testo || '(mail senza testo)') + '</pre>';
+      if (x.docs && x.docs.length) { dd.innerHTML = x.docs.map(function (d) { return '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">📎 ' + esc(d.nome) + '.' + esc(String(d.est).toLowerCase()) + '</a>'; }).join(''); dd.style.display = 'flex'; }
+    });
+  }
+  function chiudiCorpo() { scelta = null; firma = ''; if (corpo) corpo.style.display = 'none'; root.classList.remove('pv-con-corpo'); if (!manuale) root.style.setProperty('--pvSh', '0px'); if (pan && lista) disegnaLista(); }
+  /* trascinamento dalla barra del titolo */
+  var tr = null, manuale = false;
+  document.addEventListener('mousedown', function (e) {
+    var dlg = document.querySelector('#pvStrumento [role="dialog"]'); if (!dlg) return;
+    var testa = dlg.firstElementChild; if (!testa || !testa.contains(e.target) || e.target.closest('button,input,select,a')) return;
+    var z = zoom();
+    /* dopo il primo trascinamento la posizione la decide Sante: lo spostamento automatico si ferma */
+    var sh = parseFloat(root.style.getPropertyValue('--pvSh')) || 0; manuale = true; root.style.setProperty('--pvSh', '0px');
+    tr = { x: e.clientX / z, y: e.clientY / z, dx: (parseFloat(root.style.getPropertyValue('--pvDx')) || 0) + sh, dy: parseFloat(root.style.getPropertyValue('--pvDy')) || 0 };
+    root.style.setProperty('--pvDx', tr.dx + 'px');
+    root.classList.add('pv-trascino'); e.preventDefault();
+  }, true);
+  document.addEventListener('mousemove', function (e) {
+    if (!tr) return; var z = zoom();
+    root.style.setProperty('--pvDx', (tr.dx + e.clientX / z - tr.x) + 'px');
+    root.style.setProperty('--pvDy', (tr.dy + e.clientY / z - tr.y) + 'px');
+    giro();
+  }, true);
+  document.addEventListener('mouseup', function () { if (tr) { tr = null; root.classList.remove('pv-trascino'); } }, true);
+  function bottone(dlg) {
+    var testa = dlg.firstElementChild; if (!testa) return;
+    var b = testa.querySelector('#pvSoloMia');
+    if (!b) {
+      b = document.createElement('button'); b.id = 'pvSoloMia'; b.type = 'button';
+      var x = testa.querySelector('button[aria-label="Chiudi"]'); testa.insertBefore(b, x || null);
+      b.addEventListener('click', function () {
+        if (chiusoPer && chiusoPer === mostrato) chiusoPer = null; else { chiusoPer = mostrato; chiudiCorpo(); }
+        giro();
+      });
+    }
+    var aperte = mostrato && chiusoPer !== mostrato;
+    var t = aperte ? 'Solo questa' : 'Mostra storico';
+    if (b.getAttribute('data-t') !== t) { b.setAttribute('data-t', t); b.title = aperte ? 'Chiudi tutte le finestre a fianco e resta solo su quella in cui scrivi' : 'Riapri lo storico delle mail con questi indirizzi';
+      b.innerHTML = (aperte ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="10" height="15" rx="2"/><path d="M17 8l4 4-4 4"/></svg>' : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="7" height="15" rx="2"/><rect x="13.5" y="4.5" width="7" height="15" rx="2"/></svg>') + t; }
+    b.style.display = mostrato ? 'inline-flex' : 'none';
+  }
   function giro() {
     var dlg = document.querySelector('#pvStrumento [role="dialog"]');
-    var campo = dlg && dlg.querySelector('input[aria-label="Destinatari"]');
-    var ind = campo && (String(campo.value).match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i) || [])[0];
+    var tutti = [];
+    if (dlg) ['Destinatari', 'Copia', 'Copia nascosta'].forEach(function (n) { var c = dlg.querySelector('input[aria-label="' + n + '"]'); if (c) (String(c.value).match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi) || []).forEach(function (x) { x = x.toLowerCase(); if (tutti.indexOf(x) < 0 && !/@next-srl\.eu$|@legalmail\.it$/.test(x)) tutti.push(x); }); });
+    var ind = tutti.length ? tutti.join('|') : '';
     crea();
-    if (!dlg || !ind) { pan.style.display = 'none'; tab.style.display = 'none'; mostrato = null; return; }
-    ind = ind.toLowerCase();
-    var z = document.body.currentCSSZoom || 1, r = dlg.getBoundingClientRect();
-    var L = r.right / z + 10, T = r.top / z, Hh = r.height / z, W = 320, vw = window.innerWidth / (z || 1);
+    if (!dlg) { pan.style.display = 'none'; tab.style.display = 'none'; corpo.style.display = 'none'; mostrato = null; scelta = null; lista = []; firma = '';
+      root.classList.remove('pv-con-corpo'); root.style.setProperty('--pvSh', '0px'); root.style.setProperty('--pvDx', '0px'); root.style.setProperty('--pvDy', '0px'); manuale = false; return; }
+    var z = zoom(), vw = window.innerWidth / z, W = 330;
+    /* con la mail aperta a fianco, la finestra si sposta a sinistra quanto basta perché tutto stia nello schermo */
+    var dW = dlg.offsetWidth, B = 0;
+    if (scelta && !tr && !manuale) {
+      B = Math.max(340, Math.min(620, vw - dW - W - 44));
+      var tot = dW + 10 + W + 10 + B, sx = Math.max(8, (vw - tot) / 2), base = (vw - dW) / 2 + (parseFloat(root.style.getPropertyValue('--pvDx')) || 0);
+      root.style.setProperty('--pvSh', Math.round(sx - base) + 'px');
+    } else if (!scelta && !manuale) root.style.setProperty('--pvSh', '0px');
+    if (!ind) { pan.style.display = 'none'; tab.style.display = 'none'; corpo.style.display = 'none'; mostrato = null; if (dlg) bottone(dlg); return; }
+    if (dlg) bottone(dlg);
+    var r = dlg.getBoundingClientRect();
+    var L = r.right / z + 10, T = r.top / z, Hh = r.height / z;
     if (L + W > vw - 8) L = Math.max(8, vw - W - 8);
-    if (chiusoPer === ind) { pan.style.display = 'none'; tab.style.display = 'block'; tab.style.left = (r.right / z) + 'px'; tab.style.top = (T + 60) + 'px'; return; }
+    if (chiusoPer === ind) { pan.style.display = 'none'; corpo.style.display = 'none'; tab.style.display = 'block'; tab.style.left = (r.right / z) + 'px'; tab.style.top = (T + 60) + 'px'; return; }
     tab.style.display = 'none';
     pan.style.left = L + 'px'; pan.style.top = T + 'px'; pan.style.height = Hh + 'px'; pan.style.width = W + 'px'; pan.style.display = 'flex';
-    if (mostrato === ind) return;
-    mostrato = ind;
-    pan.querySelector('b').textContent = 'Con ' + ind;
-    pan.querySelector('.st-l').innerHTML = '<div style="padding:10px;color:#64748B">Cerco le ultime mail…</div>';
-    carica(ind).then(function (l) {
-      if (mostrato !== ind) return;
-      pan.querySelector('.st-l').innerHTML = l.length ? l.map(riga).join('') : '<div style="padding:10px;color:#64748B">Nessuna mail con questo indirizzo negli archivi della posta.</div>';
+    if (scelta) {
+      var cL = L + W + 10, cW = Math.max(300, vw - cL - 8);
+      if (B) cW = Math.min(cW, B);
+      corpo.style.left = cL + 'px'; corpo.style.top = T + 'px'; corpo.style.height = Hh + 'px'; corpo.style.width = cW + 'px'; corpo.style.display = 'flex';
+    } else corpo.style.display = 'none';
+    if (mostrato === ind) { if (lista.length) disegnaLista(); return; }
+    var prima = scelta ? chiaveDi(scelta) : null;
+    mostrato = ind; gruppi = tutti.slice(0, 8); lista = lista.filter(function (m) { return gruppi.indexOf(m.__ind) >= 0; }); firma = '';
+    if (prima && !lista.some(function (m) { return chiaveDi(m) === prima; })) chiudiCorpo();
+    pan.querySelector('b').textContent = gruppi.length > 1 ? 'Storico di ' + gruppi.length + ' indirizzi' : 'Con ' + gruppi[0];
+    disegnaLista();
+    gruppi.forEach(function (g) {
+      if (lista.some(function (m) { return m.__ind === g; })) return;
+      carica(g).then(function (l) {
+        if (mostrato !== ind) return;
+        caricati[g] = true;
+        l.forEach(function (m) { var c = Object.assign({}, m, { __ind: g }); lista.push(c); });
+        lista.sort(function (a, b) { return gruppi.indexOf(a.__ind) - gruppi.indexOf(b.__ind) || String(b.data).localeCompare(String(a.data)); });
+        firma = ''; disegnaLista();
+      });
     });
   }
   setInterval(giro, 500);
