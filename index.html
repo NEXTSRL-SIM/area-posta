@@ -599,7 +599,7 @@ class Component extends DCLogic {
   componentDidMount() {
     window.__attRidisegna = () => this.setState({ attT: Date.now() });
     if (this.postaVeraAvvia) this.postaVeraAvvia();
-    evCarica(this); pvStrumTrascina(this);
+    evCarica(this); pvStrumTrascina(this); window.__pvComp = this; /* PORTALE NEXT-110: per la finestra di scrittura staccata */
     if (this.waVeroAvvia) this.waVeroAvvia();
     try { const h0 = (window.location.hash || '').slice(1);
       if (h0 === 'finestra') document.documentElement.classList.add('finestra');
@@ -1141,7 +1141,12 @@ const etDi = (x) => (x && x.chiave && ET[x.chiave]) ? ET[x.chiave].map(etTag).fi
 /* PORTALE NEXT-110 (Sante 30/10): ponte per gli script aggiunti in fondo (storico a fianco della finestra Rispondi) */
 window.pvPonte = { leggi: (v) => pvLeggiMail(v), evDi: (x) => evDi(x), etDi: (x) => etDi(x), colori: () => EV_COLORI, etichette: () => EV_ET,
   evidenzia: (k, id, meta) => { if (!id) { delete EV[k]; evManda({ chiave: k, colore: null }); } else { const t = evCol(id); EV[k] = { colore: id, etichetta: t ? t.t : '' }; evManda({ chiave: k, colore: id, ...(meta || {}), chi: evChi() }); } evSalvaLocale(); },
-  etichetta: (k, id, on, meta) => { const l = (ET[k] || []).filter((z) => z !== id); ET[k] = on ? [...l, id] : l; if (!ET[k].length) delete ET[k]; evManda({ azione: 'etichetta', chiave: k, id, on: !!on, ...(meta || {}), chi: evChi() }); evSalvaLocale(); } };
+  etichetta: (k, id, on, meta) => { const l = (ET[k] || []).filter((z) => z !== id); ET[k] = on ? [...l, id] : l; if (!ET[k].length) delete ET[k]; evManda({ azione: 'etichetta', chiave: k, id, on: !!on, ...(meta || {}), chi: evChi() }); evSalvaLocale(); },
+  /* finestra di scrittura portata fuori (PORTALE NEXT-110): stato, apertura su una mail, chiusura */
+  scrivi: () => ((window.__pvComp && window.__pvComp.state) || {}).scrivi || null,
+  chiudiScrivi: () => { if (window.__pvComp) window.__pvComp.setState({ scrivi: null }); },
+  apriScrivi: (k, b) => { const c = window.__pvComp; if (!c) return false; let id = null; for (const q of Object.keys(CASELLE)) if (pvTutte(CASELLE[q]).some((y) => y.chiave === k)) { id = q; break; } if (!id) return false;
+    c.setState({ attiva: { id, chiave: k }, intera: null, scrivi: { chiave: k, modo: b.modo || 'r', a: b.a || '', cc: b.cc || '', oggetto: b.oggetto || '', testo: b.testo || '', esito: '', stato: '' } }); return true; } };
 function evPassa(x, fEv, fEt) {
   const k = x && x.chiave;
   if (fEv && fEv.length) { const e = k ? EV[k] : null; if (!e || !evCol(e.colore)) return false; if (!fEv.includes('__tutte') && !fEv.includes(e.colore)) return false; }
@@ -1272,7 +1277,7 @@ Component.prototype.rispBottoni = function (v, dove) {
       const s2 = (this.state || {}).scrivi; if (!s2 || s2.stato === 'invio' || s2.stato === 'fatto') return;
       if (!prIndirizzi(s2.a).length) { this.setState({ scrivi: { ...s2, stato: 'errore', esito: 'Manca il destinatario.' } }); return; }
       this.setState({ scrivi: { ...s2, stato: 'invio', esito: '' } });
-      fetch(PR_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: pvPass(), casella: v.casella, cartella: v.cartella, uid: v.uid, modo: s2.modo, a: s2.a, cc: s2.cc, oggetto: s2.oggetto, testo: s2.testo, html_testo: (window.pvEditorHtml ? window.pvEditorHtml() : '') }) })
+      fetch(PR_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: pvPass(), casella: v.casella, cartella: v.cartella, uid: v.uid, modo: s2.modo, a: s2.a, cc: s2.cc, oggetto: s2.oggetto, testo: s2.testo, html_testo: (window.pvEditorHtml ? window.pvEditorHtml() : ''), firma: (window.pvFirmaScelta ? window.pvFirmaScelta() : 'standard') }) })
         .then((r) => r.json()).then((j) => {
           const s3 = (this.state || {}).scrivi; if (!s3) return;
           if (j && j.ok) { PR_FATTE[k] = s2.modo === 'i' ? 'i' : 'r'; this.setState({ scrivi: { ...s3, stato: 'fatto', esito: 'Partita' + (j.inviata && !/errore|non /.test(j.inviata) ? ', copia in ' + j.inviata : '') + '.' } }); setTimeout(() => { const s4 = (this.state || {}).scrivi; if (s4 && s4.chiave === k) this.setState({ scrivi: null }); }, 1600); }
@@ -1479,16 +1484,16 @@ function cartAltre(c, v, vai) {
 /* PORTALE NEXT-110 (Sante 30/10): la finestra Rispondi / Inoltra si ridimensiona dall'angolo in basso a destra, si sposta
    trascinandola dalla barra del titolo; il testo cresce con lei */
 #pvStrumento [role="dialog"]{resize:both!important;min-width:520px;min-height:430px;max-width:calc(100vw - 40px)!important;
-  transform:translate(calc(var(--pvSh,0px) + var(--pvDx,0px)),var(--pvDy,0px));transition:transform .18s ease}
+  transform:translate(var(--pvDx,0px),var(--pvDy,0px));transition:transform .18s ease}
 html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
 #pvStrumento [role="dialog"] > div:first-child{cursor:move;user-select:none}
 #pvStrumento [role="dialog"] > div:first-child button{cursor:pointer}
 #pvStrumento [role="dialog"] > div:nth-child(2){flex:1 1 auto;min-height:0;overflow:auto}
 #pvStrumento [role="dialog"] textarea{flex:1 1 auto}
-#pvStorico,#pvCorpo{position:fixed;z-index:2147482000;display:none;flex-direction:column;background:var(--sf,#fff);border:1px solid var(--ln,#E2E8F0);border-radius:14px;box-shadow:0 24px 60px rgba(15,23,42,.28);font:500 12.5px Manrope,system-ui,sans-serif;color:var(--ink,#0F172A);overflow:hidden}
-#pvStorico .st-t,#pvCorpo .st-t{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--ln,#E2E8F0)}
-#pvStorico .st-t b,#pvCorpo .st-t b{flex:1;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#pvStorico .st-t button,#pvCorpo .st-t button{width:26px;height:26px;border:1px solid var(--ln,#E2E8F0);border-radius:7px;background:transparent;color:inherit;cursor:pointer;flex:0 0 auto}
+#pvStorico,.pvCorpo{position:fixed;z-index:2147482000;display:none;flex-direction:column;background:var(--sf,#fff);border:1px solid var(--ln,#E2E8F0);border-radius:14px;box-shadow:0 24px 60px rgba(15,23,42,.28);font:500 12.5px Manrope,system-ui,sans-serif;color:var(--ink,#0F172A);overflow:hidden}
+#pvStorico .st-t,.pvCorpo .st-t{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--ln,#E2E8F0)}
+#pvStorico .st-t b,.pvCorpo .st-t b{flex:1;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pvStorico .st-t button,.pvCorpo .st-t button{width:26px;height:26px;border:1px solid var(--ln,#E2E8F0);border-radius:7px;background:transparent;color:inherit;cursor:pointer;flex:0 0 auto}
 #pvStorico .st-l{flex:1;overflow:auto;padding:4px 6px 6px}
 #pvStorico .st-tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--ln,#E2E8F0);overflow-x:auto;flex:0 0 auto}
 #pvStorico .st-tabs:empty{display:none}
@@ -1498,38 +1503,47 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
 #pvStorico .st-tab i{font-style:normal;font-weight:600;color:#94A3B8;margin-left:5px}
 #pvStorico .st-gt{display:flex;justify-content:space-between;gap:8px;align-items:baseline;padding:2px 9px 6px;font:800 11px Manrope,system-ui,sans-serif;letter-spacing:.02em;color:#0E7490;word-break:break-all}
 #pvStorico .st-gt span{font-weight:600;color:#94A3B8;white-space:nowrap}
-#pvSoloMia{height:28px;border:1px solid var(--ln,#E2E8F0);border-radius:8px;background:transparent;color:var(--ink2,#334155);cursor:pointer;font:600 11.5px Manrope,system-ui,sans-serif;padding:0 9px;display:inline-flex;align-items:center;gap:5px}
-#pvSoloMia:hover{background:rgba(6,182,212,.08)}
+#pvTesta{position:fixed;z-index:2147481950;display:none;align-items:center;gap:6px}
+#pvStrumento [role="dialog"] > div:first-child > span{margin-right:var(--pvTestaW,0px)}
+#pvSoloMia{height:28px;background:var(--sf,#fff)!important;border:1px solid var(--ln,#E2E8F0);border-radius:8px;background:transparent;color:var(--ink2,#334155);cursor:pointer;font:600 11.5px Manrope,system-ui,sans-serif;padding:0 9px;display:inline-flex;align-items:center;gap:5px}
+#pvSoloMia:hover,#pvFuori:hover{background:rgba(6,182,212,.08)}
+#pvFuori{width:28px;height:28px;border:1px solid var(--ln,#E2E8F0);border-radius:8px;background:var(--sf,#fff);color:var(--ink2,#334155);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+/* la finestra di scrittura portata fuori, in una finestra sua (per un altro monitor) */
+html.pv-scrivi body{background:#E9EEF3!important}
+html.pv-scrivi #dc-radice{visibility:hidden}
+html.pv-scrivi #pvStrumento [role="dialog"]{visibility:visible}
+html.pv-scrivi #pvFuori{display:none!important}
 #pvStorico .st-r{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #EEF1F5;background:transparent;font:inherit;color:inherit;cursor:pointer;padding:8px 9px;margin:0;border-radius:0;border-left:4px solid transparent;box-sizing:border-box}
 #pvStorico .st-r:last-child{border-bottom:0}
 #pvStorico .st-r:hover{background:rgba(6,182,212,.08)}
 #pvStorico .st-r.sel{box-shadow:0 0 0 2px #06B6D4 inset;background:rgba(6,182,212,.10)}
+#pvStorico .st-aiuto{padding:4px 10px 6px;font:500 10.5px Manrope,system-ui,sans-serif;color:#94A3B8}
 #pvStorico .st-o{font-weight:800;font-size:12.8px;line-height:1.35;color:var(--ink,#0F172A);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #pvStorico .st-m{display:flex;flex-wrap:wrap;gap:6px;align-items:center;color:#64748B;font-size:11px;margin-top:3px}
 #pvStorico .st-e{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
 #pvStorico .st-e span{display:inline-flex;align-items:center;gap:5px;font:700 10.5px Manrope,system-ui,sans-serif;color:var(--ink2,#334155);background:var(--sf2,#F1F5F9);border:1px solid var(--ln,#E2E8F0);border-radius:6px;padding:0 7px;line-height:18px}
 #pvStorico .st-e i{width:7px;height:7px;border-radius:50%;display:block}
-#pvCorpo .cp-h{padding:10px 14px;border-bottom:1px solid var(--ln,#E2E8F0);font-size:12px;color:#475569;line-height:1.5}
-#pvCorpo .cp-h div:first-child{font:800 14px Manrope,system-ui,sans-serif;color:var(--ink,#0F172A);margin-bottom:3px}
-#pvCorpo .cp-c{flex:1;min-height:0;overflow:auto;background:#fff}
-#pvCorpo .cp-c iframe{width:100%;height:100%;border:0;display:block;background:#fff}
-#pvCorpo .cp-c pre{margin:0;padding:12px 14px;white-space:pre-wrap;font:400 13.5px/1.6 Manrope,system-ui,sans-serif;color:#0F172A}
-#pvCorpo .cp-d{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-top:1px solid var(--ln,#E2E8F0)}
-#pvCorpo .cp-d{gap:8px;max-height:132px;overflow:auto}
-#pvCorpo .cp-a{display:flex;flex-direction:column;align-items:stretch;width:96px;border:1px solid var(--ln,#E2E8F0);border-radius:9px;background:#fff;cursor:pointer;padding:0;overflow:hidden;font:600 10.5px Manrope,system-ui,sans-serif;color:#334155;text-align:left}
-#pvCorpo .cp-a:hover{border-color:#06B6D4;box-shadow:0 0 0 2px rgba(6,182,212,.18)}
-#pvCorpo .cp-a .mi{height:62px;display:flex;align-items:center;justify-content:center;background:#F8FAFC;border-bottom:1px solid #EEF1F5;overflow:hidden}
-#pvCorpo .cp-a .mi img{width:100%;height:100%;object-fit:cover;display:block}
-#pvCorpo .cp-a .mi span{font:800 11px Manrope,system-ui,sans-serif;color:#fff;border-radius:4px;padding:3px 6px}
-#pvCorpo .cp-a .nm{padding:4px 6px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#pvCorpo .cp-v{position:absolute;left:0;right:0;bottom:0;top:46px;display:none;flex-direction:column;background:#fff;z-index:2}
-#pvCorpo .cp-vb{display:flex;align-items:center;gap:6px;padding:7px 10px;border-bottom:1px solid var(--ln,#E2E8F0);font:700 12px Manrope,system-ui,sans-serif}
-#pvCorpo .cp-vb b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#pvCorpo .cp-vb button,#pvCorpo .cp-vb a{height:26px;border:1px solid var(--ln,#E2E8F0);border-radius:7px;background:#fff;color:#334155;cursor:pointer;font:600 11.5px Manrope,system-ui,sans-serif;padding:0 9px;display:inline-flex;align-items:center;text-decoration:none}
-#pvCorpo .cp-vc{flex:1;min-height:0;overflow:auto;background:#F1F5F9;display:flex;align-items:center;justify-content:center}
-#pvCorpo .cp-vc iframe{width:100%;height:100%;border:0;background:#fff}
-#pvCorpo .cp-vc img{max-width:100%;max-height:100%;object-fit:contain}
-#pvCorpo.grande{left:20px!important;top:20px!important;width:calc(100vw - 40px)!important;height:calc(100vh - 40px)!important;z-index:2147482300}
+.pvCorpo .cp-h{padding:10px 14px;border-bottom:1px solid var(--ln,#E2E8F0);font-size:12px;color:#475569;line-height:1.5}
+.pvCorpo .cp-h div:first-child{font:800 14px Manrope,system-ui,sans-serif;color:var(--ink,#0F172A);margin-bottom:3px}
+.pvCorpo .cp-c{flex:1;min-height:0;overflow:auto;background:#fff}
+.pvCorpo .cp-c iframe{width:100%;height:100%;border:0;display:block;background:#fff}
+.pvCorpo .cp-c pre{margin:0;padding:12px 14px;white-space:pre-wrap;font:400 13.5px/1.6 Manrope,system-ui,sans-serif;color:#0F172A}
+.pvCorpo .cp-d{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-top:1px solid var(--ln,#E2E8F0)}
+.pvCorpo .cp-d{gap:8px;max-height:132px;overflow:auto}
+.pvCorpo .cp-a{display:flex;flex-direction:column;align-items:stretch;width:96px;border:1px solid var(--ln,#E2E8F0);border-radius:9px;background:#fff;cursor:pointer;padding:0;overflow:hidden;font:600 10.5px Manrope,system-ui,sans-serif;color:#334155;text-align:left}
+.pvCorpo .cp-a:hover{border-color:#06B6D4;box-shadow:0 0 0 2px rgba(6,182,212,.18)}
+.pvCorpo .cp-a .mi{height:62px;display:flex;align-items:center;justify-content:center;background:#F8FAFC;border-bottom:1px solid #EEF1F5;overflow:hidden}
+.pvCorpo .cp-a .mi img{width:100%;height:100%;object-fit:cover;display:block}
+.pvCorpo .cp-a .mi span{font:800 11px Manrope,system-ui,sans-serif;color:#fff;border-radius:4px;padding:3px 6px}
+.pvCorpo .cp-a .nm{padding:4px 6px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pvCorpo .cp-v{position:absolute;left:0;right:0;bottom:0;top:46px;display:none;flex-direction:column;background:#fff;z-index:2}
+.pvCorpo .cp-vb{display:flex;align-items:center;gap:6px;padding:7px 10px;border-bottom:1px solid var(--ln,#E2E8F0);font:700 12px Manrope,system-ui,sans-serif}
+.pvCorpo .cp-vb b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pvCorpo .cp-vb button,.pvCorpo .cp-vb a{height:26px;border:1px solid var(--ln,#E2E8F0);border-radius:7px;background:#fff;color:#334155;cursor:pointer;font:600 11.5px Manrope,system-ui,sans-serif;padding:0 9px;display:inline-flex;align-items:center;text-decoration:none}
+.pvCorpo .cp-vc{flex:1;min-height:0;overflow:auto;background:#F1F5F9;display:flex;align-items:center;justify-content:center}
+.pvCorpo .cp-vc iframe{width:100%;height:100%;border:0;background:#fff}
+.pvCorpo .cp-vc img{max-width:100%;max-height:100%;object-fit:contain}
+.pvCorpo.grande{left:20px!important;top:20px!important;width:calc(100vw - 40px)!important;height:calc(100vh - 40px)!important;z-index:2147482300}
 #pvMini{display:flex;align-items:center;gap:2px;margin:8px 8px 2px;padding:4px 6px;border-radius:12px;flex:0 0 auto;border:1px solid rgba(255,255,255,.6);background:rgba(241,245,249,.82);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);box-shadow:0 0 0 1px rgba(100,116,139,.35),0 12px 32px rgba(15,23,42,.22),inset 0 1px 0 rgba(255,255,255,.7);font:600 11.5px Manrope,system-ui,sans-serif;color:#475569}
 #pvMini button{width:32px;height:30px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:9px;background:transparent;color:#64748B;cursor:pointer;padding:0}
 #pvMini button:hover:not([disabled]){background:rgba(100,116,139,.12);color:#334155}
@@ -1550,14 +1564,33 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
 <script>
 /* PORTALE NEXT-110 (Sante 30/10): a destra della finestra Rispondi / Inoltra, le ultime mail ricevute da e inviate al primo
    destinatario scritto nel campo A, con le stesse evidenziazioni ed etichette della posta. Oggetto in grassetto, sotto i dettagli.
-   Cliccando una mail il corpo si apre a fianco (la finestra si sposta a sinistra per fare posto).
+   Cliccando una mail il corpo si apre a fianco; con Cmd, Ctrl o Shift + clic se ne aprono fino a tre, una sotto l'altra.
+   Le finestre a fianco restano attaccate a quella in cui si scrive: si spostano e si allungano con lei.
    La finestra si trascina dalla barra del titolo. Si chiude con la ×, si riapre con la linguetta «Storico».
    Dati: posta-indirizzi?storia= (posta_storico v2 con cartella e uid); corpo: pvLeggiMail della pagina. */
 (function () {
   var API = 'https://pnxhthrheqeucoisifjw.supabase.co/functions/v1/posta-indirizzi';
   var attivo = '', dim = null, applico = false, oss = null, dlgOss = null, attrOss = null;
-  var pan = null, tab = null, corpo = null, chiusoPer = null, mostrato = null, cache = {}, scelta = null, lista = [], firma = '', gruppi = [], caricati = {};
+  var pan = null, tab = null, chiusoPer = null, mostrato = null, cache = {}, scelta = null, lista = [], firma = '', gruppi = [], caricati = {};
+  var aperti = [], CW = 520;
   var root = document.documentElement;
+  /* aperta come finestra di scrittura staccata: riparto dalla bozza lasciata dalla pagina di partenza */
+  var fuoriId = ((window.location.hash || '').match(/^#scrivi-(\w+)/) || [])[1] || null, fuoriAperta = false, fuoriVia = 0;
+  if (fuoriId) {
+    root.classList.add('pv-scrivi'); document.title = 'Next · Scrivi';
+    var bozza = null; try { bozza = JSON.parse(window.localStorage.getItem('pv_fuori_' + fuoriId) || 'null'); } catch (e) {}
+    var tent = 0, tf = setInterval(function () {
+      tent++;
+      if (!bozza) { clearInterval(tf); return; }
+      if (P().apriScrivi && P().apriScrivi(bozza.k, bozza)) {
+        clearInterval(tf); fuoriAperta = true;
+        try { window.localStorage.removeItem('pv_fuori_' + fuoriId); } catch (e) {}
+        if (window.pvEditorImposta) window.pvEditorImposta(bozza.html || '');
+        if (window.pvFirmaImposta) window.pvFirmaImposta(bozza.firma || 'standard');
+        if (bozza.w && bozza.h) dim = { w: bozza.w, h: bozza.h };
+      } else if (tent > 120) { clearInterval(tf); document.body.insertAdjacentHTML('beforeend', '<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:600 14px Manrope,sans-serif;color:#475569">La mail a cui rispondi non è tra quelle caricate: chiudi questa finestra e riprova dalla posta.</div>'); }
+    }, 500);
+  }
   function pass() { try { return window.sessionStorage.getItem('regia_pass'); } catch (e) { return null; } }
   function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function zoom() { return document.body.currentCSSZoom || 1; }
@@ -1612,14 +1645,17 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
   function crea() {
     if (pan) return;
     pan = document.createElement('div'); pan.id = 'pvStorico';
-    pan.innerHTML = '<div class="st-t"><b></b><button type="button" title="Chiudi" aria-label="Chiudi lo storico">✕</button></div><div class="st-tabs" role="tablist"></div><div class="st-l" role="listbox" aria-label="Ultime mail con questo indirizzo"></div>';
+    pan.innerHTML = '<div class="st-t"><b></b><button type="button" title="Chiudi" aria-label="Chiudi lo storico">✕</button></div><div class="st-tabs" role="tablist"></div><div class="st-aiuto">Clic: apre a fianco · Cmd/Shift + clic: ne apre più d’una</div><div class="st-l" role="listbox" aria-label="Ultime mail con questo indirizzo"></div>';
     document.body.appendChild(pan);
     pan.querySelector('.st-t button').addEventListener('click', function () { chiusoPer = mostrato; chiudiCorpo(); pan.style.display = 'none'; });
     pan.querySelector('.st-l').addEventListener('click', function (e) {
       var r = e.target.closest('.st-r'); if (!r) return;
       var m = lista[+r.getAttribute('data-i')]; if (!m) return;
-      if (scelta && chiaveDi(scelta) === chiaveDi(m)) { chiudiCorpo(); return; }
-      apriCorpo(m);
+      var k = chiaveDi(m), gia = aperti.filter(function (p) { return chiaveDi(p.m) === k; })[0];
+      if (e.metaKey || e.ctrlKey || e.shiftKey) { if (gia) chiudiUno(gia); else { if (aperti.length >= 3) chiudiUno(aperti[0]); apriCorpo(m); } }
+      else if (gia && aperti.length === 1) chiudiCorpo();
+      else { chiudiCorpo(); apriCorpo(m); }
+      giro();
     });
     pan.querySelector('.st-tabs').addEventListener('click', function (e) {
       var b = e.target.closest('.st-tab'); if (!b) return;
@@ -1629,24 +1665,13 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
     tab.title = 'Mostra le ultime mail con questo indirizzo';
     document.body.appendChild(tab);
     tab.addEventListener('click', function () { chiusoPer = null; });
-    corpo = document.createElement('div'); corpo.id = 'pvCorpo';
-    corpo.innerHTML = '<div class="st-t"><b>Mail</b><button type="button" title="Chiudi" aria-label="Chiudi la mail">✕</button></div><div class="cp-h"></div><div class="cp-c"></div><div class="cp-d" style="display:none"></div><div class="cp-v"><div class="cp-vb"><button type="button" data-v="torna">← Mail</button><b></b><button type="button" data-v="grande">⤢ Ingrandisci</button><a data-v="scarica" download>Scarica</a></div><div class="cp-vc"></div></div>';
-    corpo.style.position = 'fixed';
-    document.body.appendChild(corpo);
-    corpo.querySelector('.st-t button').addEventListener('click', chiudiCorpo);
-    corpo.querySelector('.cp-d').addEventListener('click', function (e) { var b = e.target.closest('.cp-a'); if (b) anteprima(docsCorrenti[+b.getAttribute('data-k')]); });
-    corpo.querySelector('.cp-vb').addEventListener('click', function (e) {
-      var b = e.target.closest('[data-v]'); if (!b) return; var v = b.getAttribute('data-v');
-      if (v === 'torna') chiudiAnteprima();
-      else if (v === 'grande') { corpo.classList.toggle('grande'); b.textContent = corpo.classList.contains('grande') ? '⤡ Riduci' : '⤢ Ingrandisci'; }
-    });
   }
   function riga(m, i) {
     var d = m.data ? new Date(m.data) : null;
     var dd = d ? d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Rome' }) + ' ' + d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' }) : '';
     var su = m.verso === 'inviata', e = ev(m), t = et(m);
     var stile = e ? 'border-left-color:' + e.c + ';background:linear-gradient(90deg,' + e.c + '26,' + e.c + '0A 70%,transparent)' : '';
-    var sel = scelta && chiaveDi(scelta) === chiaveDi(m) ? ' sel' : '';
+    var sel = aperti.some(function (p) { return chiaveDi(p.m) === chiaveDi(m); }) ? ' sel' : '';
     return '<button type="button" role="option" class="st-r' + sel + '" data-i="' + i + '" style="' + stile + '" title="Apri la mail a fianco">'
       + '<div class="st-o"' + (e ? ' style="text-decoration:underline;text-decoration-color:' + e.c + ';text-decoration-thickness:2px;text-underline-offset:3px"' : '') + '>' + esc(m.oggetto || '(senza oggetto)') + '</div>'
       + '<div class="st-m"><span style="color:' + (su ? '#0891B2' : '#16A34A') + ';font-weight:800">' + (su ? '↑ inviata' : '↓ ricevuta') + '</span><span>' + dd + '</span><span>· ' + esc(m.casella) + '</span>' + (m.allegati ? '<span title="con allegati">📎</span>' : '') + (e ? '<span style="color:' + e.f + ';font-weight:800">● ' + esc(e.t) + '</span>' : '') + '</div>'
@@ -1656,7 +1681,7 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
   function disegnaLista() {
     var l = pan.querySelector('.st-l');
     if (gruppi.length > 1 || lista.length) {
-      var f2 = JSON.stringify(lista.map(function (m) { var e = ev(m); return chiaveDi(m) + (e ? e.id : '') + et(m).map(function (x) { return x.id; }).join(','); })) + (scelta ? chiaveDi(scelta) : '') + gruppi.join('|');
+      var f2 = JSON.stringify(lista.map(function (m) { var e = ev(m); return chiaveDi(m) + (e ? e.id : '') + et(m).map(function (x) { return x.id; }).join(','); })) + aperti.map(function (p) { return chiaveDi(p.m); }).join(',') + gruppi.join('|');
       if (gruppi.indexOf(attivo) < 0) attivo = gruppi[0] || '';
       f2 += '#' + attivo; if (f2 === firma) return; firma = f2;
       var schede = pan.querySelector('.st-tabs');
@@ -1669,7 +1694,7 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
         + (sue.length ? sue.map(function (m) { return riga(m, lista.indexOf(m)); }).join('') : '<div style="padding:10px 9px;color:#64748B">' + (caricati[attivo] ? 'Nessuna mail con questo indirizzo.' : 'Cerco le ultime mail…') + '</div>');
       return;
     }
-    var f = JSON.stringify(lista.map(function (m) { var e = ev(m); return chiaveDi(m) + (e ? e.id : '') + et(m).map(function (x) { return x.id; }).join(','); })) + (scelta ? chiaveDi(scelta) : '');
+    var f = JSON.stringify(lista.map(function (m) { var e = ev(m); return chiaveDi(m) + (e ? e.id : '') + et(m).map(function (x) { return x.id; }).join(','); })) + aperti.map(function (p) { return chiaveDi(p.m); }).join(',');
     if (f === firma) return; firma = f;
     l.innerHTML = lista.length ? lista.map(riga).join('') : '<div style="padding:10px;color:#64748B">Nessuna mail con questo indirizzo negli archivi della posta.</div>';
   }
@@ -1679,35 +1704,9 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
     return fetch(API + '?t=' + encodeURIComponent(t) + '&storia=' + encodeURIComponent(ind)).then(function (r) { return r.json(); })
       .then(function (j) { cache[ind] = (j && j.ok && j.mail) || []; return cache[ind]; }).catch(function () { return []; });
   }
-  function apriCorpo(m) {
-    scelta = m; firma = ''; disegnaLista();
-    corpo.querySelector('.st-t b').textContent = m.verso === 'inviata' ? 'Mail inviata' : 'Mail ricevuta';
-    corpo.querySelector('.cp-h').innerHTML = '<div>' + esc(m.oggetto || '(senza oggetto)') + '</div><div>Da: ' + esc(m.mittente || '') + '</div>';
-    corpo.querySelector('.cp-c').innerHTML = '<pre style="color:#64748B">Apro la mail…</pre>';
-    var dd = corpo.querySelector('.cp-d'); dd.style.display = 'none'; dd.innerHTML = ''; chiudiAnteprima();
-    root.classList.add('pv-con-corpo');
-    if (!m.uid || !P().leggi) { corpo.querySelector('.cp-c').innerHTML = '<pre>Questa mail non si può aprire da qui.</pre>'; return; }
-    var k = chiaveDi(m);
-    P().leggi({ chiave: k, casella: m.casella, cartella: m.cartella, uid: m.uid, da: m.mittente }).then(function (x) {
-      if (!scelta || chiaveDi(scelta) !== k) return;
-      var c = corpo.querySelector('.cp-c');
-      if (!x || x.errore) { c.innerHTML = '<pre>Non riesco ad aprirla adesso' + (x && x.errore ? ': ' + esc(x.errore) : '') + '.</pre>'; return; }
-      var h = corpo.querySelector('.cp-h');
-      var data = x.data ? new Date(x.data).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-      h.innerHTML = '<div>' + esc(m.oggetto || '(senza oggetto)') + '</div><div>Da: ' + esc(x.nome ? x.nome + ' <' + (x.da || '') + '>' : (x.da || m.mittente || '')) + '</div>' + (x.a ? '<div>A: ' + esc(x.a) + '</div>' : '') + (data ? '<div>' + data + '</div>' : '');
-      if (x.html) {
-        var f = document.createElement('iframe');
-        f.setAttribute('sandbox', 'allow-popups allow-popups-to-escape-sandbox');
-        f.setAttribute('referrerpolicy', 'no-referrer');
-        f.srcdoc = '<base target="_blank"><style>body{margin:12px 14px;font:14px/1.55 Helvetica,Arial,sans-serif;color:#0F172A;word-wrap:break-word}img{max-width:100%;height:auto}</style>' + x.html;
-        c.innerHTML = ''; c.appendChild(f);
-      } else c.innerHTML = '<pre>' + esc(x.testo || '(mail senza testo)') + '</pre>';
-      miniature(x.docs || []);
-    });
-  }
-  /* gli allegati: miniature; cliccandone una si apre l'anteprima dentro la finestra (PDF e immagini), ingrandibile a tutto schermo */
-  var docsCorrenti = [], blobs = {};
+  /* la mail aperta a fianco: una finestra per mail (fino a tre), con gli allegati in miniatura e l'anteprima dentro */
   function tipoDi(d) { var e = String(d.est || '').toLowerCase(); return e === 'pdf' ? 'pdf' : (/^(png|jpe?g|gif|webp|bmp|svg)$/.test(e) ? 'img' : 'altro'); }
+  var blobs = {};
   function blobDi(d) {
     if (blobs[d.url]) return blobs[d.url];
     blobs[d.url] = fetch(d.url).then(function (r) { if (!r.ok) throw new Error('non scaricabile'); return r.blob(); }).then(function (b) {
@@ -1716,22 +1715,56 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
     });
     return blobs[d.url];
   }
-  function miniature(docs) {
-    docsCorrenti = docs || [];
-    var dd = corpo.querySelector('.cp-d');
-    if (!docsCorrenti.length) { dd.style.display = 'none'; dd.innerHTML = ''; return; }
-    dd.innerHTML = docsCorrenti.map(function (d, i) {
+  function apriCorpo(m) {
+    var el = document.createElement('div'); el.className = 'pvCorpo';
+    el.innerHTML = '<div class="st-t"><b></b><button type="button" title="Chiudi" aria-label="Chiudi la mail">✕</button></div><div class="cp-h"></div><div class="cp-c"><pre style="color:#64748B">Apro la mail…</pre></div><div class="cp-d" style="display:none"></div><div class="cp-v"><div class="cp-vb"><button type="button" data-v="torna">← Mail</button><b></b><button type="button" data-v="grande">⤢ Ingrandisci</button><a data-v="scarica" download>Scarica</a></div><div class="cp-vc"></div></div>';
+    document.body.appendChild(el);
+    var p = { m: m, el: el, docs: [] };
+    aperti.push(p); scelta = m; firma = ''; disegnaLista();
+    el.querySelector('.st-t b').textContent = (m.verso === 'inviata' ? 'Inviata · ' : 'Ricevuta · ') + (m.oggetto || '(senza oggetto)');
+    el.querySelector('.cp-h').innerHTML = '<div>' + esc(m.oggetto || '(senza oggetto)') + '</div><div>Da: ' + esc(m.mittente || '') + '</div>';
+    el.querySelector('.st-t button').addEventListener('click', function () { chiudiUno(p); giro(); });
+    el.querySelector('.cp-d').addEventListener('click', function (e) { var b = e.target.closest('.cp-a'); if (b) anteprima(p, p.docs[+b.getAttribute('data-k')]); });
+    el.querySelector('.cp-vb').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-v]'); if (!b) return; var v = b.getAttribute('data-v');
+      if (v === 'torna') chiudiAnteprima(p);
+      else if (v === 'grande') { el.classList.toggle('grande'); b.textContent = el.classList.contains('grande') ? '⤡ Riduci' : '⤢ Ingrandisci'; }
+    });
+    el.addEventListener('mousedown', function () { scelta = m; });
+    if (!m.uid || !P().leggi) { el.querySelector('.cp-c').innerHTML = '<pre>Questa mail non si può aprire da qui.</pre>'; return; }
+    var k = chiaveDi(m);
+    P().leggi({ chiave: k, casella: m.casella, cartella: m.cartella, uid: m.uid, da: m.mittente }).then(function (x) {
+      if (aperti.indexOf(p) < 0) return;
+      var c = el.querySelector('.cp-c');
+      if (!x || x.errore) { c.innerHTML = '<pre>Non riesco ad aprirla adesso' + (x && x.errore ? ': ' + esc(x.errore) : '') + '.</pre>'; return; }
+      var data = x.data ? new Date(x.data).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+      el.querySelector('.cp-h').innerHTML = '<div>' + esc(m.oggetto || '(senza oggetto)') + '</div><div>Da: ' + esc(x.nome ? x.nome + ' <' + (x.da || '') + '>' : (x.da || m.mittente || '')) + '</div>' + (x.a ? '<div>A: ' + esc(x.a) + '</div>' : '') + (data ? '<div>' + data + '</div>' : '');
+      if (x.html) {
+        var f = document.createElement('iframe');
+        f.setAttribute('sandbox', 'allow-popups allow-popups-to-escape-sandbox');
+        f.setAttribute('referrerpolicy', 'no-referrer');
+        f.srcdoc = '<base target="_blank"><style>body{margin:12px 14px;font:14px/1.55 Helvetica,Arial,sans-serif;color:#0F172A;word-wrap:break-word}img{max-width:100%;height:auto}</style>' + x.html;
+        c.innerHTML = ''; c.appendChild(f);
+      } else c.innerHTML = '<pre>' + esc(x.testo || '(mail senza testo)') + '</pre>';
+      miniature(p, x.docs || []);
+    });
+  }
+  function miniature(p, docs) {
+    p.docs = docs || [];
+    var dd = p.el.querySelector('.cp-d');
+    if (!p.docs.length) { dd.style.display = 'none'; dd.innerHTML = ''; return; }
+    dd.innerHTML = p.docs.map(function (d, i) {
       var t = tipoDi(d);
       return '<button type="button" class="cp-a" data-k="' + i + '" title="Anteprima di ' + esc(d.nome) + '.' + esc(String(d.est).toLowerCase()) + '"><div class="mi">' + (t === 'img' ? '<img alt="" data-u="' + i + '">' : '<span style="background:' + esc(d.fascia || '#64748B') + '">' + esc(d.est) + '</span>') + '</div><div class="nm">' + esc(d.nome) + '</div></button>';
     }).join('');
     dd.style.display = 'flex';
-    docsCorrenti.forEach(function (d, i) { if (tipoDi(d) === 'img') blobDi(d).then(function (u) { var im = dd.querySelector('img[data-u="' + i + '"]'); if (im) im.src = u; }).catch(function () {}); });
+    p.docs.forEach(function (d, i) { if (tipoDi(d) === 'img') blobDi(d).then(function (u) { var im = dd.querySelector('img[data-u="' + i + '"]'); if (im) im.src = u; }).catch(function () {}); });
   }
-  function anteprima(d) {
+  function anteprima(p, d) {
     if (!d) return;
-    var v = corpo.querySelector('.cp-v'), c = v.querySelector('.cp-vc'), t = tipoDi(d);
-    v.querySelector('b').textContent = d.nome + '.' + String(d.est).toLowerCase();
-    var sc = v.querySelector('[data-v="scarica"]'); sc.href = d.url; sc.setAttribute('download', d.nome + '.' + String(d.est).toLowerCase());
+    var v = p.el.querySelector('.cp-v'), c = v.querySelector('.cp-vc'), t = tipoDi(d), nome = d.nome + '.' + String(d.est).toLowerCase();
+    v.querySelector('b').textContent = nome;
+    var sc = v.querySelector('[data-v="scarica"]'); sc.href = d.url; sc.setAttribute('download', nome);
     c.innerHTML = '<div style="color:#64748B;font:600 12.5px Manrope,system-ui,sans-serif">Apro l’allegato…</div>'; v.style.display = 'flex';
     if (t === 'altro') { c.innerHTML = '<div style="color:#64748B;font:600 12.5px Manrope,system-ui,sans-serif;padding:20px;text-align:center">Questo tipo di file non ha l’anteprima: usa «Scarica».</div>'; return; }
     blobDi(d).then(function (u) {
@@ -1739,18 +1772,17 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
       else { c.innerHTML = '<img alt="" src="' + u + '">'; }
     }).catch(function () { c.innerHTML = '<div style="color:#B91C1C;padding:20px">Non riesco ad aprire l’allegato adesso.</div>'; });
   }
-  function chiudiAnteprima() { if (!corpo) return; corpo.querySelector('.cp-v').style.display = 'none'; corpo.querySelector('.cp-vc').innerHTML = ''; corpo.classList.remove('grande'); var g = corpo.querySelector('[data-v="grande"]'); if (g) g.textContent = '⤢ Ingrandisci'; }
-  function chiudiCorpo() { chiudiAnteprima(); scelta = null; firma = ''; if (corpo) corpo.style.display = 'none'; root.classList.remove('pv-con-corpo'); if (!manuale) root.style.setProperty('--pvSh', '0px'); if (pan && lista) disegnaLista(); }
+  function chiudiAnteprima(p) { p.el.querySelector('.cp-v').style.display = 'none'; p.el.querySelector('.cp-vc').innerHTML = ''; p.el.classList.remove('grande'); var g = p.el.querySelector('[data-v="grande"]'); if (g) g.textContent = '⤢ Ingrandisci'; }
+  function chiudiUno(p) { var i = aperti.indexOf(p); if (i < 0) return; aperti.splice(i, 1); p.el.remove(); scelta = aperti.length ? aperti[aperti.length - 1].m : null; firma = ''; if (pan) disegnaLista(); }
+  function chiudiCorpo() { aperti.slice().forEach(function (p) { p.el.remove(); }); aperti = []; scelta = null; firma = ''; if (pan && lista) disegnaLista(); }
   /* trascinamento dalla barra del titolo */
   var tr = null, manuale = false;
   document.addEventListener('mousedown', function (e) {
     var dlg = document.querySelector('#pvStrumento [role="dialog"]'); if (!dlg) return;
     var testa = dlg.firstElementChild; if (!testa || !testa.contains(e.target) || e.target.closest('button,input,select,a')) return;
     var z = zoom();
-    /* dopo il primo trascinamento la posizione la decide Sante: lo spostamento automatico si ferma */
-    var sh = parseFloat(root.style.getPropertyValue('--pvSh')) || 0; manuale = true; root.style.setProperty('--pvSh', '0px');
-    tr = { x: e.clientX / z, y: e.clientY / z, dx: (parseFloat(root.style.getPropertyValue('--pvDx')) || 0) + sh, dy: parseFloat(root.style.getPropertyValue('--pvDy')) || 0 };
-    root.style.setProperty('--pvDx', tr.dx + 'px');
+    manuale = true;
+    tr = { x: e.clientX / z, y: e.clientY / z, dx: parseFloat(root.style.getPropertyValue('--pvDx')) || 0, dy: parseFloat(root.style.getPropertyValue('--pvDy')) || 0 };
     root.classList.add('pv-trascino'); e.preventDefault();
   }, true);
   document.addEventListener('mousemove', function (e) {
@@ -1760,22 +1792,48 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
     giro();
   }, true);
   document.addEventListener('mouseup', function () { if (tr) { tr = null; root.classList.remove('pv-trascino'); } }, true);
+  /* i pulsanti della testata stanno in una barra fissa sopra la finestra, non dentro: la pagina, ridisegnando, non li tocca */
+  var testaBar = null;
   function bottone(dlg) {
-    var testa = dlg.firstElementChild; if (!testa) return;
-    var b = testa.querySelector('#pvSoloMia');
-    if (!b) {
-      b = document.createElement('button'); b.id = 'pvSoloMia'; b.type = 'button';
-      var x = testa.querySelector('button[aria-label="Chiudi"]'); testa.insertBefore(b, x || null);
-      b.addEventListener('click', function () {
+    if (!testaBar) {
+      testaBar = document.createElement('div'); testaBar.id = 'pvTesta';
+      testaBar.innerHTML = '<button type="button" id="pvSoloMia"></button><button type="button" id="pvFuori" title="Porta la mail fuori, in una finestra sua (per un altro monitor)" aria-label="Porta la mail fuori, in una finestra sua"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="14" height="14" rx="2"/><path d="M11 3h10v10M21 3l-9 9"/></svg></button>';
+      document.body.appendChild(testaBar);
+      testaBar.querySelector('#pvFuori').addEventListener('click', portaFuori);
+      testaBar.querySelector('#pvSoloMia').addEventListener('click', function () {
         if (chiusoPer && chiusoPer === mostrato) chiusoPer = null; else { chiusoPer = mostrato; chiudiCorpo(); }
         giro();
       });
     }
+    var b = testaBar.querySelector('#pvSoloMia');
     var aperte = mostrato && chiusoPer !== mostrato;
     var t = aperte ? 'Solo questa' : 'Mostra storico';
     if (b.getAttribute('data-t') !== t) { b.setAttribute('data-t', t); b.title = aperte ? 'Chiudi tutte le finestre a fianco e resta solo su quella in cui scrivi' : 'Riapri lo storico delle mail con questi indirizzi';
       b.innerHTML = (aperte ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="10" height="15" rx="2"/><path d="M17 8l4 4-4 4"/></svg>' : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="7" height="15" rx="2"/><rect x="13.5" y="4.5" width="7" height="15" rx="2"/></svg>') + t; }
     b.style.display = mostrato ? 'inline-flex' : 'none';
+    testaBar.style.display = 'flex';
+  }
+  function aggancia() {
+    var dlg = document.querySelector('#pvStrumento [role="dialog"]');
+    if (!dlg || !testaBar) { if (testaBar) testaBar.style.display = 'none'; return; }
+    var x = dlg.firstElementChild && dlg.firstElementChild.querySelector('button[aria-label="Chiudi"]'); if (!x) return;
+    var z = zoom(), r = x.getBoundingClientRect(), w = testaBar.offsetWidth;
+    testaBar.style.left = (r.left / z - 8 - w) + 'px'; testaBar.style.top = (r.top / z + r.height / z / 2 - testaBar.offsetHeight / 2) + 'px';
+    root.style.setProperty('--pvTestaW', (w + 8) + 'px');
+  }
+  (function segui() { try { aggancia(); } catch (e) {} requestAnimationFrame(segui); })();
+  function portaFuori() {
+    var s = P().scrivi && P().scrivi(), dlg = document.querySelector('#pvStrumento [role="dialog"]'); if (!s || !dlg) return;
+    var v = function (n) { var c = dlg.querySelector('input[aria-label="' + n + '"]'); return c ? c.value : ''; };
+    var og = document.getElementById('pvOgg');
+    var bz = { k: s.chiave, modo: s.modo, a: v('Destinatari'), cc: v('Copia'), oggetto: og && og.style.display !== 'none' ? og.value : v('Oggetto'),
+      html: window.pvEditorHtml ? window.pvEditorHtml() : '', testo: s.testo || '', firma: window.pvFirmaScelta ? window.pvFirmaScelta() : 'standard', w: dim && dim.w, h: dim && dim.h };
+    var id = 'b' + Date.now();
+    try { window.localStorage.setItem('pv_fuori_' + id, JSON.stringify(bz)); } catch (e) { return; }
+    var W = Math.min(window.screen.availWidth || 1500, 1500), H = Math.min(window.screen.availHeight || 900, 900), w = null;
+    try { w = window.open('https://nextsrl-sim.github.io/area-posta/?v=' + Date.now() + '#scrivi-' + id, 'next-scrivi-' + id, 'popup,width=' + W + ',height=' + H); } catch (e) {}
+    if (w) { P().chiudiScrivi && P().chiudiScrivi(); }
+    else { var fb = document.getElementById('pvFuori'); if (fb) fb.title = 'Il browser ha bloccato la finestra: consenti i popup per questa pagina'; }
   }
   function tieniMisura(dlg) {
     if (!dlg) { dim = null; dlgOss = null; if (attrOss) { attrOss.disconnect(); attrOss = null; } return; }
@@ -1787,7 +1845,12 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
       if (oss) { if (dlgOss) oss.unobserve(dlgOss); oss.observe(dlg); }
       /* la pagina riscrive lo stile della finestra a ogni ridisegno: lo ricontrollo subito, non al giro dopo */
       if (attrOss) attrOss.disconnect();
-      try { attrOss = new MutationObserver(function () { tieniMisura(dlg); }); attrOss.observe(dlg, { attributes: true, attributeFilter: ['style'] }); } catch (e) {}
+      try { attrOss = new MutationObserver(function () {
+        if (applico) return;
+        /* misure in px = le ha date Sante trascinando l'angolo; altrimenti è la pagina che ha riscritto lo stile */
+        if (/px$/.test(dlg.style.width) && /px$/.test(dlg.style.height)) { dim = { w: dlg.style.width, h: dlg.style.height }; return; }
+        tieniMisura(dlg);
+      }); attrOss.observe(dlg, { attributes: true, attributeFilter: ['style'] }); } catch (e) {}
       dlgOss = dlg;
     }
     if (dim && (dlg.style.width !== dim.w || dlg.style.height !== dim.h)) { applico = true; dlg.style.width = dim.w; dlg.style.height = dim.h; dlg.style.maxHeight = 'none'; setTimeout(function () { applico = false; }, 0); }
@@ -1799,34 +1862,28 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
     if (dlg) ['Destinatari', 'Copia', 'Copia nascosta'].forEach(function (n) { var c = dlg.querySelector('input[aria-label="' + n + '"]'); if (c) (String(c.value).match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi) || []).forEach(function (x) { x = x.toLowerCase(); if (tutti.indexOf(x) < 0 && !/@next-srl\.eu$|@legalmail\.it$/.test(x)) tutti.push(x); }); });
     var ind = tutti.length ? tutti.join('|') : '';
     crea();
-    if (!dlg) { posMini(false); pan.style.display = 'none'; tab.style.display = 'none'; corpo.style.display = 'none'; mostrato = null; scelta = null; lista = []; firma = ''; attivo = '';
-      root.classList.remove('pv-con-corpo'); root.style.setProperty('--pvSh', '0px'); root.style.setProperty('--pvDx', '0px'); root.style.setProperty('--pvDy', '0px'); manuale = false; return; }
+    if (fuoriAperta && !dlg) { if (!fuoriVia) fuoriVia = Date.now(); if (Date.now() - fuoriVia > 1200) { try { window.close(); } catch (e) {} } } else fuoriVia = 0;
+    if (!dlg) { posMini(false); pan.style.display = 'none'; tab.style.display = 'none'; chiudiCorpo(); mostrato = null; lista = []; firma = ''; attivo = '';
+      root.style.setProperty('--pvDx', '0px'); root.style.setProperty('--pvDy', '0px'); manuale = false; return; }
     var z = zoom(), vw = window.innerWidth / z, W = 330;
-    /* con la mail aperta a fianco, la finestra si sposta a sinistra quanto basta perché tutto stia nello schermo */
-    var dW = dlg.offsetWidth, B = 0;
-    if (scelta && !tr && !manuale) {
-      B = Math.max(340, Math.min(620, vw - dW - W - 44));
-      var tot = dW + 10 + W + 10 + B, sx = Math.max(8, (vw - tot) / 2), base = (vw - dW) / 2 + (parseFloat(root.style.getPropertyValue('--pvDx')) || 0);
-      root.style.setProperty('--pvSh', Math.round(sx - base) + 'px');
-    } else if (!scelta && !manuale) root.style.setProperty('--pvSh', '0px');
-    if (!ind) { posMini(false); pan.style.display = 'none'; tab.style.display = 'none'; corpo.style.display = 'none'; mostrato = null; if (dlg) bottone(dlg); return; }
+    if (!ind) { posMini(false); pan.style.display = 'none'; tab.style.display = 'none'; chiudiCorpo(); mostrato = null; if (dlg) bottone(dlg); return; }
     if (dlg) bottone(dlg);
     var r = dlg.getBoundingClientRect();
     var L = r.right / z + 10, T = r.top / z, Hh = r.height / z;
-    if (L + W > vw - 8) L = Math.max(8, vw - W - 8);
-    if (chiusoPer === ind) { posMini(false); pan.style.display = 'none'; corpo.style.display = 'none'; tab.style.display = 'block'; tab.style.left = (r.right / z) + 'px'; tab.style.top = (T + 60) + 'px'; return; }
+    if (chiusoPer === ind) { posMini(false); pan.style.display = 'none'; aperti.forEach(function (p) { p.el.style.display = 'none'; }); tab.style.display = 'block'; tab.style.left = (r.right / z) + 'px'; tab.style.top = (T + 60) + 'px'; return; }
     tab.style.display = 'none';
     pan.style.left = L + 'px'; pan.style.top = T + 'px'; pan.style.height = Hh + 'px'; pan.style.width = W + 'px'; pan.style.display = 'flex';
     posMini(true, L, T);
-    if (scelta) {
-      var cL = L + W + 10, cW = Math.max(300, vw - cL - 8);
-      if (B) cW = Math.min(cW, B);
-      if (!corpo.classList.contains('grande')) { corpo.style.left = cL + 'px'; corpo.style.top = T + 'px'; corpo.style.height = Hh + 'px'; corpo.style.width = cW + 'px'; } corpo.style.display = 'flex';
-    } else corpo.style.display = 'none';
+    /* le mail aperte: a destra dello storico, una sotto l'altra, alte quanto la finestra in cui si scrive */
+    var n = aperti.length, gap = 8, hh = n ? (Hh - gap * (n - 1)) / n : 0, cL = L + W + 10;
+    aperti.forEach(function (p, i) {
+      if (!p.el.classList.contains('grande')) { p.el.style.left = cL + 'px'; p.el.style.top = (T + i * (hh + gap)) + 'px'; p.el.style.height = hh + 'px'; p.el.style.width = CW + 'px'; }
+      p.el.style.display = 'flex';
+    });
+    /* la prima volta che il gruppo esce dallo schermo a destra, lo riporto dentro spostando tutto insieme (una volta sola, poi decide Sante) */
+    if (n && !manuale && !tr) { var fuori = cL + CW + 8 - vw; if (fuori > 1) { var dx = parseFloat(root.style.getPropertyValue('--pvDx')) || 0, lib = r.left / z - 8; var sp = Math.min(fuori, Math.max(0, lib)); if (sp > 1) { root.style.setProperty('--pvDx', (dx - sp) + 'px'); manuale = true; } } }
     if (mostrato === ind) { if (lista.length) disegnaLista(); return; }
-    var prima = scelta ? chiaveDi(scelta) : null;
     mostrato = ind; gruppi = tutti.slice(0, 8); lista = lista.filter(function (m) { return gruppi.indexOf(m.__ind) >= 0; }); firma = '';
-    if (prima && !lista.some(function (m) { return chiaveDi(m) === prima; })) chiudiCorpo();
     pan.querySelector('b').textContent = gruppi.length > 1 ? 'Storico di ' + gruppi.length + ' indirizzi' : 'Con ' + gruppi[0];
     disegnaLista();
     gruppi.forEach(function (g) {
@@ -1948,7 +2005,7 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
     c.querySelectorAll('li').forEach(function (li) { li.insertBefore(document.createTextNode('• '), li.firstChild); });
     c.querySelectorAll('br').forEach(function (x) { if (!x.nextSibling && x.parentNode !== c && x.parentNode.childNodes.length === 1) x.remove(); else x.replaceWith('\n'); });
     c.querySelectorAll('div,p,li,blockquote,ul,ol').forEach(function (x) { x.insertBefore(document.createTextNode('\n'), x.firstChild); });
-    return (c.textContent || '').replace(/ /g, ' ').replace(/\n(?=\n\n)/g, '').trim();
+    return (c.textContent || '').replace(/\u00a0/g, ' ').replace(/\n(?=\n\n)/g, '').trim();
   }
   function sincronizza() {
     if (!ed || !area) return;
@@ -1959,6 +2016,9 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
       area.dispatchEvent(new Event('input', { bubbles: true }));
     }
   }
+  var inizio = null;
+  /* la finestra portata fuori riparte dal testo già scritto */
+  window.pvEditorImposta = function (h) { inizio = h || ''; if (ed) { ed.querySelector('.ed-t').innerHTML = inizio; inizio = null; } };
   window.pvEditorHtml = function () {
     if (!ed) return '';
     var t = ed.querySelector('.ed-t');
@@ -2036,6 +2096,7 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
     var t = ed.querySelector('.ed-t');
     try { document.execCommand('defaultParagraphSeparator', false, 'div'); } catch (e) {}
     if (area.value) t.innerText = area.value;
+    if (inizio !== null) { t.innerHTML = inizio; inizio = null; }
     ed.querySelector('.ed-b').addEventListener('mousedown', function (e) { if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'OPTION') e.preventDefault(); });
     ed.querySelector('.ed-b').addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
@@ -2122,6 +2183,199 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
   /* la pagina ridisegna la finestra a ogni cambio di stato: l'editor si rimette subito al suo posto, senza il salto d'altezza */
   try { new MutationObserver(function () { giro(); }).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
   document.addEventListener('selectionchange', function () { if (ed) { salva(); } });
+})();
+</script>
+<style>
+/* PORTALE NEXT-110 (Sante 30/10): le firme memorizzate nella finestra Rispondi / Inoltra */
+#pvFirma{position:fixed;z-index:2147481950;display:none;align-items:center;gap:6px;font:500 12.5px -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;color:#3A3A3C}
+#pvStrumento [role="dialog"] > div:last-child{padding-right:var(--pvFirmaW,16px)!important}
+#pvFirma select{-webkit-appearance:none;appearance:none;height:28px;border:1px solid rgba(0,0,0,.14);border-radius:7px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='12' viewBox='0 0 8 12' fill='none' stroke='%238E8E93' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 4.5 4 2l2.5 2.5M1.5 7.5 4 10l2.5-2.5'/%3E%3C/svg%3E") no-repeat right 8px center;padding:0 24px 0 9px;font:inherit;color:#1C1C1E;cursor:pointer;max-width:240px}
+#pvFirmeG{position:fixed;inset:0;z-index:2147483200;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.38);font:500 13px Manrope,system-ui,sans-serif;color:#0F172A}
+#pvFirmeG .fg{width:min(900px,calc(100vw - 40px));height:min(620px,calc(100vh - 40px));background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(15,23,42,.3);display:flex;flex-direction:column;overflow:hidden}
+#pvFirmeG .fg-t{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #E2E8F0}
+#pvFirmeG .fg-t b{flex:1;font-size:15px}
+#pvFirmeG button{font:600 12.5px Manrope,system-ui,sans-serif;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;cursor:pointer;padding:6px 11px}
+#pvFirmeG button.pri{background:#0891B2;border-color:#0891B2;color:#fff}
+#pvFirmeG .fg-c{flex:1;min-height:0;display:flex}
+#pvFirmeG .fg-l{width:230px;border-right:1px solid #E2E8F0;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:3px}
+#pvFirmeG .fg-l .it{text-align:left;border:0;border-radius:8px;padding:8px 10px;background:transparent}
+#pvFirmeG .fg-l .it.on{background:rgba(6,182,212,.12);color:#0E7490}
+#pvFirmeG .fg-l .it small{display:block;font-weight:500;color:#94A3B8;margin-top:2px}
+#pvFirmeG .fg-d{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;padding:14px 16px;overflow:auto}
+#pvFirmeG label.r{display:flex;align-items:center;gap:8px;font-weight:600;color:#475569}
+#pvFirmeG input[type=text]{flex:1;font:500 13.5px Manrope,system-ui,sans-serif;border:1px solid #E2E8F0;border-radius:8px;padding:7px 10px}
+#pvFirmeG .bar{display:flex;flex-wrap:wrap;gap:2px;align-items:center;padding:4px;border:1px solid #E2E8F0;border-bottom:0;border-radius:8px 8px 0 0;background:#F8FAFC}
+#pvFirmeG .bar button{border:0;background:transparent;padding:3px 8px;border-radius:5px;font-weight:600}
+#pvFirmeG .bar button:hover{background:rgba(0,0,0,.06)}
+#pvFirmeG .bar input[type=color]{width:26px;height:22px;border:0;padding:0;background:none}
+#pvFirmeG .anteprima{display:flex;align-items:center;border:1px solid #E2E8F0;border-radius:0 0 8px 8px;padding:14px;min-height:120px}
+#pvFirmeG .anteprima .logo{padding-right:14px;display:none}
+#pvFirmeG .anteprima.con-logo .logo{display:block}
+#pvFirmeG .anteprima.con-logo .ft{border-left:2px solid #1f7a8c;padding-left:14px}
+#pvFirmeG .ft{flex:1;min-height:90px;outline:none;font:12.5px/1.5 Helvetica,Arial,sans-serif;color:#000}
+#pvFirmeG .ft:empty:before{content:'Scrivi qui la firma: nome, ruolo, telefono, indirizzo…';color:#94A3B8}
+#pvFirmeG .cas{display:flex;flex-wrap:wrap;gap:6px 14px;font-weight:600;color:#475569}
+#pvFirmeG .cas label{display:inline-flex;align-items:center;gap:5px;font-weight:500}
+#pvFirmeG .nota{font-size:12px;color:#64748B}
+#pvFirmeG .fg-p{display:flex;gap:8px;padding:12px 16px;border-top:1px solid #E2E8F0;align-items:center}
+#pvFirmeG .fg-p span{flex:1;font-size:12.5px;color:#64748B}
+</style>
+<script>
+/* PORTALE NEXT-110 (Sante 30/10): «servono le firme da memorizzare».
+   Nella finestra Rispondi / Inoltra, accanto a Invia, si sceglie la firma: quella standard della casella (il cartiglio di Next),
+   una firma memorizzata, oppure nessuna. «Gestisci firme…» apre la finestra per crearle e modificarle: testo formattato,
+   logo di Next a sinistra sì o no, caselle di cui è la firma predefinita. Per partire da una firma già usata:
+   «Prendi dall'ultima mail inviata» carica nell'editor l'ultima mail spedita da quella casella; si tiene solo la firma e si salva.
+   Dati: edge posta-firme (tabella posta_firme). La scelta parte verso posta-rispondi nel campo firma. */
+(function () {
+  var API = 'https://pnxhthrheqeucoisifjw.supabase.co/functions/v1/posta-firme';
+  var LOGO = 'https://pnxhthrheqeucoisifjw.supabase.co/storage/v1/object/public/web/firma/next-logo.png';
+  var CASELLE = ['sante', 'info', 'amministrazione', 'acquisti', 'commerciale', 'assistenza', 'export', 'privacy', 'pec'];
+  var firme = null, scelta = null, sceltaPer = null, box = null, gest = null, corrente = null, forzata = null;
+  function pass() { try { return window.sessionStorage.getItem('regia_pass'); } catch (e) { return null; } }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function carica() {
+    var t = pass(); if (!t) return Promise.resolve([]);
+    return fetch(API + '?t=' + encodeURIComponent(t), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) { firme = (j && j.ok && j.firme) || []; if (!forzata) sceltaPer = null; return firme; }).catch(function () { firme = firme || []; return firme; });
+  }
+  function manda(corpo) { corpo.t = pass(); return fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) }).then(function (r) { return r.json(); }); }
+  function casellaDi(dlg) {
+    var m = (dlg.textContent || '').match(/da\s+([\w.+-]+)@([\w.-]+)/i); if (!m) return '';
+    return /legalmail/i.test(m[2]) ? 'pec' : m[1].toLowerCase();
+  }
+  window.pvFirmaScelta = function () { return scelta || 'standard'; };
+  window.pvFirmaImposta = function (id) { forzata = id || 'standard'; scelta = forzata; };
+  function opzioni(cas) {
+    var l = firme || [];
+    return '<option value="standard">Firma standard (' + esc(cas || 'casella') + ')</option>'
+      + l.map(function (f) { return '<option value="' + esc(f.id) + '">' + esc(f.nome) + ((f.caselle || []).indexOf(cas) >= 0 ? ' ★' : '') + '</option>'; }).join('')
+      + '<option value="nessuna">Nessuna firma</option><option value="__gestisci">Gestisci firme…</option>';
+  }
+  function giro() {
+    var dlg = document.querySelector('#pvStrumento [role="dialog"]');
+    if (!dlg) { scelta = null; sceltaPer = null; forzata = null; var w0 = document.getElementById('pvFirma'); if (w0) w0.style.display = 'none'; return; }
+    var piede = dlg.lastElementChild; if (!piede) return;
+    /* il selettore sta in una barra fissa sopra il piede della finestra, non dentro: la pagina, ridisegnando, non lo tocca */
+    var cas = casellaDi(dlg);
+    if (firme === null) { firme = []; carica().then(function () { var s = document.querySelector('#pvFirma select'); if (s) s.setAttribute('data-v', ''); }); }
+    var w = document.getElementById('pvFirma');
+    if (!w) {
+      w = document.createElement('span'); w.id = 'pvFirma'; w.innerHTML = '<span>Firma</span><select aria-label="Firma della mail"></select>';
+      document.body.appendChild(w);
+      w.querySelector('select').addEventListener('change', function (e) {
+        if (e.target.value === '__gestisci') { e.target.value = scelta || 'standard'; apriGestione(cas); return; }
+        scelta = e.target.value;
+      });
+    }
+    var sel = w.querySelector('select'), firmaOpz = cas + '|' + (firme || []).map(function (f) { return f.id + f.nome + (f.caselle || []).join(','); }).join(';');
+    if (sel.getAttribute('data-v') !== firmaOpz) { sel.innerHTML = opzioni(cas); sel.setAttribute('data-v', firmaOpz); }
+    /* la predefinita della casella, la prima volta che si apre la finestra per quella casella */
+    if (forzata && sceltaPer !== cas) { sceltaPer = cas; scelta = forzata; }
+    if (sceltaPer !== cas) { sceltaPer = cas; var pred = (firme || []).filter(function (f) { return (f.caselle || []).indexOf(cas) >= 0; })[0]; scelta = pred ? pred.id : 'standard'; }
+    if (sel.value !== scelta && sel.querySelector('option[value="' + scelta + '"]')) sel.value = scelta;
+  }
+  /* ---- gestione delle firme ---- */
+  function apriGestione(cas) {
+    if (!gest) {
+      gest = document.createElement('div'); gest.id = 'pvFirmeG';
+      gest.innerHTML = '<div class="fg" role="dialog" aria-label="Firme della posta"><div class="fg-t"><b>Firme della posta</b><button type="button" data-a="nuova">+ Nuova firma</button><button type="button" data-a="chiudi" aria-label="Chiudi">✕</button></div>'
+        + '<div class="fg-c"><div class="fg-l"></div><div class="fg-d">'
+        + '<label class="r">Nome <input type="text" data-k="nome" placeholder="es. Sante – completa"></label>'
+        + '<div><div class="bar"><button type="button" data-c="bold"><b>G</b></button><button type="button" data-c="italic"><i>C</i></button><button type="button" data-c="underline"><u>S</u></button>'
+        + '<select data-c="fontSize" title="Dimensione" style="height:24px;border:1px solid #E2E8F0;border-radius:5px"><option value="">Dim.</option><option value="1">Piccola</option><option value="2">Normale</option><option value="3">Media</option><option value="4">Grande</option></select>'
+        + '<input type="color" data-c="foreColor" value="#1f7a8c" title="Colore del testo selezionato">'
+        + '<span style="flex:1"></span><button type="button" data-a="ultima" title="Carica qui l\'ultima mail inviata da questa casella: tieni solo la firma e salva">Prendi dall\'ultima mail inviata</button></div>'
+        + '<div class="anteprima"><div class="logo"><img src="' + LOGO + '" alt="Next" width="130" style="width:130px;display:block"></div><div class="ft" contenteditable="true" aria-label="Testo della firma"></div></div></div>'
+        + '<label class="r"><input type="checkbox" data-k="logo"> Con il logo di Next a sinistra, come il cartiglio</label>'
+        + '<div class="cas"><span>Predefinita per:</span>' + CASELLE.map(function (c) { return '<label><input type="checkbox" data-cas="' + c + '">' + c + '</label>'; }).join('') + '</div>'
+        + '<div class="nota">Le immagini incollate non partono: per il logo usa la casella qui sopra. Una casella ha una sola firma predefinita.</div>'
+        + '</div></div><div class="fg-p"><span></span><button type="button" data-a="elimina">Elimina</button><button type="button" class="pri" data-a="salva">Salva firma</button></div></div>';
+      document.body.appendChild(gest);
+      gest.addEventListener('mousedown', function (e) { if (e.target.closest('.bar button')) e.preventDefault(); });
+      gest.addEventListener('click', function (e) {
+        var b = e.target.closest('button'); if (!b) return;
+        var c = b.getAttribute('data-c'), a = b.getAttribute('data-a');
+        if (c) { gest.querySelector('.ft').focus(); document.execCommand(c, false, null); return; }
+        if (b.classList.contains('it')) { mostra(b.getAttribute('data-id')); return; }
+        if (a === 'chiudi') { gest.style.display = 'none'; return; }
+        if (a === 'nuova') { mostra(null); return; }
+        if (a === 'salva') salva();
+        if (a === 'elimina') elimina();
+        if (a === 'ultima') ultima();
+      });
+      gest.querySelector('.bar').addEventListener('change', function (e) {
+        var c = e.target.getAttribute('data-c'); if (!c || !e.target.value) return;
+        gest.querySelector('.ft').focus(); document.execCommand('styleWithCSS', false, true); document.execCommand(c, false, e.target.value); if (e.target.tagName === 'SELECT') e.target.value = '';
+      });
+      gest.querySelector('[data-k="logo"]').addEventListener('change', function (e) { gest.querySelector('.anteprima').classList.toggle('con-logo', e.target.checked); });
+    }
+    gest.setAttribute('data-cas', cas || '');
+    gest.style.display = 'flex';
+    carica().then(function () { lista(); mostra(corrente && firme.some(function (f) { return f.id === corrente; }) ? corrente : (firme[0] ? firme[0].id : null)); });
+  }
+  function lista() {
+    gest.querySelector('.fg-l').innerHTML = (firme.length ? firme.map(function (f) {
+      return '<button type="button" class="it' + (f.id === corrente ? ' on' : '') + '" data-id="' + esc(f.id) + '">' + esc(f.nome) + '<small>' + ((f.caselle || []).length ? 'predefinita: ' + esc(f.caselle.join(', ')) : 'non predefinita') + '</small></button>';
+    }).join('') : '<div class="nota" style="padding:8px">Nessuna firma salvata. Crea la prima con «+ Nuova firma».</div>');
+  }
+  function mostra(id) {
+    corrente = id; var f = (firme || []).filter(function (x) { return x.id === id; })[0] || { nome: '', html: '', logo: true, caselle: id ? [] : (gest.getAttribute('data-cas') ? [gest.getAttribute('data-cas')] : []) };
+    gest.querySelector('[data-k="nome"]').value = f.nome || '';
+    gest.querySelector('.ft').innerHTML = f.html || '';
+    gest.querySelector('[data-k="logo"]').checked = !!f.logo; gest.querySelector('.anteprima').classList.toggle('con-logo', !!f.logo);
+    gest.querySelectorAll('[data-cas]').forEach(function (x) { x.checked = (f.caselle || []).indexOf(x.getAttribute('data-cas')) >= 0; });
+    gest.querySelector('[data-a="elimina"]').style.display = id ? '' : 'none';
+    gest.querySelector('.fg-p span').textContent = id ? '' : 'Nuova firma';
+    lista();
+  }
+  function salva() {
+    var nome = gest.querySelector('[data-k="nome"]').value.trim(), msg = gest.querySelector('.fg-p span');
+    if (!nome) { msg.textContent = 'Dai un nome alla firma.'; return; }
+    msg.textContent = 'Salvo…';
+    manda({ azione: 'salva', id: corrente || undefined, nome: nome, html: gest.querySelector('.ft').innerHTML, logo: gest.querySelector('[data-k="logo"]').checked,
+      caselle: [].slice.call(gest.querySelectorAll('[data-cas]')).filter(function (x) { return x.checked; }).map(function (x) { return x.getAttribute('data-cas'); }) })
+      .then(function (j) {
+        if (!j || !j.ok) { msg.textContent = 'Non salvata: ' + ((j && j.errore) || 'errore'); return; }
+        corrente = j.firma.id; msg.textContent = 'Salvata ✓';
+        return carica().then(function () { lista(); sceltaPer = null; var s = document.querySelector('#pvFirma select'); if (s) s.setAttribute('data-v', ''); });
+      }).catch(function () { msg.textContent = 'Non salvata: rete non raggiungibile.'; });
+  }
+  function elimina() {
+    if (!corrente) return; var msg = gest.querySelector('.fg-p span');
+    var f = firme.filter(function (x) { return x.id === corrente; })[0];
+    if (gest.getAttribute('data-conferma') !== corrente) { gest.setAttribute('data-conferma', corrente); msg.textContent = 'Premi di nuovo «Elimina» per cancellare «' + (f ? f.nome : '') + '».'; return; }
+    gest.removeAttribute('data-conferma');
+    manda({ azione: 'elimina', id: corrente }).then(function () { corrente = null; msg.textContent = 'Eliminata.'; return carica().then(function () { mostra(firme[0] ? firme[0].id : null); var s = document.querySelector('#pvFirma select'); if (s) s.setAttribute('data-v', ''); if (scelta && !firme.some(function (x) { return x.id === scelta; })) scelta = 'standard'; }); });
+  }
+  function ultima() {
+    var msg = gest.querySelector('.fg-p span'), spunta = [].slice.call(gest.querySelectorAll('[data-cas]')).filter(function (x) { return x.checked; })[0];
+    var cas = gest.getAttribute('data-cas') || (spunta ? spunta.getAttribute('data-cas') : '');
+    if (!cas) { msg.textContent = 'Spunta la casella da cui prendere l\'ultima mail inviata.'; return; }
+    msg.textContent = 'Cerco l\'ultima mail inviata da ' + cas + '…';
+    fetch(API + '?t=' + encodeURIComponent(pass()) + '&ultima=' + encodeURIComponent(cas)).then(function (r) { return r.json(); }).then(function (j) {
+      var m = j && j.ok && j.mail; if (!m) { msg.textContent = 'Nessuna mail inviata trovata per ' + cas + '.'; return; }
+      var P = window.pvPonte || {}; if (!P.leggi) { msg.textContent = 'Non riesco a leggere la mail da qui.'; return; }
+      return P.leggi({ chiave: m.casella + ':' + m.cartella + ':' + m.uid, casella: m.casella, cartella: m.cartella, uid: m.uid }).then(function (x) {
+        if (!x || x.errore) { msg.textContent = 'Non riesco ad aprire l\'ultima mail inviata.'; return; }
+        var d = document.createElement('div'); d.innerHTML = x.html || esc(x.testo || '').replace(/\n/g, '<br>');
+        d.querySelectorAll('script,style,meta,link,title,iframe,object,embed,img,head').forEach(function (n) { n.remove(); });
+        d.querySelectorAll('*').forEach(function (n) { [].slice.call(n.attributes).forEach(function (a) { if (/^on/i.test(a.name) || a.name === 'class' || a.name === 'id' || a.name === 'href' || a.name === 'src') n.removeAttribute(a.name); }); });
+        gest.querySelector('.ft').innerHTML = d.innerHTML;
+        msg.textContent = 'Caricata l\'ultima mail inviata («' + (m.oggetto || '') + '»): cancella tutto tranne la firma e salva.';
+      });
+    }).catch(function () { msg.textContent = 'Non riesco a cercare l\'ultima mail adesso.'; });
+  }
+  function aggancia() {
+    var w = document.getElementById('pvFirma'), dlg = document.querySelector('#pvStrumento [role="dialog"]');
+    if (!w) return; if (!dlg) { w.style.display = 'none'; return; }
+    var p = dlg.lastElementChild; if (!p) return;
+    var z = document.body.currentCSSZoom || 1, r = p.getBoundingClientRect();
+    w.style.display = 'inline-flex';
+    w.style.left = (r.right / z - 16 - w.offsetWidth) + 'px'; w.style.top = (r.top / z + r.height / z / 2 - w.offsetHeight / 2) + 'px';
+    document.documentElement.style.setProperty('--pvFirmaW', (w.offsetWidth + 28) + 'px');
+  }
+  (function segui() { try { aggancia(); } catch (e) {} requestAnimationFrame(segui); })();
+  setInterval(giro, 400);
 })();
 </script>
 </body>
