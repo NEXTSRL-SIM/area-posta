@@ -370,9 +370,10 @@ section[aria-label="Caselle minori"].pv-barra-pronta{outline:2px dashed #06B6D4;
 <sc-for list="{{c.lista}}" as="m" hint-placeholder-count="4">
 <button onClick="{{m.pick}}" data-attiva="{{m.attivaS}}" title="{{m.evNome}}" style="--lc: {{m.lc}}; font: inherit; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--ln); border-left: {{m.bordoW}} solid {{m.bordo}}; background: {{m.bg}}; box-shadow: {{m.selSh}}; padding: 8px 10px 8px {{m.padL}}; cursor: pointer; display: flex; flex-direction: column; gap: 3px; color: var(--ink);">
 <span style="display: flex; gap: 6px; align-items: baseline;"><span title="{{m.nonLetta}}" style="flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: {{m.punto}}; align-self: center;"></span><span class="{{m.luce}}" style="--lc: {{m.lc}}; font-size: 12.5px; font-weight: {{m.peso}}; flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{m.chi}}</span><span title="{{m.tagSpiega}}" style="flex: 0 0 auto; font-size: 9.5px; font-weight: 700; border-radius: 999px; padding: 0 6px; line-height: 15px; color: {{m.tc}}; background: {{m.tb}}; border: 1px solid {{m.tc}}33;">{{m.tag}}</span><span style="flex-grow: 1;"></span><sc-if value="{{m.haClipF}}"><span title="Ha allegati" aria-label="Con allegati" style="display: inline-flex; color: #64748B; align-self: center;"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 11.6l-7.9 7.9a5 5 0 0 1-7.1-7.1l8.3-8.3a3.4 3.4 0 0 1 4.8 4.8l-8.3 8.3a1.7 1.7 0 0 1-2.4-2.4l7.6-7.6"></path></svg></span></sc-if><sc-if value="{{m.haRispF}}"><span title="Hai già risposto" aria-label="Risposta" style="display: inline-flex; color: #7C3AED; align-self: center;"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 6 6v4"></path></svg></span></sc-if><sc-if value="{{m.haInolF}}"><span title="Inoltrata" aria-label="Inoltrata" style="display: inline-flex; color: #2563EB; align-self: center;"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"></path><path d="M20 9H10a6 6 0 0 0-6 6v4"></path></svg></span></sc-if><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink3);">{{m.ora}}</span></span>
-<span style="display: flex; align-items: center; gap: 8px; min-width: 0;"><span class="{{m.luce}}" style="--lc: {{m.lc}}; flex: 0 1 auto; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 5px; {{m.titSt}}">{{m.oggetto}}</span></span><sc-if value="{{m.haEt}}"><span style="display: flex; flex-wrap: wrap; gap: 4px;"><sc-for list="{{m.etL}}" as="e"><span style="display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700; color: var(--ink2); background: var(--sf2); border: 1px solid var(--ln); border-radius: 6px; padding: 0 6px; line-height: 16px; white-space: nowrap;"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{e.c}};"></span>{{e.t}}</span></sc-for></span></sc-if>
+<span style="display: flex; align-items: center; gap: 8px; min-width: 0;"><span class="{{m.luce}}" style="--lc: {{m.lc}}; flex: 0 1 auto; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 5px; {{m.titSt}}">{{m.oggetto}}</span><sc-if value="{{m.haConv}}"><span role="button" tabindex="0" onClick="{{m.convToggle}}" title="{{m.convTit}}" aria-label="{{m.convTit}}" style="margin-left: auto; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 1px; color: {{m.convCol}}; cursor: pointer; padding-bottom: 5px;"><span style="min-width: 15px; height: 15px; border-radius: 50%; border: 1px solid currentColor; display: inline-flex; align-items: center; justify-content: center; font: 500 9px Manrope, sans-serif; padding: 0 3px; box-sizing: border-box;">{{m.convN}}</span><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: {{m.convRot}}; transition: transform .2s;"><path d="M6 9l6 6 6-6"></path></svg></span></sc-if></span><sc-if value="{{m.haEt}}"><span style="display: flex; flex-wrap: wrap; gap: 4px;"><sc-for list="{{m.etL}}" as="e"><span style="display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700; color: var(--ink2); background: var(--sf2); border: 1px solid var(--ln); border-radius: 6px; padding: 0 6px; line-height: 16px; white-space: nowrap;"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{e.c}};"></span>{{e.t}}</span></sc-for></span></sc-if>
 
 </button>
+<sc-if value="{{m.convAperta}}"><div aria-label="Conversazione" style="background: var(--sf2); border-bottom: 1px solid var(--ln); padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 4px; box-shadow: inset 0 2px 4px rgba(15,23,42,.04);"><sc-for list="{{m.filo}}" as="f"><div role="button" tabindex="0" onClick="{{f.pick}}" title="Apri questa mail" style="align-self: {{f.al}}; width: 88%; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px; padding: 5px 9px 6px 10px; border: 1px solid {{f.bd}}; border-left: {{f.bwl}} solid {{f.bl}}; border-right: {{f.bwr}} solid {{f.br}}; border-radius: 2px; background: {{f.bg}}; cursor: pointer;"><span style="display: flex; align-items: center; gap: 6px; min-width: 0;"><span style="font-size: 11px; font-weight: 700; color: {{f.cc}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">{{f.chi}}</span><sc-if value="{{f.clip}}"><span style="display: inline-flex; color: var(--ink3);"><svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 11.6l-7.9 7.9a5 5 0 0 1-7.1-7.1l8.3-8.3a3.4 3.4 0 0 1 4.8 4.8l-8.3 8.3a1.7 1.7 0 0 1-2.4-2.4l7.6-7.6"></path></svg></span></sc-if><span style="margin-left: auto; flex: 0 0 auto; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink3);">{{f.ora}}</span></span><span style="font-size: 11.5px; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{f.ogg}}</span></div></sc-for></div></sc-if>
 </sc-for>
 </div>
 <div style="padding: 12px 14px; overflow-y: auto; display: {{c.prev}}; flex-direction: column; gap: 8px; min-width: 0;">
@@ -701,7 +702,7 @@ class Component extends DCLogic {
         cambia: () => metti(on ? nasc.filter((z) => z !== g) : [...nasc, g]) }; });
       const fAperto = !!filtri[id];
       const lista = elenco.map((x, i) => ({ ...x, tc: (TAG[x.tag] || TAG.info).c, tb: (TAG[x.tag] || TAG.info).b, tag: (TAG[x.tag] || TAG.info).t, tagSpiega: (TAG[x.tag] || TAG.info).s || '', peso: '800', punto: x.nuova ? '#0891B2' : 'transparent', nonLetta: x.nuova ? 'da leggere' : '',
-        ...evRiga(x, i === k, c.col, ((this.state || {}).attiva || {}).chiave), attivaS: ((this.state || {}).attiva || {}).chiave === x.chiave ? 'si' : '', haClipF: !!x.haClip, haRispF: (PR_FATTE[x.chiave] || x.fatta) === 'r', haInolF: (PR_FATTE[x.chiave] || x.fatta) === 'i', pick: () => { if (x.vera && this.postaVeraApri) this.postaVeraApri(x); this.setState({ sel: { ...sel, [id + v]: i }, attiva: { chiave: x.chiave, id } }); if (t === 2) this.salva({ ...lay, taglie: { ...lay.taglie, [id]: 3 } }); } }));
+        ...evRiga(x, i === k, c.col, ((this.state || {}).attiva || {}).chiave), attivaS: ((this.state || {}).attiva || {}).chiave === x.chiave ? 'si' : '', haClipF: !!x.haClip, haRispF: (PR_FATTE[x.chiave] || x.fatta) === 'r', haInolF: (PR_FATTE[x.chiave] || x.fatta) === 'i', ...this.convRiga(x, c), pick: () => { if (this._noPick && Date.now() - this._noPick < 400) return; if (x.vera && this.postaVeraApri) this.postaVeraApri(x); this.setState({ sel: { ...sel, [id + v]: i }, attiva: { chiave: x.chiave, id } }); if (t === 2) this.salva({ ...lay, taglie: { ...lay.taglie, [id]: 3 } }); } }));
       const x = elenco[k] || elenco[0] || { chi: '—', ora: '', oggetto: 'Nessuna mail', testo: '', sistema: 'niente da fare.', az: 'Aggiorna' };
       const apriIntera = () => {
         if (x.vera) { const mk = () => pvScheda(x, c.indirizzo, c.nome, c.col); this.setState({ risp: null, intera: mk() }); pvLeggiMail(x).then(() => { if (this.state && this.state.intera && this.state.intera.chiave === x.chiave) this.setState({ intera: mk() }); }); return; }
@@ -923,8 +924,50 @@ const pvVoce = (m, casella, verso) => {
   return { vera: true, chiave: casella + ':' + m.cartella + ':' + m.uid, casella, cartella: m.cartella, uid: m.uid, iso: m.data,
     chi, ora: pvOra(m.data), oggetto: pvPulisci(m.oggetto) || '(senza oggetto)', tag, nuova: !!m.non_letta, da: m.da || '', a: m.a || '',
     cliente: m.cliente || '', haClip: !!m.allegati, risp: m.risp || '', fatta: m.inoltrata ? 'i' : (m.risposta ? 'r' : ''),
-    testo: '', sistema: '', az: '' };
+    testo: '', sistema: '', az: '',
+    /* PORTALE NEXT-110 (Sante 30/10): per le conversazioni */
+    mid: String(m.message_id || '').toLowerCase(), rif: (m.rif || []).map((r) => String(r).toLowerCase()), pid: PV_ID[casella] || casella };
 };
+/* LE CONVERSAZIONI (PORTALE NEXT-110, Sante 30/10): le mail non si spostano, si raggruppano solo per guardarle insieme.
+   Stesso filo = una cita l'altra (In-Reply-To / References). In mancanza, stesso oggetto (tolti Re:, R:, I:, Fwd:) con lo stesso
+   interlocutore, purché almeno una sia una risposta o un inoltro. Vale fra tutte le caselle e fra arrivo e inviata. */
+const PV_FILI = { firma: '', per: {} };
+const pvOgg = (o) => { let t = String(o || '').toLowerCase().trim(), p; do { p = t; t = t.replace(/^\s*(re|r|i|fw|fwd|rif|inoltro|risposta|aw|wg|tr)\s*(\[\d+\])?\s*:\s*/i, ''); } while (t !== p); return t.replace(/\s+/g, ' ').trim(); };
+const pvRisposta = (o) => /^\s*(re|r|i|fw|fwd|rif|aw|wg|tr)\s*(\[\d+\])?\s*:/i.test(String(o || ''));
+const pvNoi = (y) => !/^(INBOX|Posta in arrivo)$/i.test(y.cartella || '') && !/junk|spam|indesiderat/i.test(y.cartella || '');
+const pvLui = (y) => { const a = pvNoi(y) ? ((String(y.a || '').match(/[\w.+-]+@[\w.-]+/) || [''])[0]) : y.da; return String(a || '').toLowerCase().split('@')[1] || ''; };
+const pvFilo = (x) => {
+  if (!x || !x.vera) return null;
+  const tutte = [];
+  for (const id of Object.keys(CASELLE)) for (const k of ['in', 'out', 'sc', 'junk', 'usc']) for (const y of (CASELLE[id][k] || [])) if (y && y.vera) tutte.push(y);
+  const firma = tutte.length + '|' + tutte.map((y) => y.chiave).join(',').length + '|' + (tutte[0] ? tutte[0].chiave : '');
+  if (firma !== PV_FILI.firma) {
+    const pa = {}, su = (a) => { while (pa[a] && pa[a] !== a) { pa[a] = pa[pa[a]] || pa[a]; a = pa[a]; } return a; };
+    const un = (a, b) => { if (!pa[a]) pa[a] = a; if (!pa[b]) pa[b] = b; const ra = su(a), rb = su(b); if (ra !== rb) pa[ra] = rb; };
+    const nodo = (y) => y.mid ? 'm:' + y.mid : 'k:' + y.chiave;
+    const perOgg = {};
+    for (const y of tutte) {
+      const n = nodo(y); if (!pa[n]) pa[n] = n;
+      for (const r of y.rif || []) un(n, 'm:' + r);
+      const o = pvOgg(y.oggetto), d = pvLui(y);
+      if (o.length >= 5 && d && !/next-srl\.eu$/.test(d)) { const k = o + '|' + d; (perOgg[k] = perOgg[k] || []).push(y); }
+    }
+    for (const k of Object.keys(perOgg)) { const l = perOgg[k]; if (l.length > 1 && l.some((y) => pvRisposta(y.oggetto))) for (let i = 1; i < l.length; i++) un(nodo(l[0]), nodo(l[i])); }
+    const gruppi = {};
+    for (const y of tutte) { const r = su(nodo(y)); (gruppi[r] = gruppi[r] || []).push(y); }
+    const per = {};
+    for (const r of Object.keys(gruppi)) {
+      const visti = {}, g = [];
+      for (const y of gruppi[r].slice().sort((a, b) => String(b.iso || '').localeCompare(String(a.iso || '')))) { const id = y.mid || y.chiave; if (visti[id]) continue; visti[id] = 1; g.push(y); }
+      if (g.length > 1) for (const y of gruppi[r]) per[y.chiave] = g;
+    }
+    PV_FILI.firma = firma; PV_FILI.per = per;
+  }
+  const g = PV_FILI.per[x.chiave]; if (!g) return null;
+  const altre = g.filter((y) => y.chiave !== x.chiave && (!x.mid || y.mid !== x.mid));
+  return altre.length ? altre : null;
+};
+const pvDataLunga = (iso) => { const d = new Date(iso); if (isNaN(d.getTime())) return ''; return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Rome' }) + ' ' + d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' }); };
 /* legge tutte le caselle; risponde con { per: { idPagina: { in, out, errore } }, alle } oppure null */
 async function pvLeggiTutto(cerca) {
   const pass = pvPass();
@@ -1021,6 +1064,24 @@ Component.prototype.selVera = function (x) {
     haInd: true, daInd: x.cartella === 'INBOX' ? ((t && t.nome) || x.chi) + ' <' + ((t && t.da) || x.da) + '>' : 'Next S.r.l.',
     aInd: pvPulisci((t && t.a) || x.a) || (x.cartella === 'INBOX' ? x.casella + '@next-srl.eu' : x.chi),
     dataInd: pvData(x.iso), docsAttesa: !t && x.haClip };
+};
+Component.prototype.convRiga = function (x, c) {
+  const altre = pvFilo(x);
+  if (!altre) return { haConv: false, convAperta: false, filo: [] };
+  const s = this.state || {}, aperta = s.convAp === x.chiave;
+  const col = (c && c.col) || '#0891B2';
+  return { haConv: true, convAperta: aperta, convN: String(altre.length + 1), convCol: aperta ? col : 'var(--ink3)', convRot: aperta ? 'rotate(180deg)' : 'none',
+    convTit: aperta ? 'Chiudi la conversazione' : 'Conversazione: ' + (altre.length + 1) + ' mail — clic per vedere le altre',
+    convToggle: (e) => { try { if (e && e.stopPropagation) e.stopPropagation(); } catch (z) {} this._noPick = Date.now(); this.setState({ convAp: aperta ? null : x.chiave }); },
+    filo: altre.map((y) => {
+      const noi = pvNoi(y), cc = CASELLE[y.pid] || c || {};
+      return { chi: noi ? 'Noi · ' + (cc.nome || '') : y.chi, ora: pvDataLunga(y.iso), ogg: y.oggetto, clip: !!y.haClip,
+        al: noi ? 'flex-end' : 'flex-start', bg: noi ? 'color-mix(in srgb, ' + col + ' 7%, var(--sf))' : 'var(--sf)',
+        bd: noi ? 'color-mix(in srgb, ' + col + ' 22%, var(--ln))' : 'var(--ln)', bl: noi ? 'var(--ln)' : '#CBD5E1', br: noi ? col : 'var(--ln)',
+        bwl: noi ? '1px' : '2px', bwr: noi ? '2px' : '1px', cc: noi ? 'color-mix(in srgb, ' + col + ' 80%, #000)' : 'var(--ink)',
+        pick: () => { const mk = () => pvScheda(y, cc.indirizzo, cc.nome, cc.col); this.setState({ risp: null, intera: mk() });
+          pvLeggiMail(y).then(() => { const st = this.state || {}; if (st.intera && st.intera.chiave === y.chiave) this.setState({ intera: mk() }); }); } };
+    }) };
 };
 Component.prototype.postaVeraApri = function (x) {
   const t = PV_TESTI[x.chiave];
