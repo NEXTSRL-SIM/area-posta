@@ -115,7 +115,10 @@
       figli(modello, vals, tmp, nuovi);
       gestori = nuovi;
       window.morphdom(radice, tmp, {
+        /* (PORTALE NEXT-110, Sante 30/10) l'editor della mail è della pagina, non del modello: il ridisegno non lo tocca e non lo butta */
+        onBeforeNodeDiscarded: function (n) { return !(n && n.nodeType === 1 && (n.id === 'pvEd' || (n.closest && n.closest('#pvEd')))); },
         onBeforeElUpdated: function (da, a) {
+          if (da.id === 'pvEd' || (da.closest && da.closest('#pvEd'))) return false;
           if (da === document.activeElement && (da.tagName === 'TEXTAREA' || da.tagName === 'INPUT') && da.value === a.value) {
             for (var i = 0; i < a.attributes.length; i++) if (a.attributes[i].name !== 'value') da.setAttribute(a.attributes[i].name, a.attributes[i].value);
             return false;
@@ -936,7 +939,9 @@ const pvVoce = (m, casella, verso) => {
 const PV_FILI = { firma: '', per: {} };
 const pvOgg = (o) => { let t = String(o || '').toLowerCase().trim(), p; do { p = t; t = t.replace(/^\s*(re|r|i|fw|fwd|rif|inoltro|risposta|aw|wg|tr)\s*(\[\d+\])?\s*:\s*/i, ''); } while (t !== p); return t.replace(/\s+/g, ' ').trim(); };
 const pvRisposta = (o) => /^\s*(re|r|i|fw|fwd|rif|aw|wg|tr)\s*(\[\d+\])?\s*:/i.test(String(o || ''));
-const pvNoi = (y) => !/^(INBOX|Posta in arrivo)$/i.test(y.cartella || '') && !/junk|spam|indesiderat/i.test(y.cartella || '');
+/* nostra = sta in una cartella di posta inviata, oppure l'ha mandata un nostro indirizzo (anche se è arrivata in copia in un'altra casella) */
+const pvNoi = (y) => /@next-srl\.eu$|^nextsrl2023@legalmail\.it$/i.test(String(y.da || '').trim()) || (!/^(INBOX|Posta in arrivo)$/i.test(y.cartella || '') && !/junk|spam|indesiderat/i.test(y.cartella || ''));
+const pvNostraCasella = (y) => { const d = String(y.da || '').toLowerCase().trim(); if (/@next-srl\.eu$/.test(d)) { for (const k of Object.keys(CASELLE)) if (String(CASELLE[k].indirizzo || '').toLowerCase() === d) return CASELLE[k]; } return null; };
 const pvLui = (y) => { const a = pvNoi(y) ? ((String(y.a || '').match(/[\w.+-]+@[\w.-]+/) || [''])[0]) : y.da; return String(a || '').toLowerCase().split('@')[1] || ''; };
 const pvFilo = (x) => {
   if (!x || !x.vera) return null;
@@ -1079,7 +1084,8 @@ Component.prototype.convRiga = function (x, c) {
     /* (Sante 30/10) nel filo c'è anche la mail della riga, al suo posto nel tempo, evidenziata con un filo di luce */
     filo: [x, ...altre].sort((a, b) => String(b.iso || '').localeCompare(String(a.iso || ''))).map((y) => {
       const noi = pvNoi(y), cc = CASELLE[y.pid] || c || {}, qui = y.chiave === x.chiave;
-      return { chi: noi ? 'Noi · ' + (cc.nome || '') : y.chi, ora: pvDataLunga(y.iso), ogg: y.oggetto, clip: !!y.haClip,
+      const daNoi = noi ? (pvNostraCasella(y) || cc) : cc;
+      return { chi: noi ? 'Noi · ' + (daNoi.nome || '') : y.chi, ora: pvDataLunga(y.iso), ogg: y.oggetto, clip: !!y.haClip,
         al: noi ? 'flex-end' : 'flex-start', bg: noi ? 'color-mix(in srgb, ' + col + ' 7%, var(--sf))' : 'var(--sf)',
         bd: noi ? 'color-mix(in srgb, ' + col + ' 22%, var(--ln))' : 'var(--ln)', bl: noi ? 'var(--ln)' : '#CBD5E1', br: noi ? col : 'var(--ln)',
         bwl: noi ? '1px' : '2px', bwr: noi ? '2px' : '1px', cc: noi ? 'color-mix(in srgb, ' + col + ' 80%, #000)' : 'var(--ink)',
@@ -2281,6 +2287,7 @@ html.pv-scrivi #pvFuori{display:none!important}
     try { document.execCommand('defaultParagraphSeparator', false, 'div'); } catch (e) {}
     if (area.value) t.innerText = area.value;
     if (inizio !== null) { t.innerHTML = inizio; inizio = null; }
+    ed.__figli = Array.prototype.slice.call(ed.childNodes);
     ed.querySelector('.ed-b').addEventListener('mousedown', function (e) { if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'OPTION') e.preventDefault(); });
     ed.querySelector('.ed-b').addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
@@ -2350,6 +2357,12 @@ html.pv-scrivi #pvFuori{display:none!important}
     else if (tutti.length) { for (var i2 = 0; i2 < tutti.length; i2++) tutti[i2].remove(); }
     ultimoDlg = dlg;
     oggetto(dlg);
+    /* (Sante 30/10, «il testo sparisce dopo un po'») al rinfresco della posta la pagina ridisegnando rimpiazzava
+       il contenuto dell'editor con una copia vuota: se succede, rimetto subito al loro posto i pezzi veri, col testo scritto */
+    if (ed && ed.__figli && ed.__figli.some(function (n) { return n.parentNode !== ed; })) {
+      var veri = (ed.__all ? [ed.__all] : []).concat(ed.__figli);
+      try { ed.replaceChildren.apply(ed, veri); } catch (x) { while (ed.firstChild) ed.removeChild(ed.firstChild); veri.forEach(function (n) { ed.appendChild(n); }); }
+    }
     if (ed && dlg.contains(ed)) {
       var ta = dlg.querySelector('textarea[aria-label="Testo"]');
       if (ta && ta !== area) { area = ta; area.style.display = 'none'; }
@@ -2636,7 +2649,8 @@ html.pv-scrivi #pvFuori{display:none!important}
     }
     var ed = edOra(); if (!ed) return;
     var box = ed.querySelector('.ed-all');
-    if (!box) { box = document.createElement('div'); box.className = 'ed-all'; ed.insertBefore(box, ed.firstChild);
+    if (!box && ed.__all && ed.__all.parentNode !== ed) box = null;
+    if (!box) { box = ed.__all || document.createElement('div'); box.className = 'ed-all'; ed.insertBefore(box, ed.firstChild); ed.__all = box;
       box.addEventListener('click', function (e) { var b = e.target.closest('[data-via]'); if (!b) return; var f = st.file[+b.getAttribute('data-via')]; if (f && f.url) try { URL.revokeObjectURL(f.url); } catch (x) {} st.file.splice(+b.getAttribute('data-via'), 1); st.nota = ''; disegna(); }); }
     var h = st.file.map(function (f, i) {
       var est = (f.nome.split('.').pop() || '').toUpperCase().slice(0, 4), img = /^image\//.test(f.tipo) && f.url;
