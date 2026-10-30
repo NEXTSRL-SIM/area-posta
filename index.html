@@ -238,6 +238,8 @@ button[data-attiva="si"]::after{content:'';position:absolute;left:-6px;top:0;bot
 #pvStrumento span[data-pv-presa] i{background:var(--sc)!important}
 #pvStrumento::after{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;background:linear-gradient(100deg,transparent 30%,var(--sc) 45%,#fff 50%,var(--sc) 55%,transparent 70%) 0 0/250% 100%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:pvLuce 2.6s linear infinite;pointer-events:none}
 #pvStrumento.pv-str-alto::after{display:none}
+/* PEC: il cestino non c'è (la PEC non si sposta da qui) — Sante 30/10 */
+#pvStrumento.pv-pec button[title="Sposta nel cestino"],#pvStrumento.pv-pec button[title="Sposta nel cestino"] + span[aria-hidden="true"]{display:none!important}
 #pvStrumento.pv-str-alto{box-shadow:none!important;border-color:var(--ln)!important}
 @media (prefers-reduced-motion:reduce){#pvStrumento::after{animation:none}}
 #pvStrumento::before{content:'';position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,color-mix(in srgb,color-mix(in srgb,var(--sf) 90%,var(--sc)) 72%,transparent) 0%,color-mix(in srgb,color-mix(in srgb,var(--sf) 90%,var(--sc)) 55%,transparent) 48%,color-mix(in srgb,color-mix(in srgb,var(--sf) 82%,var(--sc)) 58%,transparent) 52%,color-mix(in srgb,color-mix(in srgb,var(--sf) 84%,var(--sc)) 66%,transparent) 100%);-webkit-backdrop-filter:blur(5px) saturate(1.5);backdrop-filter:blur(5px) saturate(1.5);}
@@ -1302,7 +1304,7 @@ Component.prototype.strumento = function (s) {
   const p = pvStrumPos;
   const mano = p && p.modo === 'mano' && p.chiave === x.chiave;
   return { wHa: true, wX: mano ? p.x + 'px' : (this.__wAuto ? this.__wAuto.x + 'px' : 'calc(50% - 220px)'), wY: mano ? p.y + 'px' : (this.__wAuto ? this.__wAuto.y + 'px' : 'calc(100% - 80px)'),
-    wCls: p && p.modo === 'alto' ? 'pv-str-alto' : '', wCol: (CASELLE[idC] || {}).col || '#0891B2',
+    wCls: (p && p.modo === 'alto' ? 'pv-str-alto' : '') + (x.casella === 'pec' ? ' pv-pec' : ''), wCol: (CASELLE[idC] || {}).col || '#0891B2',
     w: { ...x, ...this.attBottone(x), ...this.evBottone(x), ...this.rispBottoni(x, 'w'), apri, cestino } };
 };
 /* DOVE STA LO STRUMENTO (PORTALE NEXT-110, Sante 29/10):
