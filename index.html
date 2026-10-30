@@ -1688,8 +1688,8 @@ html.pv-scrivi #pvFuori{display:none!important}
 :is(#pvStrumento,#pvNuova) [role="dialog"] > div:last-child > button:first-child::before{content:"";width:15px;height:15px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.5 2.5 10.6 13.4'/%3E%3Cpath d='M21.5 2.5 14.6 21.3l-4-7.9-7.9-4z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.5 2.5 10.6 13.4'/%3E%3Cpath d='M21.5 2.5 14.6 21.3l-4-7.9-7.9-4z'/%3E%3C/svg%3E") center/contain no-repeat}
 :is(#pvStrumento,#pvNuova) [role="dialog"] > div:last-child > button:nth-child(2){background:linear-gradient(#FFFFFF,#F4F4F6)!important;border:1px solid rgba(0,0,0,.14)!important;color:#1C1C1E!important}
 /* (Sante 30/10, proposta A) la linguetta fa da cassetto: da chiuso «Storico» sul bordo della finestra, da aperto ‹ sul bordo dello storico; stesso aspetto */
-#pvStoricoTab,#pvStoricoChiudi{position:fixed;z-index:2147482000;display:none;align-items:center;justify-content:center;gap:5px;writing-mode:vertical-rl;padding:10px 4px;min-height:70px;width:24px;box-sizing:border-box;border-radius:0 10px 10px 0;background:var(--sf,#fff);color:#0369A1;border:1px solid var(--ln,#E2E8F0);border-left:0;box-shadow:4px 6px 14px rgba(15,23,42,.12);font:800 10.5px Manrope,system-ui,sans-serif;letter-spacing:.04em;cursor:pointer}
-#pvStoricoTab:hover,#pvStoricoChiudi:hover{background:#F0F9FF}
+#pvStoricoTab,#pvStoricoChiudi{position:fixed;z-index:2147482000;display:none;align-items:center;justify-content:center;gap:5px;writing-mode:vertical-rl;padding:10px 4px;min-height:74px;width:24px;box-sizing:border-box;border-radius:0 10px 10px 0;background:var(--pvTabCol,#0891B2);color:#fff;border:0;box-shadow:4px 6px 14px rgba(15,23,42,.18);font:800 10.5px Manrope,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+#pvStoricoTab:hover,#pvStoricoChiudi:hover{filter:brightness(1.08)}
 #pvStoricoTab svg{transform:none}
 </style>
 <script>
@@ -2068,25 +2068,27 @@ html.pv-scrivi #pvFuori{display:none!important}
     if (!dlg) { posMini(false); pan.style.display = 'none'; tab.style.display = 'none'; cass.style.display = 'none'; chiudiCorpo(); mostrato = null; lista = []; firma = ''; attivo = '';
       root.style.setProperty('--pvDx', '0px'); root.style.setProperty('--pvDy', '0px'); manuale = false; return; }
     var z = zoom(), vw = window.innerWidth / z, W = 330;
-    if (!ind) { posMini(false); pan.style.display = 'none'; tab.style.display = 'none'; cass.style.display = 'none'; chiudiCorpo(); mostrato = null; if (dlg) bottone(dlg); return; }
+    if (!ind) { if (!manuale && !tr) root.style.setProperty('--pvDx', '0px'); posMini(false); pan.style.display = 'none'; tab.style.display = 'none'; cass.style.display = 'none'; chiudiCorpo(); mostrato = null; if (dlg) bottone(dlg); return; }
     if (dlg) bottone(dlg);
     var r = dlg.getBoundingClientRect();
     var L = r.right / z + 10, T = r.top / z, Hh = r.height / z;
-    if (chiusoPer === ind) { posMini(false); pan.style.display = 'none'; aperti.forEach(function (p) { p.el.style.display = 'none'; }); cass.style.display = 'none'; tab.style.display = 'flex'; tab.style.left = (r.right / z - 1) + 'px'; tab.style.top = (T + 60) + 'px'; return; }
+    if (chiusoPer === ind) { if (!manuale && !tr) root.style.setProperty('--pvDx', '0px'); posMini(false); pan.style.display = 'none'; aperti.forEach(function (p) { p.el.style.display = 'none'; }); cass.style.display = 'none'; try { var tb2 = dlg.querySelector(':scope > div:first-child > b'); if (tb2) root.style.setProperty('--pvTabCol', getComputedStyle(tb2).color); } catch (x) {} tab.style.display = 'flex'; tab.style.left = (r.right / z - 1) + 'px'; tab.style.top = (T + 60) + 'px'; return; }
     tab.style.display = 'none';
     pan.style.left = L + 'px'; pan.style.top = T + 'px'; pan.style.height = Hh + 'px'; pan.style.width = W + 'px'; pan.style.display = 'flex';
     posMini(true, L, T);
     /* le mail aperte: a destra dello storico, una sotto l'altra, alte quanto la finestra in cui si scrive */
     var n = aperti.length, gap = 8, hh = n ? (Hh - gap * (n - 1)) / n : 0, cL = L + W + 10;
+    try { var tb = dlg.querySelector(':scope > div:first-child > b'); if (tb) root.style.setProperty('--pvTabCol', getComputedStyle(tb).color); } catch (x) {}
     cass.style.display = 'flex'; cass.style.left = ((n ? cL + CW : L + W) - 1) + 'px'; cass.style.top = (T + 60) + 'px';
     aperti.forEach(function (p, i) {
       if (!p.el.classList.contains('grande')) { p.el.style.left = cL + 'px'; p.el.style.top = (T + i * (hh + gap)) + 'px'; p.el.style.height = hh + 'px'; p.el.style.width = CW + 'px'; }
       p.el.style.display = 'flex';
     });
     /* nella finestra staccata il gruppo (scrittura + storico + mail aperte) sta al centro */
-    if (fuoriId && !manuale && !tr) { var lar = W + 10 + (n ? CW + 10 : 0); root.style.setProperty('--pvDx', Math.round(-lar / 2) + 'px'); }
+    /* (Sante 30/10) il gruppo (scrittura + storico + mail aperte) sta sempre al centro della pagina, finché non lo sposti tu */
+    if (!manuale && !tr) { var lar = W + 10 + (n ? CW + 10 : 0); root.style.setProperty('--pvDx', Math.round(-lar / 2) + 'px'); }
     /* la prima volta che il gruppo esce dallo schermo a destra, lo riporto dentro spostando tutto insieme (una volta sola, poi decide Sante) */
-    if (n && !manuale && !tr && !fuoriId) { var fuori = cL + CW + 8 - vw; if (fuori > 1) { var dx = parseFloat(root.style.getPropertyValue('--pvDx')) || 0, lib = r.left / z - 8; var sp = Math.min(fuori, Math.max(0, lib)); if (sp > 1) { root.style.setProperty('--pvDx', (dx - sp) + 'px'); manuale = true; } } }
+    if (false && n && !manuale && !tr && !fuoriId) { var fuori = cL + CW + 8 - vw; if (fuori > 1) { var dx = parseFloat(root.style.getPropertyValue('--pvDx')) || 0, lib = r.left / z - 8; var sp = Math.min(fuori, Math.max(0, lib)); if (sp > 1) { root.style.setProperty('--pvDx', (dx - sp) + 'px'); manuale = true; } } }
     if (mostrato === ind) { if (lista.length) disegnaLista(); return; }
     mostrato = ind; gruppi = tutti.slice(0, 8); lista = lista.filter(function (m) { return gruppi.indexOf(m.__ind) >= 0; }); firma = '';
     pan.querySelector('b').textContent = gruppi.length > 1 ? 'Storico di ' + gruppi.length + ' indirizzi' : 'Con ' + gruppi[0];
