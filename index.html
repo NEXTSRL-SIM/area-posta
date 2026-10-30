@@ -1285,8 +1285,9 @@ Component.prototype.rispBottoni = function (v, dove) {
     scInvia: () => {
       const s2 = (this.state || {}).scrivi; if (!s2 || s2.stato === 'invio' || s2.stato === 'fatto') return;
       if (!prIndirizzi(s2.a).length) { this.setState({ scrivi: { ...s2, stato: 'errore', esito: 'Manca il destinatario.' } }); return; }
+      if (window.pvAllegatiPronti && !window.pvAllegatiPronti()) { this.setState({ scrivi: { ...s2, stato: 'errore', esito: 'Sto ancora leggendo gli allegati: riprova fra un attimo.' } }); return; }
       this.setState({ scrivi: { ...s2, stato: 'invio', esito: '' } });
-      fetch(PR_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: pvPass(), casella: v.casella, cartella: v.cartella, uid: v.uid, modo: s2.modo, a: s2.a, cc: s2.cc, oggetto: s2.oggetto, testo: s2.testo, html_testo: (window.pvEditorHtml ? window.pvEditorHtml() : ''), firma: (window.pvFirmaScelta ? window.pvFirmaScelta() : 'standard') }) })
+      fetch(PR_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: pvPass(), casella: v.casella, cartella: v.cartella, uid: v.uid, modo: s2.modo, a: s2.a, cc: s2.cc, oggetto: s2.oggetto, testo: s2.testo, html_testo: (window.pvEditorHtml ? window.pvEditorHtml() : ''), firma: (window.pvFirmaScelta ? window.pvFirmaScelta() : 'standard'), allegati_nuovi: (window.pvAllegati ? window.pvAllegati() : []), priorita: (window.pvPriorita ? window.pvPriorita() : '') }) })
         .then((r) => r.json()).then((j) => {
           const s3 = (this.state || {}).scrivi; if (!s3) return;
           if (j && j.ok) { PR_FATTE[k] = s2.modo === 'i' ? 'i' : 'r'; this.setState({ scrivi: { ...s3, stato: 'fatto', esito: 'Partita' + (j.inviata && !/errore|non /.test(j.inviata) ? ', copia in ' + j.inviata : '') + '.' } }); setTimeout(() => { const s4 = (this.state || {}).scrivi; if (s4 && s4.chiave === k) this.setState({ scrivi: null }); }, 1600); }
@@ -1322,9 +1323,10 @@ Component.prototype.nuovaVals = function (s) {
     invia: () => {
       const n2 = (this.state || {}).nuova; if (!n2 || n2.stato === 'invio' || n2.stato === 'fatto') return;
       if (!prIndirizzi(n2.a).length) { this.setState({ nuova: { ...n2, stato: 'errore', esito: 'Manca il destinatario.' } }); return; }
+      if (window.pvAllegatiPronti && !window.pvAllegatiPronti()) { this.setState({ nuova: { ...n2, stato: 'errore', esito: 'Sto ancora leggendo gli allegati: riprova fra un attimo.' } }); return; }
       this.setState({ nuova: { ...n2, stato: 'invio', esito: '' } });
       fetch(PR_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: pvPass(), casella: n2.casella, modo: 'n', a: n2.a, cc: n2.cc, ccn: n2.ccn, oggetto: n2.oggetto, testo: n2.testo,
-        html_testo: (window.pvEditorHtml ? window.pvEditorHtml() : ''), firma: (window.pvFirmaScelta ? window.pvFirmaScelta() : 'standard') }) })
+        html_testo: (window.pvEditorHtml ? window.pvEditorHtml() : ''), firma: (window.pvFirmaScelta ? window.pvFirmaScelta() : 'standard'), allegati_nuovi: (window.pvAllegati ? window.pvAllegati() : []), priorita: (window.pvPriorita ? window.pvPriorita() : '') }) })
         .then((r) => r.json()).then((j) => {
           const n3 = (this.state || {}).nuova; if (!n3) return;
           if (j && j.ok) { this.setState({ nuova: { ...n3, stato: 'fatto', esito: 'Partita' + (j.inviata && !/errore|non /.test(j.inviata) ? ', copia in ' + j.inviata : '') + '.' } }); setTimeout(() => { const n4 = (this.state || {}).nuova; if (n4 && n4.stato === 'fatto') this.setState({ nuova: null }); }, 1600); }
@@ -2453,6 +2455,130 @@ html.pv-scrivi #pvFuori{display:none!important}
   }
   (function segui() { try { aggancia(); } catch (e) {} requestAnimationFrame(segui); })();
   setInterval(giro, 400);
+})();
+</script>
+<style>
+/* PORTALE NEXT-110 (Sante 30/10): allegati e priorità nella finestra Nuova mail / Rispondi / Inoltra */
+#pvEd .ed-b .pv-dx{margin-left:auto;display:inline-flex;align-items:center;gap:1px}
+#pvEd .ed-b button.pv-pri-a.on{background:rgba(255,59,48,.14);color:#FF3B30}
+#pvEd .ed-b button.pv-pri-b.on{background:rgba(0,122,255,.14);color:#007AFF}
+#pvEd .ed-all{display:none;flex-wrap:wrap;gap:6px;padding:7px 8px;border-top:1px solid var(--ln,#E5E7EB);background:#FAFAFB;max-height:132px;overflow:auto}
+#pvEd .ed-all.si{display:flex}
+#pvEd .ed-all .al{display:inline-flex;align-items:center;gap:7px;max-width:260px;height:34px;padding:0 6px 0 4px;border:1px solid rgba(0,0,0,.10);border-radius:8px;background:#fff;font:500 12px -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;color:#1C1C1E}
+#pvEd .ed-all .al .ic{width:26px;height:26px;border-radius:5px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;font:800 8.5px Manrope,sans-serif;color:#fff;background-size:cover;background-position:center}
+#pvEd .ed-all .al .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#pvEd .ed-all .al small{color:#8E8E93;font-size:11px;flex:0 0 auto}
+#pvEd .ed-all .al button{width:18px;height:18px;border:0;border-radius:50%;background:rgba(0,0,0,.06);color:#636366;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;flex:0 0 auto}
+#pvEd .ed-all .al button:hover{background:rgba(255,59,48,.14);color:#FF3B30}
+#pvEd .ed-all .nota{flex-basis:100%;font:500 11.5px Manrope,sans-serif;color:#8E8E93}
+#pvEd .ed-all .nota.err{color:#DC2626}
+#pvEd .pv-pri-nota{display:none;align-items:center;gap:6px;padding:5px 10px;font:600 12px Manrope,sans-serif;border-bottom:1px solid var(--ln,#E5E7EB)}
+#pvEd .pv-pri-nota.alta{display:flex;background:rgba(255,59,48,.08);color:#C9241B}
+#pvEd .pv-pri-nota.bassa{display:flex;background:rgba(0,122,255,.07);color:#0A5BC4}
+#pvTrascina{position:fixed;z-index:2147482500;display:none;pointer-events:none;border:2px dashed #06B6D4;border-radius:16px;background:rgba(6,182,212,.10);align-items:center;justify-content:center;font:700 15px Manrope,sans-serif;color:#0E7490;box-sizing:border-box}
+#pvTrascina span{background:rgba(255,255,255,.92);border-radius:12px;padding:10px 16px;box-shadow:0 8px 24px rgba(15,23,42,.18)}
+</style>
+<script>
+/* PORTALE NEXT-110 (Sante 30/10): «inserire gli allegati ad una mail ... trascinarli dentro ... premi il coso degli allegati
+   mi deve aprire la schermata per selezionare» e «la priorità: bassa, normale, alta, come Outlook».
+   Nella barra dell'editor, in fondo a destra: la graffetta (apre la scelta dei file del computer, anche più d'uno),
+   il punto esclamativo rosso (priorità alta) e la freccia blu in giù (priorità bassa); nessuno dei due acceso = normale.
+   I file si possono anche trascinare sopra la finestra. Sotto il testo compaiono in fila, con miniatura, peso e ✕ per toglierli.
+   Partono con la mail (posta-rispondi v6): al massimo 20 file e 20 MB in tutto, come accettano quasi tutti i server di posta. */
+(function () {
+  var MAX = 20 * 1024 * 1024, MAXN = 20;
+  var I_CLIP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 11.6l-7.9 7.9a5 5 0 0 1-7.1-7.1l8.3-8.3a3.4 3.4 0 0 1 4.8 4.8l-8.3 8.3a1.7 1.7 0 0 1-2.4-2.4l7.6-7.6"/></svg>';
+  var I_ALTA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 4.5v10"/><circle cx="12" cy="19.2" r=".6" fill="currentColor"/></svg>';
+  var I_BASSA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5v15"/><path d="M6.5 14l5.5 5.5 5.5-5.5"/></svg>';
+  var COL = { PDF: '#E5322D', DOC: '#2B579A', DOCX: '#2B579A', XLS: '#217346', XLSX: '#217346', CSV: '#217346', PPT: '#D24726', PPTX: '#D24726', ZIP: '#8E8E93', RAR: '#8E8E93', P7M: '#6D28D9', EML: '#0891B2', TXT: '#64748B', DWG: '#B45309', DXF: '#B45309' };
+  function dlgOra() { return document.querySelector(':is(#pvStrumento,#pvNuova) [role="dialog"]'); }
+  function edVero() { var d = dlgOra(); if (!d) return null; var l = d.querySelectorAll('#pvEd'); for (var i = 0; i < l.length; i++) if (l[i].__pvAll) return l[i]; return l[0] || null; }
+  function peso(n) { return n < 1024 ? n + ' B' : n < 1048576 ? Math.round(n / 1024) + ' KB' : (n / 1048576).toFixed(1).replace('.', ',') + ' MB'; }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function stato(ed) { if (!ed.__pvAll) ed.__pvAll = { file: [], pri: '', nota: '', err: false }; return ed.__pvAll; }
+  function disegna(ed) {
+    var st = stato(ed), box = ed.querySelector('.ed-all'); if (!box) return;
+    var tot = st.file.reduce(function (a, f) { return a + f.peso; }, 0);
+    box.className = 'ed-all' + (st.file.length || st.nota ? ' si' : '');
+    box.innerHTML = st.file.map(function (f, i) {
+      var est = (f.nome.split('.').pop() || '').toUpperCase().slice(0, 4), img = /^image\//.test(f.tipo) && f.url;
+      return '<span class="al" title="' + esc(f.nome) + '"><span class="ic" style="' + (img ? 'background-image:url(' + f.url + ')' : 'background:' + (COL[est] || '#94A3B8')) + '">' + (img ? '' : esc(est || 'FILE')) + '</span>'
+        + '<span class="nm">' + esc(f.nome) + '</span><small>' + peso(f.peso) + '</small>'
+        + '<button type="button" data-via="' + i + '" title="Togli questo allegato" aria-label="Togli ' + esc(f.nome) + '"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>';
+    }).join('') + (st.nota ? '<span class="nota' + (st.err ? ' err' : '') + '">' + esc(st.nota) + '</span>' : (st.file.length > 1 ? '<span class="nota">' + st.file.length + ' allegati · ' + peso(tot) + ' in tutto</span>' : ''));
+    var pa = ed.querySelector('.pv-pri-a'), pb = ed.querySelector('.pv-pri-b'), pn = ed.querySelector('.pv-pri-nota');
+    if (pa) pa.classList.toggle('on', st.pri === 'alta'); if (pb) pb.classList.toggle('on', st.pri === 'bassa');
+    if (pn) { pn.className = 'pv-pri-nota ' + st.pri; pn.innerHTML = st.pri === 'alta' ? I_ALTA.replace('<svg', '<svg width="14" height="14"') + 'Priorità alta: chi la riceve la vede segnata come importante' : st.pri === 'bassa' ? I_BASSA.replace('<svg', '<svg width="14" height="14"') + 'Priorità bassa' : ''; }
+    var clip = ed.querySelector('.pv-clip'); if (clip) clip.title = st.file.length ? 'Allegati: ' + st.file.length + ' (' + peso(tot) + ') — clic per aggiungerne' : 'Allega file dal computer (o trascinali sulla finestra)';
+  }
+  function aggiungi(ed, lista) {
+    var st = stato(ed); st.nota = ''; st.err = false;
+    var tot = st.file.reduce(function (a, f) { return a + f.peso; }, 0), scarti = [];
+    Array.prototype.forEach.call(lista || [], function (f) {
+      if (!f || !f.size && f.size !== 0) return;
+      if (st.file.length >= MAXN) { scarti.push(f.name + ' (massimo ' + MAXN + ' file)'); return; }
+      if (tot + f.size > MAX) { scarti.push(f.name + ' (' + peso(f.size) + ': si supererebbero i 20 MB)'); return; }
+      tot += f.size;
+      var voce = { nome: f.name || 'allegato', tipo: f.type || 'application/octet-stream', peso: f.size, b64: null, url: /^image\//.test(f.type) ? URL.createObjectURL(f) : '' };
+      st.file.push(voce);
+      var r = new FileReader();
+      r.onload = function () { voce.b64 = String(r.result || '').replace(/^data:[^,]*,/, ''); };
+      r.onerror = function () { voce.errore = true; };
+      r.readAsDataURL(f);
+    });
+    if (scarti.length) { st.nota = 'Non allegati: ' + scarti.join('; '); st.err = true; }
+    disegna(ed);
+  }
+  var input = document.createElement('input'); input.type = 'file'; input.multiple = true; input.style.display = 'none'; input.setAttribute('aria-hidden', 'true');
+  input.addEventListener('change', function () { var ed = edVero(); if (ed) aggiungi(ed, input.files); input.value = ''; });
+  function monta(ed) {
+    var bar = ed.querySelector('.ed-b'); if (!bar || bar.querySelector('.pv-dx')) return;
+    var dx = document.createElement('span'); dx.className = 'pv-dx';
+    dx.innerHTML = '<span class="sep"></span><button type="button" class="pv-pri-a" title="Priorità alta (clic di nuovo: normale)" aria-label="Priorità alta">' + I_ALTA + '</button>'
+      + '<button type="button" class="pv-pri-b" title="Priorità bassa (clic di nuovo: normale)" aria-label="Priorità bassa">' + I_BASSA + '</button><span class="sep"></span>'
+      + '<button type="button" class="pv-clip" aria-label="Allega file">' + I_CLIP + '</button>';
+    bar.appendChild(dx);
+    var pn = document.createElement('div'); pn.className = 'pv-pri-nota'; bar.parentNode.insertBefore(pn, bar.nextSibling);
+    var box = document.createElement('div'); box.className = 'ed-all'; ed.appendChild(box);
+    dx.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return; e.stopPropagation(); var st = stato(ed);
+      if (b.classList.contains('pv-clip')) { if (!input.parentNode) document.body.appendChild(input); input.click(); return; }
+      var v = b.classList.contains('pv-pri-a') ? 'alta' : 'bassa'; st.pri = st.pri === v ? '' : v; disegna(ed);
+    }, true);
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-via]'); if (!b) return; var st = stato(ed), f = st.file[+b.getAttribute('data-via')];
+      if (f && f.url) try { URL.revokeObjectURL(f.url); } catch (x) {}
+      st.file.splice(+b.getAttribute('data-via'), 1); st.nota = ''; disegna(ed);
+    });
+    disegna(ed);
+  }
+  setInterval(function () { var d = dlgOra(); if (!d) return; d.querySelectorAll('#pvEd').forEach(function (ed) { if (ed.querySelector('.ed-t')) monta(ed); }); }, 200);
+  /* per chi spedisce: i file letti e la priorità */
+  window.pvAllegati = function () { var ed = edVero(); if (!ed || !ed.__pvAll) return []; return ed.__pvAll.file.filter(function (f) { return f.b64; }).map(function (f) { return { nome: f.nome, tipo: f.tipo, base64: f.b64 }; }); };
+  window.pvAllegatiPronti = function () { var ed = edVero(); return !ed || !ed.__pvAll || ed.__pvAll.file.every(function (f) { return f.b64 || f.errore; }); };
+  window.pvPriorita = function () { var ed = edVero(); return (ed && ed.__pvAll && ed.__pvAll.pri) || ''; };
+  /* trascinare i file sulla finestra */
+  var vel = null;
+  function velo(d) {
+    if (!vel) { vel = document.createElement('div'); vel.id = 'pvTrascina'; vel.innerHTML = '<span>Lascia qui i file da allegare</span>'; document.body.appendChild(vel); }
+    if (!d) { vel.style.display = 'none'; return; }
+    var z = document.body.currentCSSZoom || 1, r = d.getBoundingClientRect();
+    vel.style.left = r.left / z + 'px'; vel.style.top = r.top / z + 'px'; vel.style.width = r.width / z + 'px'; vel.style.height = r.height / z + 'px'; vel.style.display = 'flex';
+  }
+  function haFile(e) { var t = e.dataTransfer && e.dataTransfer.types; return !!t && Array.prototype.indexOf.call(t, 'Files') >= 0; }
+  var esce = 0;
+  document.addEventListener('dragover', function (e) {
+    var d = dlgOra(); if (!d || !haFile(e)) return;
+    e.preventDefault(); e.stopPropagation();
+    var dentro = d.contains(e.target); e.dataTransfer.dropEffect = dentro ? 'copy' : 'none';
+    velo(dentro ? d : null); clearTimeout(esce); esce = setTimeout(function () { velo(null); }, 400);
+  }, true);
+  document.addEventListener('drop', function (e) {
+    var d = dlgOra(); if (!d || !haFile(e)) return;
+    e.preventDefault(); e.stopPropagation(); velo(null);
+    if (!d.contains(e.target)) return;
+    var ed = edVero(); if (ed) aggiungi(ed, e.dataTransfer.files);
+  }, true);
 })();
 </script>
 <style>
