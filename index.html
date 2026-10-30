@@ -2796,6 +2796,16 @@ html.pv-scrivi #pvCerca{display:none}
   window.addEventListener('scroll', giro, true);
   /* PORTALE NEXT-110 (Sante 30/10): «capire in che casella sono dentro». Basta toccare una casella (aperta, fascetta o chip):
      diventa la casella in cui sei, si colora il bordo e una mail nuova parte da lì. */
+  /* (Sante 30/10) trascinando una casella vicino al bordo alto o basso, la pagina scorre da sola */
+  var scorri = 0, vel = 0;
+  document.addEventListener('dragover', function (e) {
+    var c = window.__pvComp; if (!c || !c.trascina) return;
+    var z = document.body.currentCSSZoom || 1, y = e.clientY / z, h = window.innerHeight / z, m = 90;
+    vel = y < m ? -Math.ceil((m - y) / 6) : (y > h - m ? Math.ceil((y - (h - m)) / 6) : 0);
+    if (vel && !scorri) scorri = setInterval(function () { var c2 = window.__pvComp; if (!vel || !c2 || !c2.trascina) { clearInterval(scorri); scorri = 0; return; } window.scrollBy(0, vel * 3); }, 16);
+  });
+  document.addEventListener('dragend', function () { vel = 0; var c = window.__pvComp; if (c) c.trascina = null; });
+  document.addEventListener('drop', function () { vel = 0; });
   document.addEventListener('mousedown', function (e) {
     var el = e.target && e.target.closest && e.target.closest('[data-cas]'), c = window.__pvComp; if (!el || !c) return;
     var id = el.getAttribute('data-cas'); if (id && (c.state || {}).casScelta !== id) c.setState({ casScelta: id });
