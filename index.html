@@ -1268,7 +1268,7 @@ Component.prototype.rispBottoni = function (v, dove) {
       const s2 = (this.state || {}).scrivi; if (!s2 || s2.stato === 'invio' || s2.stato === 'fatto') return;
       if (!prIndirizzi(s2.a).length) { this.setState({ scrivi: { ...s2, stato: 'errore', esito: 'Manca il destinatario.' } }); return; }
       this.setState({ scrivi: { ...s2, stato: 'invio', esito: '' } });
-      fetch(PR_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: pvPass(), casella: v.casella, cartella: v.cartella, uid: v.uid, modo: s2.modo, a: s2.a, cc: s2.cc, oggetto: s2.oggetto, testo: s2.testo }) })
+      fetch(PR_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: pvPass(), casella: v.casella, cartella: v.cartella, uid: v.uid, modo: s2.modo, a: s2.a, cc: s2.cc, oggetto: s2.oggetto, testo: s2.testo, html_testo: (window.pvEditorHtml ? window.pvEditorHtml() : '') }) })
         .then((r) => r.json()).then((j) => {
           const s3 = (this.state || {}).scrivi; if (!s3) return;
           if (j && j.ok) { PR_FATTE[k] = s2.modo === 'i' ? 'i' : 'r'; this.setState({ scrivi: { ...s3, stato: 'fatto', esito: 'Partita' + (j.inviata && !/errore|non /.test(j.inviata) ? ', copia in ' + j.inviata : '') + '.' } }); setTimeout(() => { const s4 = (this.state || {}).scrivi; if (s4 && s4.chiave === k) this.setState({ scrivi: null }); }, 1600); }
@@ -1541,6 +1541,242 @@ function cartAltre(c, v, vai) {
     });
   }
   setInterval(giro, 500);
+})();
+</script>
+<style>
+/* PORTALE NEXT-110 (Sante 30/10): editor con la formattazione nella finestra Rispondi / Inoltra */
+#pvEd{display:flex;flex-direction:column;flex:1 1 auto;min-height:220px;border:1px solid var(--ln,#E2E8F0);border-radius:9px;overflow:hidden;background:#fff}
+#pvEd .ed-b{display:flex;flex-wrap:wrap;align-items:center;gap:1px;padding:4px 6px;border-bottom:1px solid var(--ln,#E5E7EB);background:linear-gradient(#FBFBFD,#F3F4F6)}
+#pvEd .ed-b button{width:24px;min-width:24px;height:22px;padding:0;border:0;border-radius:5px;background:transparent;color:#3A3A3C;cursor:pointer;font:400 13px -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;display:inline-flex;align-items:center;justify-content:center;position:relative}
+#pvEd .ed-b button:hover{background:rgba(0,0,0,.06)}
+#pvEd .ed-b button.on{background:rgba(0,122,255,.14);color:#007AFF}
+#pvEd .ed-b button svg{width:14px;height:14px}
+#pvEd .ed-b select{-webkit-appearance:none;appearance:none;height:22px;border:1px solid rgba(0,0,0,.12);border-radius:5px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='12' viewBox='0 0 8 12' fill='none' stroke='%238E8E93' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 4.5 4 2l2.5 2.5M1.5 7.5 4 10l2.5-2.5'/%3E%3C/svg%3E") no-repeat right 6px center;box-shadow:0 .5px 1px rgba(0,0,0,.06);color:#1C1C1E;font:400 12px -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;padding:0 20px 0 7px;cursor:pointer;margin:0 2px}
+#pvEd .ed-b select:focus{outline:none;border-color:#007AFF;box-shadow:0 0 0 2px rgba(0,122,255,.25)}
+#pvEd .ed-b .sep{width:1px;height:14px;background:rgba(0,0,0,.12);margin:0 5px}
+#pvEd .ed-b .bar{position:absolute;left:6px;right:6px;bottom:2px;height:2px;border-radius:1px}
+#pvEd .ed-t{flex:1 1 auto;min-height:180px;overflow:auto;padding:10px 12px;outline:none;font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#000;line-height:1.55;background:#fff;cursor:text}
+#pvEd .ed-t:empty:before{content:'Scrivi qui…';color:#94A3B8}
+#pvEd .ed-t ul,#pvEd .ed-t ol{margin:0 0 0 6px;padding-left:24px}
+#pvEd .ed-t blockquote{margin:0 0 0 40px;border:none;padding:0}
+#pvEdPal{position:fixed;z-index:2147483100;display:none;background:#fff;border:1px solid #CBD5E1;border-radius:10px;box-shadow:0 12px 30px rgba(15,23,42,.2);padding:8px;font:600 11.5px Manrope,system-ui,sans-serif;color:#334155}
+#pvEdPal .g{display:grid;grid-template-columns:repeat(8,20px);gap:4px;margin:6px 0}
+#pvEdPal .g i{width:20px;height:20px;border-radius:4px;cursor:pointer;display:block;box-shadow:inset 0 0 0 1px rgba(15,23,42,.15)}
+#pvEdPal .r{display:flex;gap:6px;align-items:center;justify-content:space-between}
+#pvEdPal .r button{border:1px solid #CBD5E1;background:#fff;border-radius:6px;padding:3px 8px;cursor:pointer;font:600 11.5px Manrope,system-ui,sans-serif}
+#pvEdPal input[type=color]{width:34px;height:24px;border:0;padding:0;background:none;cursor:pointer}
+</style>
+<script>
+/* PORTALE NEXT-110 (Sante 30/10): nella finestra Rispondi / Inoltra il testo si scrive con la formattazione:
+   carattere, dimensione, grassetto, corsivo, sottolineato, barrato, colore del carattere, evidenziatore,
+   sfondo della riga, elenchi puntati e numerati, rientri, allineamento, togli formattazione.
+   Il testo semplice resta nella casella di testo della pagina (che resta nascosta); l'HTML parte in html_testo. */
+(function () {
+  var ed = null, area = null, pal = null, salvata = null, palCmd = null, ultimoDlg = null;
+  /* la pagina ridisegna la finestra a ogni cambio di stato: l'editor non si ricrea, si risposta nella finestra nuova col suo contenuto */
+  var FONT = [['Helvetica','Helvetica, Arial, sans-serif'],['Arial','Arial, sans-serif'],['Calibri','Calibri, Carlito, sans-serif'],['Verdana','Verdana, sans-serif'],['Tahoma','Tahoma, sans-serif'],['Georgia','Georgia, serif'],['Times New Roman','\'Times New Roman\', Times, serif'],['Garamond','Garamond, serif'],['Courier New','\'Courier New\', monospace']];
+  var TAGLIE = [10, 11, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36];
+  var COLORI = ['#000000','#434343','#666666','#999999','#B7B7B7','#D9D9D9','#EFEFEF','#FFFFFF','#C00000','#E53935','#FB8C00','#FDD835','#43A047','#00ACC1','#1E88E5','#8E24AA','#F4CCCC','#FCE5CD','#FFF2CC','#D9EAD3','#D0E0E3','#CFE2F3','#D9D2E9','#EAD1DC','#7F0000','#B45F06','#7F6000','#274E13','#0C343D','#073763','#20124D','#4C1130'];
+  var EVID = ['#FFFF00','#FFF2CC','#FCE5CD','#F4CCCC','#D9EAD3','#CFE2F3','#D9D2E9','#00FFFF','#FF00FF','#B6D7A8','#A4C2F4','#FFE599','#F9CB9C','#EA9999','#D5A6BD','#E0F7FA'];
+  function ico(p) { return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>'; }
+  var I = {
+    ul: ico('<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4" cy="6" r="1.3" fill="currentColor"/><circle cx="4" cy="12" r="1.3" fill="currentColor"/><circle cx="4" cy="18" r="1.3" fill="currentColor"/>'),
+    ol: ico('<path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 4.5h1.5V9M3.5 9h3M3.5 14.5a1.3 1.3 0 0 1 2.5.4c0 .9-2.5 1.8-2.5 3.1h2.7" stroke-width="1.5"/>'),
+    out: ico('<path d="M21 6H11M21 12H11M21 18H11"/><path d="M7 9l-3 3 3 3"/>'),
+    in_: ico('<path d="M21 6H11M21 12H11M21 18H11"/><path d="M4 9l3 3-3 3"/>'),
+    sx: ico('<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>'),
+    ce: ico('<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>'),
+    dx: ico('<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>'),
+    gi: ico('<path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>'),
+    pulisci: ico('<path d="M7 5h11M12.5 5 9.5 19"/><path d="M15.5 15.5l4 4M19.5 15.5l-4 4"/>'),
+    riga: ico('<rect x="3.5" y="8.5" width="17" height="7" rx="1.5" fill="currentColor" fill-opacity=".12"/><path d="M6.5 12h11"/>'),
+    annulla: ico('<path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>'),
+    rifai: ico('<path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/>')
+  };
+  function sel() { var s = window.getSelection(); return s && s.rangeCount ? s.getRangeAt(0) : null; }
+  function dentro(n) { return ed && n && ed.querySelector('.ed-t').contains(n.nodeType === 1 ? n : n.parentNode); }
+  function salva() { var r = sel(); if (r && dentro(r.commonAncestorContainer)) salvata = r.cloneRange(); }
+  function ripristina() {
+    var t = ed.querySelector('.ed-t'); t.focus();
+    if (salvata) { var s = window.getSelection(); s.removeAllRanges(); s.addRange(salvata); }
+  }
+  function cmd(c, v, css) {
+    ripristina();
+    try { document.execCommand('styleWithCSS', false, css !== false); } catch (e) {}
+    document.execCommand(c, false, v == null ? null : v);
+    salva(); stato();
+  }
+  function taglia(px) {
+    ripristina();
+    try { document.execCommand('styleWithCSS', false, false); } catch (e) {}
+    document.execCommand('fontSize', false, '7');
+    var t = ed.querySelector('.ed-t');
+    var nuovi = [];
+    t.querySelectorAll('font[size="7"]').forEach(function (f) {
+      var sp = document.createElement('span'); sp.style.fontSize = px + 'px';
+      while (f.firstChild) sp.appendChild(f.firstChild);
+      f.parentNode.replaceChild(sp, f); nuovi.push(sp);
+    });
+    if (nuovi.length) { var r = document.createRange(); r.setStartBefore(nuovi[0].firstChild || nuovi[0]); r.setEndAfter(nuovi[nuovi.length - 1].lastChild || nuovi[nuovi.length - 1]);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+    salva(); stato();
+  }
+  function blocco(n) {
+    var t = ed.querySelector('.ed-t');
+    while (n && n !== t) { if (n.nodeType === 1 && /^(DIV|P|LI|BLOCKQUOTE|H1|H2|H3)$/.test(n.tagName)) return n; n = n.parentNode; }
+    return null;
+  }
+  function sfondoRiga(col) {
+    ripristina();
+    var t = ed.querySelector('.ed-t'), r = sel(); if (!r) return;
+    if (!t.firstChild || t.firstChild.nodeType === 3) { try { document.execCommand('formatBlock', false, 'div'); } catch (e) {} r = sel(); }
+    var a = blocco(r.startContainer), b = blocco(r.endContainer);
+    if (!a) { try { document.execCommand('formatBlock', false, 'div'); } catch (e) {} r = sel(); a = blocco(r.startContainer); b = blocco(r.endContainer); }
+    if (!a) return;
+    var lista = [a], n = a;
+    while (b && n !== b) { n = n.nextElementSibling || (n.parentNode !== t ? n.parentNode.nextElementSibling : null); if (!n) break; lista.push(n); }
+    lista.forEach(function (x) { if (col) { x.style.backgroundColor = col; x.style.padding = '2px 6px'; } else { x.style.backgroundColor = ''; x.style.padding = ''; } });
+    salva();
+  }
+  function testoSemplice(t) {
+    var c = t.cloneNode(true);
+    c.querySelectorAll('li').forEach(function (li) { li.insertBefore(document.createTextNode('• '), li.firstChild); });
+    c.querySelectorAll('br').forEach(function (x) { if (!x.nextSibling && x.parentNode !== c && x.parentNode.childNodes.length === 1) x.remove(); else x.replaceWith('\n'); });
+    c.querySelectorAll('div,p,li,blockquote,ul,ol').forEach(function (x) { x.insertBefore(document.createTextNode('\n'), x.firstChild); });
+    return (c.textContent || '').replace(/ /g, ' ').replace(/\n(?=\n\n)/g, '').trim();
+  }
+  function sincronizza() {
+    if (!ed || !area) return;
+    var t = ed.querySelector('.ed-t');
+    var v = testoSemplice(t);
+    if (area.value !== v) {
+      var set = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set; set.call(area, v);
+      area.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
+  window.pvEditorHtml = function () {
+    if (!ed) return '';
+    var t = ed.querySelector('.ed-t');
+    return testoSemplice(t) ? t.innerHTML : '';
+  };
+  function stato() {
+    if (!ed) return;
+    ['bold', 'italic', 'underline', 'strikeThrough', 'insertUnorderedList', 'insertOrderedList', 'justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'].forEach(function (c) {
+      var b = ed.querySelector('[data-c="' + c + '"]'); if (!b) return;
+      var on = false; try { on = document.queryCommandState(c); } catch (e) {}
+      b.classList.toggle('on', !!on);
+    });
+    var r = sel(); if (!r || !dentro(r.startContainer)) return;
+    var n = r.startContainer.nodeType === 1 ? r.startContainer : r.startContainer.parentNode, cs = getComputedStyle(n);
+    var f = ed.querySelector('select[data-s="font"]'), fam = (cs.fontFamily || '').split(',')[0].replace(/['"]/g, '').trim().toLowerCase();
+    var hit = FONT.filter(function (x) { return x[0].toLowerCase() === fam || (fam === 'carlito' && x[0] === 'Calibri'); })[0];
+    f.value = hit ? hit[1] : '';
+    var z = ed.querySelector('select[data-s="taglia"]'), px = Math.round(parseFloat(cs.fontSize));
+    z.value = TAGLIE.indexOf(px) >= 0 ? String(px) : '';
+  }
+  function tavolozza(btn, quale) {
+    palCmd = quale;
+    if (!pal) {
+      pal = document.createElement('div'); pal.id = 'pvEdPal'; document.body.appendChild(pal);
+      pal.addEventListener('mousedown', function (e) { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
+      pal.addEventListener('click', function (e) {
+        var c = e.target.getAttribute && e.target.getAttribute('data-col');
+        if (c != null) { applicaColore(c); chiudiPal(); }
+        if (e.target.getAttribute && e.target.getAttribute('data-nessuno') != null) { applicaColore(null); chiudiPal(); }
+      });
+      pal.addEventListener('change', function (e) { if (e.target.type === 'color') { applicaColore(e.target.value); chiudiPal(); } });
+    }
+    var tit = quale === 'fore' ? 'Colore del carattere' : (quale === 'hilite' ? 'Evidenziatore (sfondo del testo)' : 'Sfondo della riga');
+    var lista = quale === 'fore' ? COLORI : (quale === 'hilite' ? EVID.concat(COLORI.slice(16, 24)) : EVID.concat(COLORI.slice(16, 24)));
+    pal.innerHTML = '<div>' + tit + '</div><div class="g">' + lista.map(function (c) { return '<i data-col="' + c + '" title="' + c + '" style="background:' + c + '"></i>'; }).join('') + '</div>'
+      + '<div class="r"><button type="button" data-nessuno>' + (quale === 'fore' ? 'Automatico' : 'Nessuno') + '</button><label style="display:flex;align-items:center;gap:5px">Altro <input type="color" value="#1E88E5"></label></div>';
+    var z = document.body.currentCSSZoom || 1, r = btn.getBoundingClientRect();
+    pal.style.left = (r.left / z) + 'px'; pal.style.top = ((r.bottom + 4) / z) + 'px'; pal.style.display = 'block';
+  }
+  function chiudiPal() { if (pal) pal.style.display = 'none'; }
+  function applicaColore(c) {
+    if (palCmd === 'fore') { cmd('foreColor', c || '#000000'); ultimoCol('fore', c || '#000000'); }
+    else if (palCmd === 'hilite') { cmd('hiliteColor', c || 'transparent'); ultimoCol('hilite', c || 'transparent'); }
+    else { sfondoRiga(c); ultimoCol('riga', c || 'transparent'); }
+  }
+  function ultimoCol(q, c) { var b = ed.querySelector('[data-p="' + q + '"] .bar'); if (b) b.style.background = c; }
+  function costruisci(dlg) {
+    area = dlg.querySelector('textarea[aria-label="Testo"]'); if (!area) return;
+    ed = document.createElement('div'); ed.id = 'pvEd';
+    var opzF = '<option value="">Carattere</option>' + FONT.map(function (f) { return '<option value="' + f[1].replace(/"/g, '&quot;') + '" style="font-family:' + f[1].replace(/"/g, '&quot;') + '">' + f[0] + '</option>'; }).join('');
+    var opzT = '<option value="">Dim.</option>' + TAGLIE.map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
+    ed.innerHTML = '<div class="ed-b">'
+      + '<button type="button" data-a="undo" title="Annulla (Ctrl+Z)">' + I.annulla + '</button><button type="button" data-a="redo" title="Ripeti (Ctrl+Y)">' + I.rifai + '</button><span class="sep"></span>'
+      + '<select data-s="font" title="Tipo di carattere" style="width:122px">' + opzF + '</select>'
+      + '<select data-s="taglia" title="Dimensione del carattere" style="width:58px">' + opzT + '</select><span class="sep"></span>'
+      + '<button type="button" data-c="bold" title="Grassetto (Ctrl+B)"><span style="font-weight:700;font-size:13px">G</span></button>'
+      + '<button type="button" data-c="italic" title="Corsivo (Ctrl+I)"><span style="font-style:italic;font-family:Georgia,serif;font-size:13.5px">C</span></button>'
+      + '<button type="button" data-c="underline" title="Sottolineato (Ctrl+U)"><span style="text-decoration:underline;text-underline-offset:2px;font-size:13px">S</span></button>'
+      + '<button type="button" data-c="strikeThrough" title="Barrato"><span style="text-decoration:line-through;font-size:12.5px">ab</span></button><span class="sep"></span>'
+      + '<button type="button" data-p="fore" title="Colore del carattere"><span style="font-size:13px;margin-top:-2px">A</span><span class="bar" style="background:#C00000"></span></button>'
+      + '<button type="button" data-p="hilite" title="Evidenziatore: sfondo del testo selezionato"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5l5 5-7.5 7.5H7v-5z"/><path d="M7 12l5 5"/><path d="M5 19.5h6"/></svg><span class="bar" style="background:#FFD60A"></span></button>'
+      + '<button type="button" data-p="riga" title="Sfondo della riga: colora tutta la riga o il paragrafo">' + I.riga + '<span class="bar" style="background:#FFF2CC"></span></button><span class="sep"></span>'
+      + '<button type="button" data-c="insertUnorderedList" title="Elenco puntato">' + I.ul + '</button>'
+      + '<button type="button" data-c="insertOrderedList" title="Elenco numerato">' + I.ol + '</button>'
+      + '<button type="button" data-c="outdent" title="Riduci rientro">' + I.out + '</button>'
+      + '<button type="button" data-c="indent" title="Aumenta rientro">' + I.in_ + '</button><span class="sep"></span>'
+      + '<button type="button" data-c="justifyLeft" title="Allinea a sinistra">' + I.sx + '</button>'
+      + '<button type="button" data-c="justifyCenter" title="Centra">' + I.ce + '</button>'
+      + '<button type="button" data-c="justifyRight" title="Allinea a destra">' + I.dx + '</button>'
+      + '<button type="button" data-c="justifyFull" title="Giustifica">' + I.gi + '</button><span class="sep"></span>'
+      + '<button type="button" data-a="pulisci" title="Togli la formattazione dal testo selezionato">' + I.pulisci + '</button>'
+      + '</div><div class="ed-t" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Testo formattato"></div>';
+    area.style.display = 'none';
+    area.parentNode.insertBefore(ed, area);
+    var t = ed.querySelector('.ed-t');
+    try { document.execCommand('defaultParagraphSeparator', false, 'div'); } catch (e) {}
+    if (area.value) t.innerText = area.value;
+    ed.querySelector('.ed-b').addEventListener('mousedown', function (e) { if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'OPTION') e.preventDefault(); });
+    ed.querySelector('.ed-b').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      var c = b.getAttribute('data-c'), a = b.getAttribute('data-a'), p = b.getAttribute('data-p');
+      if (c) cmd(c);
+      else if (a === 'undo' || a === 'redo') cmd(a);
+      else if (a === 'pulisci') { cmd('removeFormat'); cmd('unlink'); }
+      else if (p) { if (pal && pal.style.display === 'block' && palCmd === p) chiudiPal(); else tavolozza(b, p); }
+    });
+    ed.querySelector('select[data-s="font"]').addEventListener('change', function (e) { if (e.target.value) cmd('fontName', e.target.value); });
+    ed.querySelector('select[data-s="taglia"]').addEventListener('change', function (e) { if (e.target.value) taglia(+e.target.value); });
+    t.addEventListener('input', function () { salva(); });
+    t.addEventListener('blur', function () { sincronizza(); });
+    t.addEventListener('keyup', function () { salva(); stato(); });
+    t.addEventListener('mouseup', function () { salva(); stato(); });
+    t.addEventListener('keydown', function (e) {
+      if (e.key === 'Tab') { e.preventDefault(); cmd(e.shiftKey ? 'outdent' : 'indent'); }
+    });
+    t.addEventListener('paste', function (e) {
+      var h = e.clipboardData && e.clipboardData.getData('text/html');
+      if (h) { e.preventDefault(); var d = document.createElement('div'); d.innerHTML = h;
+        d.querySelectorAll('script,style,meta,link,title,iframe,object,embed,xml').forEach(function (x) { x.remove(); });
+        d.querySelectorAll('*').forEach(function (x) { [].slice.call(x.attributes).forEach(function (at) { if (/^on/i.test(at.name) || at.name === 'class' || at.name === 'id') x.removeAttribute(at.name); }); });
+        document.execCommand('insertHTML', false, d.innerHTML); }
+    });
+    document.addEventListener('mousedown', function (e) { if (pal && pal.style.display === 'block' && !pal.contains(e.target) && !e.target.closest('#pvEd [data-p]')) chiudiPal(); }, true);
+  }
+  function giro() {
+    var dlg = document.querySelector('#pvStrumento [role="dialog"]');
+    if (!dlg) { if (ed) { ed = null; area = null; salvata = null; chiudiPal(); } ultimoDlg = null; return; }
+    ultimoDlg = dlg;
+    if (ed && dlg.contains(ed)) {
+      var ta = dlg.querySelector('textarea[aria-label="Testo"]');
+      if (ta && ta !== area) { area = ta; area.style.display = 'none'; }
+      else if (ta && ta.style.display !== 'none') ta.style.display = 'none';
+      return;
+    }
+    if (ed && !dlg.contains(ed)) {
+      var ta2 = dlg.querySelector('textarea[aria-label="Testo"]');
+      if (ta2) { area = ta2; ta2.style.display = 'none'; ta2.parentNode.insertBefore(ed, ta2); }
+      return;
+    }
+    costruisci(dlg);
+  }
+  setInterval(giro, 250);
+  document.addEventListener('selectionchange', function () { if (ed) { salva(); } });
 })();
 </script>
 </body>
