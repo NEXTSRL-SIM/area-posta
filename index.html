@@ -303,6 +303,7 @@ section[aria-label="Caselle minori"].pv-barra-pronta{outline:2px dashed #06B6D4;
 <span style="font-size: 12.5px; font-weight: 700;">{{pvTesta.titolo}}</span>
 <span style="font-size: 12px; color: var(--ink3);">{{pvTesta.nota}}</span>
 </div>
+<button onClick="{{riceviOra}}" title="Legge adesso tutte le caselle, senza aspettare il giro dei 3 minuti" style="font: 700 13.5px Manrope, sans-serif; border: 1px solid #06B6D4; border-radius: 10px; height: 40px; padding: 0 12px; background: var(--sf); color: #0E7490; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg>{{riceviT}}</button>
 <button onClick="{{ripristina}}" style="font: 700 13.5px Manrope, sans-serif; border: 1px solid var(--ln); border-radius: 10px; height: 40px; padding: 0 12px; background: var(--sf); color: var(--ink); cursor: pointer;">Disposizione iniziale</button>
 </div>
 </header>
@@ -777,7 +778,10 @@ class Component extends DCLogic {
       : { sotto: 'posta vera', col: '#D97706', titolo: 'Sto leggendo le caselle…', nota: 'ci vuole qualche secondo' };
     return { ...ricerca, pvTesta, inFinestra, clsC, waIn, wa, ...temaX, apriFuoriArea, apriFuoriPosta, fuoriVista, haFuori: fuoriVista.length > 0, mini, chiuse, aperte, haIntera: !!s.intera, intera: s.intera ? { ...s.intera, ...this.attBottone(s.intera), ...this.evBottone(s.intera) } : {}, ...this.strumento(s), chiudiIntera: () => this.setState({ intera: null, risp: null }),
       inRisposta: !!(s.intera && s.risp), risposta: risposta(s.intera, s.risp),
-      rispondi: () => this.setState({ risp: 'r' }), rispondiTutti: () => this.setState({ risp: 't' }), inoltra: () => this.setState({ risp: 'i' }), annullaRisposta: () => this.setState({ risp: null }), sopra: (e) => { if (e && e.preventDefault) e.preventDefault(); }, ripristina: () => this.salva(INIZIALE) };
+      rispondi: () => this.setState({ risp: 'r' }), rispondiTutti: () => this.setState({ risp: 't' }), inoltra: () => this.setState({ risp: 'i' }), annullaRisposta: () => this.setState({ risp: null }), sopra: (e) => { if (e && e.preventDefault) e.preventDefault(); }, ripristina: () => this.salva(INIZIALE),
+      /* PORTALE NEXT-110 (Sante 30/10): «Ricevi ora» legge subito tutte le caselle, senza aspettare il giro dei 3 minuti */
+      riceviOra: () => { if (this.pvCercaAttiva || (this.state || {}).pvRiceve) return; this.setState({ pvRiceve: true }); Promise.resolve(this.pvGiro && this.pvGiro()).catch(() => {}).then(() => this.setState({ pvRiceve: false })); },
+      riceviT: s.pvRiceve ? 'Leggo…' : 'Ricevi ora' };
   }
 }
 /* PORTALE NEXT-102 — il Messaggio veloce collegato alla Chat Next vera (regia-chat + wa-chat).
