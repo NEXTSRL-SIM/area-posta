@@ -1237,10 +1237,10 @@ const PR_URL = 'https://pnxhthrheqeucoisifjw.supabase.co/functions/v1/posta-risp
 const PR_FATTE = {};
 const prIndirizzi = (s) => (String(s || '').match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi) || []).map((x) => x.toLowerCase());
 Component.prototype.rispBottoni = function (v, dove) {
-  if (!v || !v.vera || !v.chiave || v.casella === 'pec') return { haRisp: false };
+  if (!v || !v.vera || !v.chiave) return { haRisp: false }; /* PORTALE NEXT-110 (Sante 30/10): si risponde e si inoltra anche dalla PEC */
   const st = this.state || {}, k = v.chiave, sc = st.scrivi && st.scrivi.chiave === k ? st.scrivi : null;
   const interaQui = !!(st.intera && st.intera.chiave === k);
-  const mia = String(v.casella || '') + '@next-srl.eu';
+  const mia = v.casella === 'pec' ? 'nextsrl2023@legalmail.it' : String(v.casella || '') + '@next-srl.eu';
   const apri = (modo) => {
     const da = prIndirizzi(v.risp)[0] || prIndirizzi(v.da)[0] || '';
     const verso = (v.cartella && /sent|inviat/i.test(v.cartella));
@@ -1255,7 +1255,7 @@ Component.prototype.rispBottoni = function (v, dove) {
   const out = { haRisp: true, scriviOn: on, rispR: () => apri('r'), rispT: () => apri('t'), rispI: () => apri('i') };
   if (!on) return out;
   const invio = sc.stato === 'invio', fatto = sc.stato === 'fatto';
-  return { ...out, scTitolo: sc.modo === 'i' ? 'Inoltra' : (sc.modo === 't' ? 'Rispondi a tutti' : 'Rispondi'), scDa: mia,
+  return { ...out, scTitolo: sc.modo === 'i' ? 'Inoltra' : (sc.modo === 't' ? 'Rispondi a tutti' : 'Rispondi'), scDa: v.casella === 'pec' ? mia + ' — PEC: l\'invio ha valore legale' : mia,
     scA: sc.a, scCc: sc.cc, scOgg: sc.oggetto, scTesto: sc.testo,
     scAIn: cambia('a'), scCcIn: cambia('cc'), scOggIn: cambia('oggetto'), scTestoIn: cambia('testo'),
     scHaAll: sc.modo === 'i' && !!v.haClip, scAll: 'si allegano da soli all\'invio',
