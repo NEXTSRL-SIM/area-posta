@@ -1139,7 +1139,9 @@ function evCarica(comp) {
 const evDi = (x) => (x && x.chiave && EV[x.chiave]) ? evCol(EV[x.chiave].colore) : null;
 const etDi = (x) => (x && x.chiave && ET[x.chiave]) ? ET[x.chiave].map(etTag).filter(Boolean) : [];
 /* PORTALE NEXT-110 (Sante 30/10): ponte per gli script aggiunti in fondo (storico a fianco della finestra Rispondi) */
-window.pvPonte = { leggi: (v) => pvLeggiMail(v), evDi: (x) => evDi(x), etDi: (x) => etDi(x) };
+window.pvPonte = { leggi: (v) => pvLeggiMail(v), evDi: (x) => evDi(x), etDi: (x) => etDi(x), colori: () => EV_COLORI, etichette: () => EV_ET,
+  evidenzia: (k, id, meta) => { if (!id) { delete EV[k]; evManda({ chiave: k, colore: null }); } else { const t = evCol(id); EV[k] = { colore: id, etichetta: t ? t.t : '' }; evManda({ chiave: k, colore: id, ...(meta || {}), chi: evChi() }); } evSalvaLocale(); },
+  etichetta: (k, id, on, meta) => { const l = (ET[k] || []).filter((z) => z !== id); ET[k] = on ? [...l, id] : l; if (!ET[k].length) delete ET[k]; evManda({ azione: 'etichetta', chiave: k, id, on: !!on, ...(meta || {}), chi: evChi() }); evSalvaLocale(); } };
 function evPassa(x, fEv, fEt) {
   const k = x && x.chiave;
   if (fEv && fEv.length) { const e = k ? EV[k] : null; if (!e || !evCol(e.colore)) return false; if (!fEv.includes('__tutte') && !fEv.includes(e.colore)) return false; }
@@ -1487,12 +1489,19 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
 #pvStorico .st-t,#pvCorpo .st-t{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--ln,#E2E8F0)}
 #pvStorico .st-t b,#pvCorpo .st-t b{flex:1;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #pvStorico .st-t button,#pvCorpo .st-t button{width:26px;height:26px;border:1px solid var(--ln,#E2E8F0);border-radius:7px;background:transparent;color:inherit;cursor:pointer;flex:0 0 auto}
-#pvStorico .st-l{flex:1;overflow:auto;padding:6px}
+#pvStorico .st-l{flex:1;overflow:auto;padding:4px 6px 6px}
+#pvStorico .st-tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--ln,#E2E8F0);overflow-x:auto;flex:0 0 auto}
+#pvStorico .st-tabs:empty{display:none}
+#pvStorico .st-tab{border:1px solid transparent;border-bottom:0;background:transparent;border-radius:8px 8px 0 0;padding:6px 10px 7px;font:700 11.5px Manrope,system-ui,sans-serif;color:#64748B;cursor:pointer;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;margin-bottom:-1px}
+#pvStorico .st-tab:hover{color:#0E7490}
+#pvStorico .st-tab.on{background:var(--sf,#fff);border-color:var(--ln,#E2E8F0);color:#0E7490}
+#pvStorico .st-tab i{font-style:normal;font-weight:600;color:#94A3B8;margin-left:5px}
 #pvStorico .st-gt{display:flex;justify-content:space-between;gap:8px;align-items:baseline;padding:2px 9px 6px;font:800 11px Manrope,system-ui,sans-serif;letter-spacing:.02em;color:#0E7490;word-break:break-all}
 #pvStorico .st-gt span{font-weight:600;color:#94A3B8;white-space:nowrap}
 #pvSoloMia{height:28px;border:1px solid var(--ln,#E2E8F0);border-radius:8px;background:transparent;color:var(--ink2,#334155);cursor:pointer;font:600 11.5px Manrope,system-ui,sans-serif;padding:0 9px;display:inline-flex;align-items:center;gap:5px}
 #pvSoloMia:hover{background:rgba(6,182,212,.08)}
-#pvStorico .st-r{display:block;width:100%;text-align:left;border:0;background:transparent;font:inherit;color:inherit;cursor:pointer;padding:7px 9px;margin:0 0 3px;border-radius:8px;border-left:4px solid transparent;box-sizing:border-box}
+#pvStorico .st-r{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #EEF1F5;background:transparent;font:inherit;color:inherit;cursor:pointer;padding:8px 9px;margin:0;border-radius:0;border-left:4px solid transparent;box-sizing:border-box}
+#pvStorico .st-r:last-child{border-bottom:0}
 #pvStorico .st-r:hover{background:rgba(6,182,212,.08)}
 #pvStorico .st-r.sel{box-shadow:0 0 0 2px #06B6D4 inset;background:rgba(6,182,212,.10)}
 #pvStorico .st-o{font-weight:800;font-size:12.8px;line-height:1.35;color:var(--ink,#0F172A);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -1506,7 +1515,36 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
 #pvCorpo .cp-c iframe{width:100%;height:100%;border:0;display:block;background:#fff}
 #pvCorpo .cp-c pre{margin:0;padding:12px 14px;white-space:pre-wrap;font:400 13.5px/1.6 Manrope,system-ui,sans-serif;color:#0F172A}
 #pvCorpo .cp-d{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-top:1px solid var(--ln,#E2E8F0)}
-#pvCorpo .cp-d a{font:600 11.5px Manrope,system-ui,sans-serif;color:#0E7490;text-decoration:none;border:1px solid var(--ln,#E2E8F0);border-radius:7px;padding:3px 8px}
+#pvCorpo .cp-d{gap:8px;max-height:132px;overflow:auto}
+#pvCorpo .cp-a{display:flex;flex-direction:column;align-items:stretch;width:96px;border:1px solid var(--ln,#E2E8F0);border-radius:9px;background:#fff;cursor:pointer;padding:0;overflow:hidden;font:600 10.5px Manrope,system-ui,sans-serif;color:#334155;text-align:left}
+#pvCorpo .cp-a:hover{border-color:#06B6D4;box-shadow:0 0 0 2px rgba(6,182,212,.18)}
+#pvCorpo .cp-a .mi{height:62px;display:flex;align-items:center;justify-content:center;background:#F8FAFC;border-bottom:1px solid #EEF1F5;overflow:hidden}
+#pvCorpo .cp-a .mi img{width:100%;height:100%;object-fit:cover;display:block}
+#pvCorpo .cp-a .mi span{font:800 11px Manrope,system-ui,sans-serif;color:#fff;border-radius:4px;padding:3px 6px}
+#pvCorpo .cp-a .nm{padding:4px 6px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pvCorpo .cp-v{position:absolute;left:0;right:0;bottom:0;top:46px;display:none;flex-direction:column;background:#fff;z-index:2}
+#pvCorpo .cp-vb{display:flex;align-items:center;gap:6px;padding:7px 10px;border-bottom:1px solid var(--ln,#E2E8F0);font:700 12px Manrope,system-ui,sans-serif}
+#pvCorpo .cp-vb b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pvCorpo .cp-vb button,#pvCorpo .cp-vb a{height:26px;border:1px solid var(--ln,#E2E8F0);border-radius:7px;background:#fff;color:#334155;cursor:pointer;font:600 11.5px Manrope,system-ui,sans-serif;padding:0 9px;display:inline-flex;align-items:center;text-decoration:none}
+#pvCorpo .cp-vc{flex:1;min-height:0;overflow:auto;background:#F1F5F9;display:flex;align-items:center;justify-content:center}
+#pvCorpo .cp-vc iframe{width:100%;height:100%;border:0;background:#fff}
+#pvCorpo .cp-vc img{max-width:100%;max-height:100%;object-fit:contain}
+#pvCorpo.grande{left:20px!important;top:20px!important;width:calc(100vw - 40px)!important;height:calc(100vh - 40px)!important;z-index:2147482300}
+#pvMini{display:flex;align-items:center;gap:2px;margin:8px 8px 2px;padding:4px 6px;border-radius:12px;flex:0 0 auto;border:1px solid rgba(255,255,255,.6);background:rgba(241,245,249,.82);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);box-shadow:0 0 0 1px rgba(100,116,139,.35),0 12px 32px rgba(15,23,42,.22),inset 0 1px 0 rgba(255,255,255,.7);font:600 11.5px Manrope,system-ui,sans-serif;color:#475569}
+#pvMini button{width:32px;height:30px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:9px;background:transparent;color:#64748B;cursor:pointer;padding:0}
+#pvMini button:hover:not([disabled]){background:rgba(100,116,139,.12);color:#334155}
+#pvMini button[disabled]{opacity:.38;cursor:default}
+#pvMini .mi-t{padding:0 8px 0 6px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#64748B}
+#pvMiniMenu{position:fixed;z-index:2147482200;display:none;width:250px;background:var(--sf,#fff);border:1px solid var(--ln,#E2E8F0);border-radius:12px;box-shadow:0 16px 40px rgba(15,23,42,.22);padding:6px;font:600 12.5px Manrope,system-ui,sans-serif;color:var(--ink,#0F172A)}
+#pvMiniMenu .mm-h{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#94A3B8;padding:5px 8px 4px}
+#pvMiniMenu button{display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;border-radius:8px;padding:6px 8px;cursor:pointer;text-align:left;font:inherit;color:inherit}
+#pvMiniMenu button:hover{background:rgba(6,182,212,.08)}
+#pvMiniMenu i{width:10px;height:10px;border-radius:50%;display:block;flex:0 0 auto}
+#pvMiniMenu .mm-c{width:15px;height:15px;border-radius:4px;border:1px solid #CBD5E1;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#fff;flex:0 0 auto}
+/* Invia e Annulla come in Mail del Mac */
+#pvStrumento [role="dialog"] > div:last-child > button{height:30px!important;border-radius:7px!important;font:500 13px -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif!important;display:inline-flex!important;align-items:center;gap:7px;padding:0 14px!important;box-shadow:0 .5px 1px rgba(0,0,0,.12)}
+#pvStrumento [role="dialog"] > div:last-child > button:first-child::before{content:"";width:15px;height:15px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.5 2.5 10.6 13.4'/%3E%3Cpath d='M21.5 2.5 14.6 21.3l-4-7.9-7.9-4z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.5 2.5 10.6 13.4'/%3E%3Cpath d='M21.5 2.5 14.6 21.3l-4-7.9-7.9-4z'/%3E%3C/svg%3E") center/contain no-repeat}
+#pvStrumento [role="dialog"] > div:last-child > button:nth-child(2){background:linear-gradient(#FFFFFF,#F4F4F6)!important;border:1px solid rgba(0,0,0,.14)!important;color:#1C1C1E!important}
 #pvStoricoTab{position:fixed;z-index:2147482000;display:none;writing-mode:vertical-rl;padding:10px 5px;border-radius:0 9px 9px 0;background:#0891B2;color:#fff;font:700 11px Manrope,system-ui,sans-serif;letter-spacing:.06em;cursor:pointer;border:0}
 </style>
 <script>
@@ -1517,6 +1555,7 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
    Dati: posta-indirizzi?storia= (posta_storico v2 con cartella e uid); corpo: pvLeggiMail della pagina. */
 (function () {
   var API = 'https://pnxhthrheqeucoisifjw.supabase.co/functions/v1/posta-indirizzi';
+  var attivo = '', dim = null, applico = false, oss = null, dlgOss = null, attrOss = null;
   var pan = null, tab = null, corpo = null, chiusoPer = null, mostrato = null, cache = {}, scelta = null, lista = [], firma = '', gruppi = [], caricati = {};
   var root = document.documentElement;
   function pass() { try { return window.sessionStorage.getItem('regia_pass'); } catch (e) { return null; } }
@@ -1526,10 +1565,54 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
   function P() { return window.pvPonte || {}; }
   function ev(m) { try { return P().evDi ? P().evDi({ chiave: chiaveDi(m) }) : null; } catch (e) { return null; } }
   function et(m) { try { return P().etDi ? P().etDi({ chiave: chiaveDi(m) }) : []; } catch (e) { return []; } }
+  /* il widget grigio degli strumenti: evidenzia ed etichetta la mail selezionata nello storico */
+  var mini = null, menu = null, menuQuale = null;
+  function meta(m) { return { casella: String(m.casella || ''), cartella: String(m.cartella || ''), oggetto: String(m.oggetto || ''), mittente: String(m.mittente || '') }; }
+  function creaMini() {
+    mini = document.createElement('div'); mini.id = 'pvMini'; mini.setAttribute('role', 'toolbar'); mini.setAttribute('aria-label', 'Strumenti della mail selezionata nello storico');
+    mini.innerHTML = '<span class="mi-t" style="flex:1">Seleziona una mail</span>'
+      + '<button type="button" data-m="ev" title="Evidenzia la mail selezionata"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l-6 6v3h9l3-3"/><path d="M22 12l-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg></button>'
+      + '<button type="button" data-m="et" title="Etichette della mail selezionata"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4L13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></button>';
+    pan.insertBefore(mini, pan.querySelector('.st-tabs'));
+    menu = document.createElement('div'); menu.id = 'pvMiniMenu'; document.body.appendChild(menu);
+    mini.addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b || b.disabled) return; var q = b.getAttribute('data-m'); if (menu.style.display === 'block' && menuQuale === q) { menu.style.display = 'none'; return; } apriMenu(q, b); });
+    menu.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b || !scelta) return; var k = chiaveDi(scelta);
+      if (b.hasAttribute('data-ev')) { P().evidenzia && P().evidenzia(k, b.getAttribute('data-ev') || null, meta(scelta)); menu.style.display = 'none'; }
+      else if (b.hasAttribute('data-et')) { var id = b.getAttribute('data-et'); var gia = et(scelta).some(function (x) { return x.id === id; }); P().etichetta && P().etichetta(k, id, !gia, meta(scelta)); apriMenu('et'); }
+      firma = ''; disegnaLista();
+    });
+    document.addEventListener('mousedown', function (e) { if (menu.style.display === 'block' && !menu.contains(e.target) && !mini.contains(e.target)) menu.style.display = 'none'; }, true);
+  }
+  function apriMenu(q, btn) {
+    menuQuale = q; var h = '';
+    if (q === 'ev') {
+      var cur = ev(scelta);
+      h = '<div class="mm-h">Evidenzia · un colore per mail</div>' + ((P().colori && P().colori()) || []).map(function (t) { return '<button type="button" data-ev="' + esc(t.id) + '"><i style="background:' + esc(t.colore) + '"></i><span style="flex:1">' + esc(t.nome) + '</span>' + (cur && cur.id === t.id ? '✓' : '') + '</button>'; }).join('')
+        + (cur ? '<button type="button" data-ev="" style="color:#64748B">Togli l’evidenziazione</button>' : '');
+    } else {
+      var mie = et(scelta).map(function (x) { return x.id; }), tutte = (P().etichette && P().etichette()) || [];
+      h = '<div class="mm-h">Etichette · anche più di una</div>' + (tutte.length ? tutte.map(function (t) { var on = mie.indexOf(t.id) >= 0; return '<button type="button" data-et="' + esc(t.id) + '"><span class="mm-c" style="' + (on ? 'background:' + esc(t.colore) + ';border-color:' + esc(t.colore) : '') + '">' + (on ? '✓' : '') + '</span><i style="background:' + esc(t.colore) + ';width:7px;height:7px"></i><span>' + esc(t.nome) + '</span></button>'; }).join('') : '<div style="padding:6px 8px;color:#64748B">Nessuna etichetta: si creano dal widget della posta.</div>');
+    }
+    menu.innerHTML = h;
+    var z = zoom(), r = (btn || mini.querySelector('[data-m="' + q + '"]')).getBoundingClientRect();
+    menu.style.left = Math.max(8, r.right / z - 250) + 'px'; menu.style.top = (r.bottom / z + 6) + 'px'; menu.style.display = 'block';
+  }
+  function posMini(vis, L, T) {
+    if (!pan) return;
+    if (!mini) creaMini();
+    if (!vis) { menu.style.display = 'none'; return; }
+    var on = !!scelta;
+    mini.querySelectorAll('button').forEach(function (b) { b.disabled = !on; });
+    var tt = mini.querySelector('.mi-t'), testo = on ? (scelta.oggetto || '(senza oggetto)') : 'Seleziona una mail';
+    if (tt.textContent !== testo) { tt.textContent = testo; tt.title = testo; }
+    var e = on ? ev(scelta) : null; var be = mini.querySelector('[data-m="ev"]'); be.style.color = e ? e.c : ''; be.style.borderColor = e ? e.c : 'transparent';
+    var t = on ? et(scelta) : []; var bt = mini.querySelector('[data-m="et"]'); bt.style.color = t.length ? t[0].colore : ''; bt.style.borderColor = t.length ? t[0].colore : 'transparent';
+  }
   function crea() {
     if (pan) return;
     pan = document.createElement('div'); pan.id = 'pvStorico';
-    pan.innerHTML = '<div class="st-t"><b></b><button type="button" title="Chiudi" aria-label="Chiudi lo storico">✕</button></div><div class="st-l" role="listbox" aria-label="Ultime mail con questo indirizzo"></div>';
+    pan.innerHTML = '<div class="st-t"><b></b><button type="button" title="Chiudi" aria-label="Chiudi lo storico">✕</button></div><div class="st-tabs" role="tablist"></div><div class="st-l" role="listbox" aria-label="Ultime mail con questo indirizzo"></div>';
     document.body.appendChild(pan);
     pan.querySelector('.st-t button').addEventListener('click', function () { chiusoPer = mostrato; chiudiCorpo(); pan.style.display = 'none'; });
     pan.querySelector('.st-l').addEventListener('click', function (e) {
@@ -1538,14 +1621,25 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
       if (scelta && chiaveDi(scelta) === chiaveDi(m)) { chiudiCorpo(); return; }
       apriCorpo(m);
     });
+    pan.querySelector('.st-tabs').addEventListener('click', function (e) {
+      var b = e.target.closest('.st-tab'); if (!b) return;
+      attivo = b.getAttribute('data-g'); firma = ''; disegnaLista();
+    });
     tab = document.createElement('button'); tab.id = 'pvStoricoTab'; tab.type = 'button'; tab.textContent = 'STORICO';
     tab.title = 'Mostra le ultime mail con questo indirizzo';
     document.body.appendChild(tab);
     tab.addEventListener('click', function () { chiusoPer = null; });
     corpo = document.createElement('div'); corpo.id = 'pvCorpo';
-    corpo.innerHTML = '<div class="st-t"><b>Mail</b><button type="button" title="Chiudi" aria-label="Chiudi la mail">✕</button></div><div class="cp-h"></div><div class="cp-c"></div><div class="cp-d" style="display:none"></div>';
+    corpo.innerHTML = '<div class="st-t"><b>Mail</b><button type="button" title="Chiudi" aria-label="Chiudi la mail">✕</button></div><div class="cp-h"></div><div class="cp-c"></div><div class="cp-d" style="display:none"></div><div class="cp-v"><div class="cp-vb"><button type="button" data-v="torna">← Mail</button><b></b><button type="button" data-v="grande">⤢ Ingrandisci</button><a data-v="scarica" download>Scarica</a></div><div class="cp-vc"></div></div>';
+    corpo.style.position = 'fixed';
     document.body.appendChild(corpo);
     corpo.querySelector('.st-t button').addEventListener('click', chiudiCorpo);
+    corpo.querySelector('.cp-d').addEventListener('click', function (e) { var b = e.target.closest('.cp-a'); if (b) anteprima(docsCorrenti[+b.getAttribute('data-k')]); });
+    corpo.querySelector('.cp-vb').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-v]'); if (!b) return; var v = b.getAttribute('data-v');
+      if (v === 'torna') chiudiAnteprima();
+      else if (v === 'grande') { corpo.classList.toggle('grande'); b.textContent = corpo.classList.contains('grande') ? '⤡ Riduci' : '⤢ Ingrandisci'; }
+    });
   }
   function riga(m, i) {
     var d = m.data ? new Date(m.data) : null;
@@ -1563,14 +1657,17 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
     var l = pan.querySelector('.st-l');
     if (gruppi.length > 1 || lista.length) {
       var f2 = JSON.stringify(lista.map(function (m) { var e = ev(m); return chiaveDi(m) + (e ? e.id : '') + et(m).map(function (x) { return x.id; }).join(','); })) + (scelta ? chiaveDi(scelta) : '') + gruppi.join('|');
-      if (f2 === firma) return; firma = f2;
-      var h = '', i0 = 0;
-      gruppi.forEach(function (g, gi) {
-        var sue = lista.filter(function (m) { return m.__ind === g; });
-        h += '<div class="st-g"' + (gi ? ' style="border-top:1px solid var(--ln,#CBD5E1);margin-top:8px;padding-top:8px"' : '') + '><div class="st-gt">' + esc(g) + '<span>' + (caricati[g] ? sue.length + ' mail' : 'cerco…') + '</span></div>'
-          + (sue.length ? sue.map(function (m) { return riga(m, lista.indexOf(m)); }).join('') : (caricati[g] ? '<div style="padding:4px 9px 6px;color:#64748B">Nessuna mail con questo indirizzo.</div>' : '')) + '</div>';
-      });
-      l.innerHTML = h; return;
+      if (gruppi.indexOf(attivo) < 0) attivo = gruppi[0] || '';
+      f2 += '#' + attivo; if (f2 === firma) return; firma = f2;
+      var schede = pan.querySelector('.st-tabs');
+      schede.innerHTML = gruppi.length > 1 ? gruppi.map(function (g) {
+        var n = lista.filter(function (m) { return m.__ind === g; }).length;
+        return '<button type="button" role="tab" class="st-tab' + (g === attivo ? ' on' : '') + '" data-g="' + esc(g) + '" title="' + esc(g) + '">' + esc(g.split('@')[0]) + '<i>' + (caricati[g] ? n : '…') + '</i></button>';
+      }).join('') : '';
+      var sue = lista.filter(function (m) { return m.__ind === attivo; });
+      l.innerHTML = (gruppi.length > 1 ? '<div class="st-gt">' + esc(attivo) + '</div>' : '')
+        + (sue.length ? sue.map(function (m) { return riga(m, lista.indexOf(m)); }).join('') : '<div style="padding:10px 9px;color:#64748B">' + (caricati[attivo] ? 'Nessuna mail con questo indirizzo.' : 'Cerco le ultime mail…') + '</div>');
+      return;
     }
     var f = JSON.stringify(lista.map(function (m) { var e = ev(m); return chiaveDi(m) + (e ? e.id : '') + et(m).map(function (x) { return x.id; }).join(','); })) + (scelta ? chiaveDi(scelta) : '');
     if (f === firma) return; firma = f;
@@ -1587,7 +1684,7 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
     corpo.querySelector('.st-t b').textContent = m.verso === 'inviata' ? 'Mail inviata' : 'Mail ricevuta';
     corpo.querySelector('.cp-h').innerHTML = '<div>' + esc(m.oggetto || '(senza oggetto)') + '</div><div>Da: ' + esc(m.mittente || '') + '</div>';
     corpo.querySelector('.cp-c').innerHTML = '<pre style="color:#64748B">Apro la mail…</pre>';
-    var dd = corpo.querySelector('.cp-d'); dd.style.display = 'none'; dd.innerHTML = '';
+    var dd = corpo.querySelector('.cp-d'); dd.style.display = 'none'; dd.innerHTML = ''; chiudiAnteprima();
     root.classList.add('pv-con-corpo');
     if (!m.uid || !P().leggi) { corpo.querySelector('.cp-c').innerHTML = '<pre>Questa mail non si può aprire da qui.</pre>'; return; }
     var k = chiaveDi(m);
@@ -1605,10 +1702,45 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
         f.srcdoc = '<base target="_blank"><style>body{margin:12px 14px;font:14px/1.55 Helvetica,Arial,sans-serif;color:#0F172A;word-wrap:break-word}img{max-width:100%;height:auto}</style>' + x.html;
         c.innerHTML = ''; c.appendChild(f);
       } else c.innerHTML = '<pre>' + esc(x.testo || '(mail senza testo)') + '</pre>';
-      if (x.docs && x.docs.length) { dd.innerHTML = x.docs.map(function (d) { return '<a href="' + esc(d.url) + '" target="_blank" rel="noopener">📎 ' + esc(d.nome) + '.' + esc(String(d.est).toLowerCase()) + '</a>'; }).join(''); dd.style.display = 'flex'; }
+      miniature(x.docs || []);
     });
   }
-  function chiudiCorpo() { scelta = null; firma = ''; if (corpo) corpo.style.display = 'none'; root.classList.remove('pv-con-corpo'); if (!manuale) root.style.setProperty('--pvSh', '0px'); if (pan && lista) disegnaLista(); }
+  /* gli allegati: miniature; cliccandone una si apre l'anteprima dentro la finestra (PDF e immagini), ingrandibile a tutto schermo */
+  var docsCorrenti = [], blobs = {};
+  function tipoDi(d) { var e = String(d.est || '').toLowerCase(); return e === 'pdf' ? 'pdf' : (/^(png|jpe?g|gif|webp|bmp|svg)$/.test(e) ? 'img' : 'altro'); }
+  function blobDi(d) {
+    if (blobs[d.url]) return blobs[d.url];
+    blobs[d.url] = fetch(d.url).then(function (r) { if (!r.ok) throw new Error('non scaricabile'); return r.blob(); }).then(function (b) {
+      var t = tipoDi(d), tipo = t === 'pdf' ? 'application/pdf' : (t === 'img' ? (b.type && b.type.indexOf('image/') === 0 ? b.type : 'image/' + String(d.est).toLowerCase().replace('jpg', 'jpeg')) : b.type);
+      return URL.createObjectURL(new Blob([b], { type: tipo }));
+    });
+    return blobs[d.url];
+  }
+  function miniature(docs) {
+    docsCorrenti = docs || [];
+    var dd = corpo.querySelector('.cp-d');
+    if (!docsCorrenti.length) { dd.style.display = 'none'; dd.innerHTML = ''; return; }
+    dd.innerHTML = docsCorrenti.map(function (d, i) {
+      var t = tipoDi(d);
+      return '<button type="button" class="cp-a" data-k="' + i + '" title="Anteprima di ' + esc(d.nome) + '.' + esc(String(d.est).toLowerCase()) + '"><div class="mi">' + (t === 'img' ? '<img alt="" data-u="' + i + '">' : '<span style="background:' + esc(d.fascia || '#64748B') + '">' + esc(d.est) + '</span>') + '</div><div class="nm">' + esc(d.nome) + '</div></button>';
+    }).join('');
+    dd.style.display = 'flex';
+    docsCorrenti.forEach(function (d, i) { if (tipoDi(d) === 'img') blobDi(d).then(function (u) { var im = dd.querySelector('img[data-u="' + i + '"]'); if (im) im.src = u; }).catch(function () {}); });
+  }
+  function anteprima(d) {
+    if (!d) return;
+    var v = corpo.querySelector('.cp-v'), c = v.querySelector('.cp-vc'), t = tipoDi(d);
+    v.querySelector('b').textContent = d.nome + '.' + String(d.est).toLowerCase();
+    var sc = v.querySelector('[data-v="scarica"]'); sc.href = d.url; sc.setAttribute('download', d.nome + '.' + String(d.est).toLowerCase());
+    c.innerHTML = '<div style="color:#64748B;font:600 12.5px Manrope,system-ui,sans-serif">Apro l’allegato…</div>'; v.style.display = 'flex';
+    if (t === 'altro') { c.innerHTML = '<div style="color:#64748B;font:600 12.5px Manrope,system-ui,sans-serif;padding:20px;text-align:center">Questo tipo di file non ha l’anteprima: usa «Scarica».</div>'; return; }
+    blobDi(d).then(function (u) {
+      if (t === 'pdf') { var f = document.createElement('iframe'); f.src = u + '#view=FitH'; c.innerHTML = ''; c.appendChild(f); }
+      else { c.innerHTML = '<img alt="" src="' + u + '">'; }
+    }).catch(function () { c.innerHTML = '<div style="color:#B91C1C;padding:20px">Non riesco ad aprire l’allegato adesso.</div>'; });
+  }
+  function chiudiAnteprima() { if (!corpo) return; corpo.querySelector('.cp-v').style.display = 'none'; corpo.querySelector('.cp-vc').innerHTML = ''; corpo.classList.remove('grande'); var g = corpo.querySelector('[data-v="grande"]'); if (g) g.textContent = '⤢ Ingrandisci'; }
+  function chiudiCorpo() { chiudiAnteprima(); scelta = null; firma = ''; if (corpo) corpo.style.display = 'none'; root.classList.remove('pv-con-corpo'); if (!manuale) root.style.setProperty('--pvSh', '0px'); if (pan && lista) disegnaLista(); }
   /* trascinamento dalla barra del titolo */
   var tr = null, manuale = false;
   document.addEventListener('mousedown', function (e) {
@@ -1645,13 +1777,29 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
       b.innerHTML = (aperte ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="10" height="15" rx="2"/><path d="M17 8l4 4-4 4"/></svg>' : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="7" height="15" rx="2"/><rect x="13.5" y="4.5" width="7" height="15" rx="2"/></svg>') + t; }
     b.style.display = mostrato ? 'inline-flex' : 'none';
   }
+  function tieniMisura(dlg) {
+    if (!dlg) { dim = null; dlgOss = null; if (attrOss) { attrOss.disconnect(); attrOss = null; } return; }
+    if (!oss && window.ResizeObserver) oss = new ResizeObserver(function (v) {
+      if (applico || tr) return; var d = v[0] && v[0].target; if (!d || !d.style.width || !d.style.height) return;
+      dim = { w: d.style.width, h: d.style.height };
+    });
+    if (dlgOss !== dlg) {
+      if (oss) { if (dlgOss) oss.unobserve(dlgOss); oss.observe(dlg); }
+      /* la pagina riscrive lo stile della finestra a ogni ridisegno: lo ricontrollo subito, non al giro dopo */
+      if (attrOss) attrOss.disconnect();
+      try { attrOss = new MutationObserver(function () { tieniMisura(dlg); }); attrOss.observe(dlg, { attributes: true, attributeFilter: ['style'] }); } catch (e) {}
+      dlgOss = dlg;
+    }
+    if (dim && (dlg.style.width !== dim.w || dlg.style.height !== dim.h)) { applico = true; dlg.style.width = dim.w; dlg.style.height = dim.h; dlg.style.maxHeight = 'none'; setTimeout(function () { applico = false; }, 0); }
+  }
   function giro() {
     var dlg = document.querySelector('#pvStrumento [role="dialog"]');
+    tieniMisura(dlg);
     var tutti = [];
     if (dlg) ['Destinatari', 'Copia', 'Copia nascosta'].forEach(function (n) { var c = dlg.querySelector('input[aria-label="' + n + '"]'); if (c) (String(c.value).match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi) || []).forEach(function (x) { x = x.toLowerCase(); if (tutti.indexOf(x) < 0 && !/@next-srl\.eu$|@legalmail\.it$/.test(x)) tutti.push(x); }); });
     var ind = tutti.length ? tutti.join('|') : '';
     crea();
-    if (!dlg) { pan.style.display = 'none'; tab.style.display = 'none'; corpo.style.display = 'none'; mostrato = null; scelta = null; lista = []; firma = '';
+    if (!dlg) { posMini(false); pan.style.display = 'none'; tab.style.display = 'none'; corpo.style.display = 'none'; mostrato = null; scelta = null; lista = []; firma = ''; attivo = '';
       root.classList.remove('pv-con-corpo'); root.style.setProperty('--pvSh', '0px'); root.style.setProperty('--pvDx', '0px'); root.style.setProperty('--pvDy', '0px'); manuale = false; return; }
     var z = zoom(), vw = window.innerWidth / z, W = 330;
     /* con la mail aperta a fianco, la finestra si sposta a sinistra quanto basta perché tutto stia nello schermo */
@@ -1661,18 +1809,19 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
       var tot = dW + 10 + W + 10 + B, sx = Math.max(8, (vw - tot) / 2), base = (vw - dW) / 2 + (parseFloat(root.style.getPropertyValue('--pvDx')) || 0);
       root.style.setProperty('--pvSh', Math.round(sx - base) + 'px');
     } else if (!scelta && !manuale) root.style.setProperty('--pvSh', '0px');
-    if (!ind) { pan.style.display = 'none'; tab.style.display = 'none'; corpo.style.display = 'none'; mostrato = null; if (dlg) bottone(dlg); return; }
+    if (!ind) { posMini(false); pan.style.display = 'none'; tab.style.display = 'none'; corpo.style.display = 'none'; mostrato = null; if (dlg) bottone(dlg); return; }
     if (dlg) bottone(dlg);
     var r = dlg.getBoundingClientRect();
     var L = r.right / z + 10, T = r.top / z, Hh = r.height / z;
     if (L + W > vw - 8) L = Math.max(8, vw - W - 8);
-    if (chiusoPer === ind) { pan.style.display = 'none'; corpo.style.display = 'none'; tab.style.display = 'block'; tab.style.left = (r.right / z) + 'px'; tab.style.top = (T + 60) + 'px'; return; }
+    if (chiusoPer === ind) { posMini(false); pan.style.display = 'none'; corpo.style.display = 'none'; tab.style.display = 'block'; tab.style.left = (r.right / z) + 'px'; tab.style.top = (T + 60) + 'px'; return; }
     tab.style.display = 'none';
     pan.style.left = L + 'px'; pan.style.top = T + 'px'; pan.style.height = Hh + 'px'; pan.style.width = W + 'px'; pan.style.display = 'flex';
+    posMini(true, L, T);
     if (scelta) {
       var cL = L + W + 10, cW = Math.max(300, vw - cL - 8);
       if (B) cW = Math.min(cW, B);
-      corpo.style.left = cL + 'px'; corpo.style.top = T + 'px'; corpo.style.height = Hh + 'px'; corpo.style.width = cW + 'px'; corpo.style.display = 'flex';
+      if (!corpo.classList.contains('grande')) { corpo.style.left = cL + 'px'; corpo.style.top = T + 'px'; corpo.style.height = Hh + 'px'; corpo.style.width = cW + 'px'; } corpo.style.display = 'flex';
     } else corpo.style.display = 'none';
     if (mostrato === ind) { if (lista.length) disegnaLista(); return; }
     var prima = scelta ? chiaveDi(scelta) : null;
@@ -1692,10 +1841,15 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
     });
   }
   setInterval(giro, 500);
+  try { new MutationObserver(function () { tieniMisura(document.querySelector('#pvStrumento [role="dialog"]')); }).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
 })();
 </script>
 <style>
 /* PORTALE NEXT-110 (Sante 30/10): editor con la formattazione nella finestra Rispondi / Inoltra */
+#pvStrumento [role="dialog"] textarea[aria-label="Testo"]{display:none!important}
+#pvOgg{position:fixed;z-index:2147481900;display:none;font:500 13.5px/1.4 Manrope,sans-serif;border:1px solid var(--ln,#E2E8F0);border-radius:9px;padding:7px 10px;background:var(--sf,#fff);color:var(--ink,#0F172A);box-sizing:border-box;resize:none;overflow:hidden;margin:0}
+#pvStrumento [role="dialog"] input[aria-label="Oggetto"]{height:var(--pvOggH,auto);color:transparent!important;caret-color:transparent}
+#pvOgg:focus{outline:2px solid rgba(6,182,212,.35);outline-offset:0}
 #pvEd{display:flex;flex-direction:column;flex:1 1 auto;min-height:220px;border:1px solid var(--ln,#E2E8F0);border-radius:9px;overflow:hidden;background:#fff}
 #pvEd .ed-b{display:flex;flex-wrap:wrap;align-items:center;gap:1px;padding:4px 6px;border-bottom:1px solid var(--ln,#E5E7EB);background:linear-gradient(#FBFBFD,#F3F4F6)}
 #pvEd .ed-b button{width:24px;min-width:24px;height:22px;padding:0;border:0;border-radius:5px;background:transparent;color:#3A3A3C;cursor:pointer;font:400 13px -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;display:inline-flex;align-items:center;justify-content:center;position:relative}
@@ -1909,10 +2063,48 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
     });
     document.addEventListener('mousedown', function (e) { if (pal && pal.style.display === 'block' && !pal.contains(e.target) && !e.target.closest('#pvEd [data-p]')) chiudiPal(); }, true);
   }
+  /* PORTALE NEXT-110 (Sante 30/10): l'oggetto sempre leggibile tutto, su due righe se non ci sta in una.
+     La casella vera della pagina resta al suo posto (trasparente, alta quanto serve); sopra ci sta una casella a più righe
+     che scrive nella vera: così la pagina, quando ridisegna, non la tocca. */
+  var ogg = null, oggInp = null;
+  function oggetto(dlg) {
+    var inp = dlg ? dlg.querySelector('input[aria-label="Oggetto"]') : null;
+    if (!inp) { if (ogg) ogg.style.display = 'none'; oggInp = null; return; }
+    if (!ogg) {
+      ogg = document.createElement('textarea'); ogg.id = 'pvOgg'; ogg.rows = 1; ogg.setAttribute('aria-label', 'Oggetto della mail');
+      document.body.appendChild(ogg);
+      ogg.addEventListener('input', function () {
+        ogg.value = ogg.value.replace(/[\r\n]+/g, ' ');
+        var i = document.querySelector('#pvStrumento [role="dialog"] input[aria-label="Oggetto"]'); if (!i) return;
+        var set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; set.call(i, ogg.value);
+        i.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      ogg.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') ev.preventDefault(); });
+    }
+    if (oggInp !== inp) { oggInp = inp; if (document.activeElement !== ogg) ogg.value = inp.value; }
+    if (document.activeElement !== ogg && ogg.value !== inp.value) ogg.value = inp.value;
+    /* altezza: una riga, due se non ci sta, tre al massimo */
+    var z = document.body.currentCSSZoom || 1, r = inp.getBoundingClientRect();
+    ogg.style.display = 'block'; ogg.style.width = (r.width / z) + 'px'; ogg.style.height = 'auto';
+    var h = Math.min(ogg.scrollHeight + 2, 19 * 3 + 16); ogg.style.height = h + 'px'; ogg.style.overflowY = ogg.scrollHeight + 2 > h ? 'auto' : 'hidden';
+    document.documentElement.style.setProperty('--pvOggH', h + 'px');
+    r = inp.getBoundingClientRect();
+    ogg.style.left = (r.left / z) + 'px'; ogg.style.top = (r.top / z) + 'px';
+  }
+  (function segui() { try { if (ogg && ogg.style.display !== 'none') oggetto(document.querySelector('#pvStrumento [role="dialog"]')); } catch (x) {} requestAnimationFrame(segui); })();
+  var assente = 0;
   function giro() {
     var dlg = document.querySelector('#pvStrumento [role="dialog"]');
-    if (!dlg) { if (ed) { ed = null; area = null; salvata = null; chiudiPal(); } ultimoDlg = null; return; }
+    /* la finestra sparisce un attimo anche mentre la pagina la ridisegna: l'editor si dimentica solo se resta chiusa davvero */
+    if (!dlg) { oggetto(null); if (ed && !assente) assente = Date.now(); if (ed && Date.now() - assente > 1500) { ed = null; area = null; salvata = null; chiudiPal(); } ultimoDlg = null; return; }
+    assente = 0;
+    /* mai due editor nella stessa finestra */
+    var tutti = dlg.querySelectorAll('#pvEd');
+    /* se la pagina ridisegnando ha messo una copia dell'editor (senza comandi), al suo posto torna quello vero, col suo testo */
+    if (ed) { for (var i = 0; i < tutti.length; i++) if (tutti[i] !== ed) { if (!dlg.contains(ed)) tutti[i].replaceWith(ed); else tutti[i].remove(); } }
+    else if (tutti.length) { for (var i2 = 0; i2 < tutti.length; i2++) tutti[i2].remove(); }
     ultimoDlg = dlg;
+    oggetto(dlg);
     if (ed && dlg.contains(ed)) {
       var ta = dlg.querySelector('textarea[aria-label="Testo"]');
       if (ta && ta !== area) { area = ta; area.style.display = 'none'; }
@@ -1927,6 +2119,8 @@ html.pv-trascino #pvStrumento [role="dialog"]{transition:none}
     costruisci(dlg);
   }
   setInterval(giro, 250);
+  /* la pagina ridisegna la finestra a ogni cambio di stato: l'editor si rimette subito al suo posto, senza il salto d'altezza */
+  try { new MutationObserver(function () { giro(); }).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
   document.addEventListener('selectionchange', function () { if (ed) { salva(); } });
 })();
 </script>
