@@ -1604,11 +1604,12 @@ html.pv-trascino :is(#pvStrumento,#pvNuova) [role="dialog"]{transition:none}
 #pvStorico .st-t b,.pvCorpo .st-t b{flex:1;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #pvStorico .st-t button,.pvCorpo .st-t button{width:26px;height:26px;border:1px solid var(--ln,#E2E8F0);border-radius:7px;background:transparent;color:inherit;cursor:pointer;flex:0 0 auto}
 #pvStorico .st-l{flex:1;overflow:auto;padding:4px 6px 6px}
-#pvStorico .st-tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--ln,#E2E8F0);overflow-x:auto;flex:0 0 auto}
+#pvStorico .st-tabs{display:flex;align-items:flex-end;gap:3px;padding:7px 8px 0;background:#EEF1F5;border-bottom:1px solid #D5DBE3;overflow-x:auto;flex:0 0 auto}
 #pvStorico .st-tabs:empty{display:none}
-#pvStorico .st-tab{border:1px solid transparent;border-bottom:0;background:transparent;border-radius:8px 8px 0 0;padding:6px 10px 7px;font:700 11.5px Manrope,system-ui,sans-serif;color:#64748B;cursor:pointer;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;margin-bottom:-1px}
-#pvStorico .st-tab:hover{color:#0E7490}
-#pvStorico .st-tab.on{background:var(--sf,#fff);border-color:var(--ln,#E2E8F0);color:#0E7490}
+/* le schede si vedono come schede (Sante 30/10): quelle dietro grigie e un po' più basse, quella davanti bianca */
+#pvStorico .st-tab{border:1px solid #D5DBE3;border-bottom:0;background:#E2E7EE;border-radius:8px 8px 0 0;padding:5px 11px 6px;font:700 11.5px Manrope,system-ui,sans-serif;color:#64748B;cursor:pointer;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;margin-bottom:0}
+#pvStorico .st-tab:hover{color:#0E7490;background:#EAEEF3}
+#pvStorico .st-tab.on{background:var(--sf,#fff);border-color:#D5DBE3;color:#0E7490;padding:7px 12px 8px;margin-bottom:-1px;box-shadow:0 -1px 3px rgba(15,23,42,.06)}
 #pvStorico .st-tab i{font-style:normal;font-weight:600;color:#94A3B8;margin-left:5px}
 #pvStorico .st-gt{display:flex;justify-content:space-between;gap:8px;align-items:baseline;padding:2px 9px 6px;font:800 11px Manrope,system-ui,sans-serif;letter-spacing:.02em;color:#0E7490;word-break:break-all}
 #pvStorico .st-gt span{font-weight:600;color:#94A3B8;white-space:nowrap}
