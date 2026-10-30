@@ -1407,5 +1407,69 @@ function cartAltre(c, v, vai) {
     ...giu('usc', (c.usc || []).length, ha(/outbox|uscita/i), 'In uscita: mail non ancora partite. Se il numero è rosso qualcosa è bloccato', true) };
 }
 </script>
+<script>
+/* PORTALE NEXT-110 (Sante 30/10): suggerimento dei destinatari nei campi A e Cc della finestra Rispondi / Inoltra.
+   Gli indirizzi sono quelli già usati nella posta (posta-indirizzi). Si sceglie col clic, con le frecce e Invio. */
+(function () {
+  var API = 'https://pnxhthrheqeucoisifjw.supabase.co/functions/v1/posta-indirizzi';
+  var box = null, campo = null, voci = [], sel = -1, timer = null, ultimo = '';
+  function pass() { try { return window.sessionStorage.getItem('regia_pass'); } catch (e) { return null; } }
+  function adatto(el) { return el && el.tagName === 'INPUT' && /^(Destinatari|Copia|Copia nascosta)$/.test(el.getAttribute('aria-label') || ''); }
+  function pezzo(v) { var p = String(v || '').split(/[,;]/); return p[p.length - 1].trim(); }
+  function chiudi() { if (box) box.style.display = 'none'; voci = []; sel = -1; }
+  function crea() {
+    if (box) return box;
+    box = document.createElement('div');
+    box.setAttribute('role', 'listbox');
+    box.style.cssText = 'position:fixed;z-index:2147483000;display:none;background:#fff;border:1px solid #CBD5E1;border-radius:10px;box-shadow:0 12px 30px rgba(15,23,42,.18);padding:4px;max-height:280px;overflow:auto;font:500 13px Manrope,system-ui,sans-serif;color:#0F172A;';
+    document.body.appendChild(box);
+    box.addEventListener('mousedown', function (e) { e.preventDefault(); var r = e.target.closest('[data-i]'); if (r) scegli(+r.getAttribute('data-i')); });
+    return box;
+  }
+  function disegna() {
+    crea();
+    if (!voci.length || !campo) { chiudi(); return; }
+    box.innerHTML = voci.map(function (v, i) {
+      return '<div data-i="' + i + '" style="padding:7px 10px;border-radius:7px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;' + (i === sel ? 'background:#E0F2FE;' : '') + '"><span>' + v.indirizzo.replace(/</g, '&lt;') + (v.nome ? ' <span style="color:#64748B">· ' + String(v.nome).replace(/</g, '&lt;') + '</span>' : '') + '</span><span style="color:#94A3B8;font-size:11px">' + v.volte + '</span></div>';
+    }).join('');
+    var z = campo.currentCSSZoom || 1, r = campo.getBoundingClientRect();
+    box.style.left = (r.left / z) + 'px'; box.style.top = ((r.bottom + 4) / z) + 'px'; box.style.width = Math.max(260, r.width / z) + 'px';
+    box.style.display = 'block';
+  }
+  function scegli(i) {
+    var v = voci[i]; if (!v || !campo) return;
+    var parti = String(campo.value || '').split(/[,;]/).map(function (x) { return x.trim(); }).filter(Boolean);
+    parti.pop(); parti.push(v.indirizzo);
+    campo.value = parti.join(', ') + ', ';
+    campo.dispatchEvent(new Event('input', { bubbles: true }));
+    chiudi(); campo.focus();
+  }
+  function cerca() {
+    var q = pezzo(campo && campo.value);
+    if (q.length < 2 || /@.+\./.test(q) && /\s$/.test(campo.value)) { chiudi(); return; }
+    if (q === ultimo && voci.length) { disegna(); return; }
+    ultimo = q;
+    var t = pass(); if (!t) return;
+    fetch(API + '?t=' + encodeURIComponent(t) + '&q=' + encodeURIComponent(q)).then(function (r) { return r.json(); }).then(function (j) {
+      if (pezzo(campo && campo.value) !== q) return;
+      voci = (j && j.ok && j.indirizzi) || []; sel = voci.length ? 0 : -1; disegna();
+    }).catch(function () { chiudi(); });
+  }
+  document.addEventListener('input', function (e) {
+    if (!adatto(e.target)) return;
+    if (!e.isTrusted) return;
+    campo = e.target; clearTimeout(timer); timer = setTimeout(cerca, 180);
+  }, true);
+  document.addEventListener('keydown', function (e) {
+    if (!box || box.style.display === 'none' || e.target !== campo) return;
+    if (e.key === 'ArrowDown') { sel = Math.min(voci.length - 1, sel + 1); disegna(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { sel = Math.max(0, sel - 1); disegna(); e.preventDefault(); }
+    else if ((e.key === 'Enter' || e.key === 'Tab') && sel >= 0) { scegli(sel); e.preventDefault(); }
+    else if (e.key === 'Escape') { chiudi(); }
+  }, true);
+  document.addEventListener('focusout', function (e) { if (e.target === campo) setTimeout(chiudi, 150); }, true);
+  window.addEventListener('scroll', function () { if (box && box.style.display !== 'none') disegna(); }, true);
+})();
+</script>
 </body>
 </html>
