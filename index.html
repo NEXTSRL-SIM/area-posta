@@ -1331,6 +1331,34 @@ Component.prototype.evBottone = function (v) {
 /* RISPONDI, RISPONDI A TUTTI, INOLTRA (PORTALE NEXT-110, Sante 29/10): come in Outlook. Spedisce l'edge posta-rispondi
    dalla stessa casella, con la firma di Next e la mail originale citata; nell'inoltro anche gli allegati originali.
    Copia in Posta inviata e segno «risposta»/«inoltrata» sulla mail originale, visibili anche da Outlook. */
+/* PORTALE NEXT-113 (Sante 02/11): l'invio come in Mail. Al tocco di Invia si sente il fruscio dell'invio, la finestra si chiude
+   e compare «Inviata»; la spedizione vera continua sotto. Se il server la rifiuta, la finestra si riapre con il testo intatto e l'errore. */
+function pvSuonoInvio() {
+  try {
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    const ctx = window.__pvAudio || (window.__pvAudio = new C()); if (ctx.state === 'suspended') ctx.resume();
+    const t = ctx.currentTime, dur = 0.55;
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1);
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.1;
+    bp.frequency.setValueAtTime(500, t); bp.frequency.exponentialRampToValueAtTime(4200, t + dur * 0.85);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.08); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(bp); bp.connect(g); g.connect(ctx.destination); src.start(t); src.stop(t + dur);
+  } catch (e) {}
+}
+function pvAvviso(testo, tipo) {
+  try {
+    let box = document.getElementById('pv-avvisi');
+    if (!box) { box = document.createElement('div'); box.id = 'pv-avvisi'; box.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none'; document.body.appendChild(box); }
+    const el = document.createElement('div');
+    const col = tipo === 'errore' ? '#DC2626' : (tipo === 'nota' ? '#B45309' : '#16A34A');
+    el.style.cssText = 'pointer-events:auto;background:#FFFFFF;color:#0F172A;border:1px solid #E2E8F0;border-left:4px solid ' + col + ';border-radius:12px;padding:11px 16px;font:600 14px/1.4 -apple-system,Segoe UI,Arial,sans-serif;box-shadow:0 10px 30px rgba(15,23,42,.18);max-width:520px;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s';
+    el.textContent = testo; box.appendChild(el);
+    requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
+    setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(8px)'; setTimeout(() => el.remove(), 250); }, tipo === 'errore' ? 9000 : 3200);
+  } catch (e) {}
+}
 const PR_URL = 'https://pnxhthrheqeucoisifjw.supabase.co/functions/v1/posta-rispondi';
 const PR_FATTE = {};
 const prIndirizzi = (s) => (String(s || '').match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi) || []).map((x) => x.toLowerCase());
@@ -1365,13 +1393,15 @@ Component.prototype.rispBottoni = function (v, dove) {
       const s2 = (this.state || {}).scrivi; if (!s2 || s2.stato === 'invio' || s2.stato === 'fatto') return;
       if (!prIndirizzi(s2.a).length) { this.setState({ scrivi: { ...s2, stato: 'errore', esito: 'Manca il destinatario.' } }); return; }
       if (window.pvAllegatiPronti && !window.pvAllegatiPronti()) { this.setState({ scrivi: { ...s2, stato: 'errore', esito: 'Sto ancora leggendo gli allegati: riprova fra un attimo.' } }); return; }
-      this.setState({ scrivi: { ...s2, stato: 'invio', esito: '' } });
-      fetch(PR_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: pvPass(), casella: v.casella, cartella: v.cartella, uid: v.uid, modo: s2.modo, a: s2.a, cc: s2.cc, oggetto: s2.oggetto, testo: s2.testo, html_testo: (window.pvEditorHtml ? window.pvEditorHtml() : ''), firma: (window.pvFirmaScelta ? window.pvFirmaScelta() : 'standard'), allegati_nuovi: (window.pvAllegati ? window.pvAllegati() : []), priorita: (window.pvPriorita ? window.pvPriorita() : ''), conferme: (window.pvConferme ? window.pvConferme() : {}) }) })
-        .then((r) => r.json()).then((j) => {
-          const s3 = (this.state || {}).scrivi; if (!s3) return;
-          if (j && j.ok) { PR_FATTE[k] = s2.modo === 'i' ? 'i' : 'r'; this.setState({ scrivi: { ...s3, stato: 'fatto', esito: 'Partita' + (j.inviata && !/errore|non /.test(j.inviata) ? ', copia in ' + j.inviata : '') + '.' } }); setTimeout(() => { const s4 = (this.state || {}).scrivi; if (s4 && s4.chiave === k) this.setState({ scrivi: null }); }, 1600); }
-          else this.setState({ scrivi: { ...s3, stato: 'errore', esito: 'Non partita: ' + ((j && j.errore) || 'errore') } });
-        }).catch(() => { const s3 = (this.state || {}).scrivi; if (s3) this.setState({ scrivi: { ...s3, stato: 'errore', esito: 'Non partita: rete non raggiungibile.' } }); });
+      const corpo = { t: pvPass(), casella: v.casella, cartella: v.cartella, uid: v.uid, modo: s2.modo, a: s2.a, cc: s2.cc, oggetto: s2.oggetto, testo: s2.testo, html_testo: (window.pvEditorHtml ? window.pvEditorHtml() : ''), firma: (window.pvFirmaScelta ? window.pvFirmaScelta() : 'standard'), allegati_nuovi: (window.pvAllegati ? window.pvAllegati() : []), priorita: (window.pvPriorita ? window.pvPriorita() : ''), conferme: (window.pvConferme ? window.pvConferme() : {}) };
+      const dest = prIndirizzi(s2.a)[0] || '';
+      /* PORTALE NEXT-113: subito il suono, la finestra si chiude, «Inviata»; la spedizione continua sotto */
+      pvSuonoInvio(); PR_FATTE[k] = s2.modo === 'i' ? 'i' : 'r'; this.setState({ scrivi: null });
+      pvAvviso('Inviata' + (dest ? ' a ' + dest : ''), 'ok');
+      const riapri = (msg) => { delete PR_FATTE[k]; this.setState({ scrivi: { ...s2, stato: 'errore', esito: 'Non partita: ' + msg } }); setTimeout(() => { if (window.pvEditorImposta) window.pvEditorImposta(corpo.html_testo || ''); }, 60); pvAvviso('Non partita: ' + msg + ' — la mail è di nuovo aperta', 'errore'); };
+      fetch(PR_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) })
+        .then((r) => r.json()).then((j) => { if (!(j && j.ok)) riapri((j && j.errore) || 'errore'); })
+        .catch(() => riapri('rete non raggiungibile'));
     } };
 };
 
@@ -1403,14 +1433,16 @@ Component.prototype.nuovaVals = function (s) {
       const n2 = (this.state || {}).nuova; if (!n2 || n2.stato === 'invio' || n2.stato === 'fatto') return;
       if (!prIndirizzi(n2.a).length) { this.setState({ nuova: { ...n2, stato: 'errore', esito: 'Manca il destinatario.' } }); return; }
       if (window.pvAllegatiPronti && !window.pvAllegatiPronti()) { this.setState({ nuova: { ...n2, stato: 'errore', esito: 'Sto ancora leggendo gli allegati: riprova fra un attimo.' } }); return; }
-      this.setState({ nuova: { ...n2, stato: 'invio', esito: '' } });
-      fetch(PR_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: pvPass(), casella: n2.casella, modo: 'n', a: n2.a, cc: n2.cc, ccn: n2.ccn, oggetto: n2.oggetto, testo: n2.testo,
-        html_testo: (window.pvEditorHtml ? window.pvEditorHtml() : ''), firma: (window.pvFirmaScelta ? window.pvFirmaScelta() : 'standard'), allegati_nuovi: (window.pvAllegati ? window.pvAllegati() : []), priorita: (window.pvPriorita ? window.pvPriorita() : ''), conferme: (window.pvConferme ? window.pvConferme() : {}) }) })
-        .then((r) => r.json()).then((j) => {
-          const n3 = (this.state || {}).nuova; if (!n3) return;
-          if (j && j.ok) { this.setState({ nuova: { ...n3, stato: 'fatto', esito: 'Partita' + (j.inviata && !/errore|non /.test(j.inviata) ? ', copia in ' + j.inviata : '') + '.' } }); setTimeout(() => { const n4 = (this.state || {}).nuova; if (n4 && n4.stato === 'fatto') this.setState({ nuova: null }); }, 1600); }
-          else this.setState({ nuova: { ...n3, stato: 'errore', esito: 'Non partita: ' + ((j && j.errore) || 'errore') } });
-        }).catch(() => { const n3 = (this.state || {}).nuova; if (n3) this.setState({ nuova: { ...n3, stato: 'errore', esito: 'Non partita: rete non raggiungibile.' } }); });
+      const corpo = { t: pvPass(), casella: n2.casella, modo: 'n', a: n2.a, cc: n2.cc, ccn: n2.ccn, oggetto: n2.oggetto, testo: n2.testo,
+        html_testo: (window.pvEditorHtml ? window.pvEditorHtml() : ''), firma: (window.pvFirmaScelta ? window.pvFirmaScelta() : 'standard'), allegati_nuovi: (window.pvAllegati ? window.pvAllegati() : []), priorita: (window.pvPriorita ? window.pvPriorita() : ''), conferme: (window.pvConferme ? window.pvConferme() : {}) };
+      const dest = prIndirizzi(n2.a)[0] || '';
+      /* PORTALE NEXT-113: subito il suono, la finestra si chiude, «Inviata»; la spedizione continua sotto */
+      pvSuonoInvio(); this.setState({ nuova: null });
+      pvAvviso('Inviata' + (dest ? ' a ' + dest : ''), 'ok');
+      const riapri = (msg) => { this.setState({ nuova: { ...n2, on: true, stato: 'errore', esito: 'Non partita: ' + msg } }); setTimeout(() => { if (window.pvEditorImposta) window.pvEditorImposta(corpo.html_testo || ''); }, 60); pvAvviso('Non partita: ' + msg + ' — la mail è di nuovo aperta', 'errore'); };
+      fetch(PR_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) })
+        .then((r) => r.json()).then((j) => { if (!(j && j.ok)) riapri((j && j.errore) || 'errore'); })
+        .catch(() => riapri('rete non raggiungibile'));
     } };
 };
 /* LO STRUMENTO DELLA MAIL (PORTALE NEXT-110, Sante 29/10): un solo strumento a vetro, al posto dei pulsanti sulle singole mail.
