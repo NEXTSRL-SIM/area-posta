@@ -2905,5 +2905,39 @@ html.pv-scrivi #pvCerca{display:none}
   }, true);
 })();
 </script>
+<script>
+/* PORTALE NEXT 2.0-143 (Sante 11/11): dettatura. Quando si scrive in un campo di testo compare il microfono accanto:
+   toccato diventa rosso e il parlato entra nel campo (riconoscimento vocale del browser, italiano); toccato di nuovo si ferma.
+   Il testo resta modificabile: niente parte da solo. */
+(function () {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR || window.__dettatura) return; window.__dettatura = 1;
+  var b = document.createElement('button'), campo = null, rec = null;
+  b.type = 'button'; b.title = 'Detta con il microfono'; b.setAttribute('aria-label', 'Detta con il microfono');
+  b.innerHTML = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"></path></svg>';
+  b.style.cssText = 'position:fixed;z-index:99999;display:none;width:32px;height:32px;border-radius:50%;border:1px solid #0891B2;background:#fff;color:#0891B2;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18);padding:0';
+  document.body.appendChild(b);
+  var adatto = function (el) { if (!el || el.disabled || el.readOnly) return false; if (el.tagName === 'TEXTAREA') return true; if (el.isContentEditable) return true; return el.tagName === 'INPUT' && /^(text|search|email|)$/i.test(el.type || '') && !el.hasAttribute('data-mic-no'); };
+  var metti = function () { if (!campo || !document.body.contains(campo)) { if (!rec) b.style.display = 'none'; return; } var r = campo.getBoundingClientRect(); if (!r.width) return; b.style.display = 'flex'; b.style.top = Math.max(4, r.top + Math.min(r.height, 40) / 2 - 16) + 'px'; b.style.left = Math.min(window.innerWidth - 40, r.right + 6) + 'px'; };
+  var ferma = function () { if (rec) { try { rec.stop(); } catch (e) {} rec = null; } b.style.background = '#fff'; b.style.color = '#0891B2'; };
+  document.addEventListener('focusin', function (e) { if (adatto(e.target) && !e.target.closest('[data-mic]')) { if (rec && campo !== e.target) ferma(); campo = e.target; metti(); } });
+  document.addEventListener('focusout', function () { setTimeout(function () { if (!rec && document.activeElement !== campo) b.style.display = 'none'; }, 150); });
+  window.addEventListener('scroll', metti, true); window.addEventListener('resize', metti);
+  b.addEventListener('mousedown', function (e) { e.preventDefault(); });
+  b.addEventListener('click', function () {
+    if (rec) { ferma(); return; }
+    if (!campo) return;
+    var base = campo.isContentEditable ? campo.innerText : campo.value; base = base ? base.replace(/\s*$/, ' ') : '';
+    rec = new SR(); rec.lang = 'it-IT'; rec.continuous = true; rec.interimResults = true;
+    rec.onresult = function (ev) { var t = ''; for (var i = 0; i < ev.results.length; i++) t += ev.results[i][0].transcript; if (campo.isContentEditable) campo.innerText = base + t; else { campo.value = base + t; campo.dispatchEvent(new Event('input', { bubbles: true })); } };
+    rec.onerror = function (ev) { if (ev.error === 'not-allowed') alertNo(); ferma(); };
+    rec.onend = function () { ferma(); };
+    b.style.background = '#B91C1C'; b.style.color = '#fff';
+    try { rec.start(); } catch (e) { ferma(); }
+    campo.focus();
+  });
+  function alertNo() { b.title = 'Microfono non permesso: consentilo nelle impostazioni del browser'; }
+})();
+</script>
 </body>
 </html>
