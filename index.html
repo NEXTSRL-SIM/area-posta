@@ -560,9 +560,11 @@ const CASELLE = {
   exp: { nome: 'Export', indirizzo: 'export@next-srl.eu', col: 'var(--ink3)', in: [ m('[CONTATTO]', 'ven', 'Richiesta informazioni', 'info', false, 'Informazioni sui prodotti.', 'nessuna azione richiesta.', 'Apri') ], out: [] },
   pri: { nome: 'Privacy', indirizzo: 'privacy@next-srl.eu', col: 'var(--ink3)', in: [ m('[CLIENTE]', 'mar', 'Richiesta cancellazione dati', 'compito', false, 'Chiedo la cancellazione dei miei dati.', 'compito a Sante: risposta entro 30 giorni.', 'Vedi il compito') ], out: [] },
   dpo: { nome: 'DPO', indirizzo: 'dpo@next-srl.eu', col: 'var(--ink3)', in: [], out: [] },
-  dmarc: { nome: 'Rapporti DMARC', indirizzo: 'dmarc@next-srl.eu', col: 'var(--ink3)', in: [ m('google.com', '06:00', 'Rapporto giornaliero', 'fatto', false, 'Rapporto tecnico sulla consegna delle mail.', 'letto: nessun problema di consegna.', 'Apri') ], out: [] }
+  dmarc: { nome: 'Rapporti DMARC', indirizzo: 'dmarc@next-srl.eu', col: 'var(--ink3)', in: [ m('google.com', '06:00', 'Rapporto giornaliero', 'fatto', false, 'Rapporto tecnico sulla consegna delle mail.', 'letto: nessun problema di consegna.', 'Apri') ], out: [] },
+  /* PORTALE NEXT 2.0-144 (Sante 17/11): la casella di Alessandro Belloni, su Hostinger (sola lettura dal portale) */
+  net: { nome: 'Commerciale .net (Belloni)', indirizzo: 'commerciale@next-srl.net', col: '#0D9488', in: [], out: [] }
 };
-const INIZIALE = { ordine: ['sante', 'info', 'pec', 'amm', 'acq', 'com', 'ass', 'exp', 'pri', 'dpo', 'dmarc'], puntate: ['sante', 'info', 'pec', 'amm', 'acq'], taglie: { sante: 6 }, alte: {}, versione: 4, aperta: null, mini: ['exp', 'pri', 'dpo', 'dmarc'] };
+const INIZIALE = { ordine: ['sante', 'info', 'pec', 'amm', 'acq', 'com', 'net', 'ass', 'exp', 'pri', 'dpo', 'dmarc'], puntate: ['sante', 'info', 'pec', 'amm', 'acq'], taglie: { sante: 6 }, alte: {}, versione: 4, aperta: null, mini: ['exp', 'pri', 'dpo', 'dmarc'] };
 const CHIAVE = 'next-caselle-v4';
 const mailDi = (n) => (n.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '') || 'mittente') + '@esempio.it';
 const iniziali = (n) => (n.replace(/[^A-Za-z ]/g, ' ').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?');
@@ -616,6 +618,8 @@ class Component extends DCLogic {
     } catch (e) {}
     let lay = null;
     try { const t = window.localStorage.getItem(CHIAVE); if (t) lay = JSON.parse(t); } catch (e) {}
+    /* 144: le caselle nuove entrano anche nelle disposizioni gia' salvate (in coda, chiuse) */
+    try { if (lay && Array.isArray(lay.ordine)) { const manca = Object.keys(CASELLE).filter((x) => !lay.ordine.includes(x)); if (manca.length) lay = { ...lay, ordine: [...lay.ordine, ...manca] }; } } catch (e) {}
     let h = '';
     try { h = (window.location.hash || '').slice(1); } catch (e) {}
     if (h && CASELLE[h]) lay = { ...(lay || INIZIALE), aperta: h, mini: ((lay || INIZIALE).mini || []).filter((y) => y !== h) };
@@ -892,8 +896,8 @@ Component.prototype.waVeroVista = function (s, waS) {
    nessuna mail risulta letta perché la si guarda da qui. Una mail per intero: ?leggi=1. L'allegato: ?file=1.
    I documenti si mostrano col simbolo del portale: PDF in rosso, gli altri in blu con l'estensione. */
 const PV_API = 'https://pnxhthrheqeucoisifjw.supabase.co/functions/v1/area-lavoro-dati';
-const PV_ID = { sante: 'sante', info: 'info', pec: 'pec', amministrazione: 'amm', acquisti: 'acq', commerciale: 'com', assistenza: 'ass' };
-const PV_CASELLA = { sante: 'sante', info: 'info', pec: 'pec', amm: 'amministrazione', acq: 'acquisti', com: 'commerciale', ass: 'assistenza' };
+const PV_ID = { sante: 'sante', info: 'info', pec: 'pec', amministrazione: 'amm', acquisti: 'acq', commerciale: 'com', assistenza: 'ass', commerciale_net: 'net' };
+const PV_CASELLA = { sante: 'sante', info: 'info', pec: 'pec', amm: 'amministrazione', acq: 'acquisti', com: 'commerciale', ass: 'assistenza', net: 'commerciale_net' };
 const PV_GG = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab'];
 const pvPass = () => { try { return window.sessionStorage.getItem('regia_pass'); } catch (e) { return null; } };
 const pvOra = (iso) => {
